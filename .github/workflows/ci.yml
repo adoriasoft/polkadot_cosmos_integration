@@ -15,18 +15,16 @@ jobs:
     steps:
       - uses: actions/checkout@v1
       - name: setup
-        run: | 
-            sudo apt update
-            sudo apt-get update
-      - name: dependecies
-        run: |
-            sudo apt-get install -y cmake pkg-config libssl-dev git gcc build-essential clang libclang-dev
-            curl https://sh.rustup.rs -sSf | sh
-            rustup default stable
-            rustup update nightly
-            rustup target add wasm32-unknown-unknown --toolchain nightly
-            rustup update
+        run: curl https://getsubstrate.io -sSf | bash -s -- --fast
       - name: build
         run: cargo build --release
-      - name: test
-        run: cargo test --all
+        
+  macos:
+    runs-on: macos-latest
+    
+    steps:
+      - uses: actions/checkout@v1
+      - name: setup
+        run: curl https://getsubstrate.io -sSf | bash -s -- --fast
+      - name: build
+        run: cargo build --release
