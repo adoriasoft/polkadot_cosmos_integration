@@ -13,15 +13,15 @@ jobs:
         runs-on: ubuntu-18.04
 
         steps:
-            -name: dependecies
-                run: sudo apt install -y cmake pkg-config libssl-dev git gcc build-essential clang libclang-dev
+            - name: dependecies
+              run: sudo apt install -y cmake pkg-config libssl-dev git gcc build-essential clang libclang-dev
                     curl https://sh.rustup.rs -sSf | sh
                     rustup default stable
                     rustup update nightly
                     rustup target add wasm32-unknown-unknown --toolchain nightly
                     rustup update
-            -name: build
-                run: cargo build --release
-            -name: test
-                run: cargo test --all
+            - name: build
+              run: cargo build --release
+            - name: test
+              run: cargo test --all
 
