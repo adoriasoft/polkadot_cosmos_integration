@@ -15,7 +15,9 @@ jobs:
     steps:
       - uses: actions/checkout@v1
       - name: setup
-        run: curl https://getsubstrate.io -sSf | bash -s -- --fast
+        run: | 
+            curl https://getsubstrate.io -sSf | bash -s -- --fast
+            ./scripts/init.sh
       - name: build
         run: cargo build --release
         
@@ -25,6 +27,8 @@ jobs:
     steps:
       - uses: actions/checkout@v1
       - name: setup
-        run: curl https://getsubstrate.io -sSf | bash -s -- --fast
+        run: | 
+            curl https://getsubstrate.io -sSf | bash -s -- --fast
+            ./scripts/init.sh
       - name: build
         run: cargo build --release
