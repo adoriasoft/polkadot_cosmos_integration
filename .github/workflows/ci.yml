@@ -15,7 +15,10 @@ jobs:
     steps:
       - uses: actions/checkout@v1
       - name: setup
-        run: sudo apt install -y cmake pkg-config libssl-dev git gcc build-essential clang libclang-dev
+        run: |
+            sudo apt install -y cmake pkg-config libssl-dev git gcc build-essential clang libclang-dev
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+            source $HOME/.cargo/env
       - name: build
         run: cargo build --release
         
