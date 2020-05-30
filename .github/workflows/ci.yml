@@ -15,20 +15,6 @@ jobs:
     steps:
       - uses: actions/checkout@v1
       - name: setup
-        run: | 
-            curl https://sh.rustup.rs -sSf | sh
-            ./scripts/init.sh
-      - name: build
-        run: cargo build --release
-        
-  macos:
-    runs-on: macos-latest
-    
-    steps:
-      - uses: actions/checkout@v1
-      - name: setup
-        run: | 
-            curl https://getsubstrate.io -sSf | bash -s -- --fast
-            ./scripts/init.sh
+        run: sudo apt install -y cmake pkg-config libssl-dev git gcc build-essential clang libclang-dev
       - name: build
         run: cargo build --release
