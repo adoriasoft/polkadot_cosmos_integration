@@ -14,12 +14,14 @@ jobs:
     
     steps:
       - uses: actions/checkout@v1
-      - name: setup1
-        run: sudo apt install -y cmake pkg-config libssl-dev git gcc build-essential clang libclang-dev
-      - name: install_rust
-        run: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-      - name: setup_env
-        run: source $HOME/.cargo/env
+      - name: setup
+        run: | 
+            sudo apt install -y cmake pkg-config libssl-dev git gcc build-essential clang libclang-dev
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs >> install.sh
+            sudo chmod 774 install.sh
+            ./install.sh -y
+            rm install.sh
+            source $HOME/.cargo/env
       - name: build
         run: cargo build --release
         
