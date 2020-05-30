@@ -18,3 +18,4 @@ jobs:
         run: sudo apt install -y cmake pkg-config libssl-dev git gcc build-essential clang libclang-dev
       - name: build
         run: cargo build --release
+        
