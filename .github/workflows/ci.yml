@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  linux:
+    runs-on: ubuntu-18.04
+    
+    steps:
+      - uses: actions/checkout@v1
+      - name: setup
+        run: | 
+            sudo apt install -y cmake pkg-config libssl-dev git gcc build-essential clang libclang-dev
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs >> install.sh
+            sudo chmod 774 install.sh
+            ./install.sh -y
+            rm install.sh
+            source $HOME/.cargo/env
+            rustup default stable
+            rustup update nightly
+            rustup target add wasm32-unknown-unknown --toolchain nightly
+            rustup update
+      - name: build
+        run: | 
+            cargo clean
+            cargo build --release
+      - name: test
+        run: | 
+            cargo test --all
