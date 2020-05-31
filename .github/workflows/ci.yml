@@ -26,7 +26,8 @@ jobs:
             rustup update nightly
             rustup target add wasm32-unknown-unknown --toolchain nightly
             rustup update
-            ./scripts/init.sh
       - name: build
-        run: cargo build --release
+        run: | 
+            cargo clean
+            cargo build --release
         
