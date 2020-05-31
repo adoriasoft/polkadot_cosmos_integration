@@ -30,4 +30,6 @@ jobs:
         run: | 
             cargo clean
             cargo build --release
-        
+      - name: test
+        run: | 
+            cargo test --all
