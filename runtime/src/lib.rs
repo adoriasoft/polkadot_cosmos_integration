@@ -40,6 +40,8 @@ pub use frame_support::{
 	},
 };
 
+use frame_support::sp_runtime::print;
+
 /// Importing a template pallet
 pub use template;
 
@@ -354,6 +356,7 @@ impl_runtime_apis! {
 			source: TransactionSource,
 			tx: <Block as BlockT>::Extrinsic,
 		) -> TransactionValidity {
+			print("Validate from runtime");
 			Executive::validate_transaction(source, tx)
 		}
 	}

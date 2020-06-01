@@ -80,9 +80,27 @@ decl_module! {
 		}
 		*/
 		
+		
+		
 	}
 	
 }
+
+impl<T: Trait> frame_support::unsigned::ValidateUnsigned for Module<T> {
+	type Call = Call<T>;
+
+	fn validate_unsigned(
+		_source: TransactionSource,
+		call: &Self::Call,
+	) -> TransactionValidity {
+		print("Validate unsigned");
+		ValidTransaction::with_tag_prefix("test")
+				.priority(1)
+				.and_provides([b"submit_number_unsigned"])
+				.longevity(3)
+				.propagate(true)
+				.build()
+	}
 /*
 impl runtime_api::TaggedTransactionQueue<Block> for Module<T> {
 	type Call = Call<T>;
