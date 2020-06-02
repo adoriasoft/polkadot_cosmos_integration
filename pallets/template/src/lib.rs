@@ -9,7 +9,8 @@ use frame_support::sp_runtime::{
 	transaction_validity::{
 		TransactionValidity, ValidTransaction, InvalidTransaction, TransactionSource,
 		TransactionPriority,
-	};
+	},
+};
 
 #[cfg(test)]
 mod mock;
