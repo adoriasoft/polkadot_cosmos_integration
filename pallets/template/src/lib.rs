@@ -4,7 +4,12 @@
 use frame_support::{decl_module, decl_storage, decl_event, decl_error, dispatch,
 weights::Weight,};
 use frame_system::{self as system, ensure_signed};
-use frame_support::sp_runtime::print;
+use frame_support::sp_runtime::{
+	print,
+	transaction_validity::{
+		TransactionValidity, ValidTransaction, InvalidTransaction, TransactionSource,
+		TransactionPriority,
+	};
 
 #[cfg(test)]
 mod mock;
@@ -101,6 +106,7 @@ impl<T: Trait> frame_support::unsigned::ValidateUnsigned for Module<T> {
 				.propagate(true)
 				.build()
 	}
+}
 /*
 impl runtime_api::TaggedTransactionQueue<Block> for Module<T> {
 	type Call = Call<T>;
