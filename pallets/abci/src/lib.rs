@@ -41,12 +41,12 @@ decl_module! {
 
 impl<T: Trait> Module<T> {
 	
-	fn do_finalize() -> DispatchResult {
+	pub fn do_finalize() -> DispatchResult {
 		print("Block is finilized");
 		Ok(())
 	}
 
-	fn do_initialize(block_number: T::BlockNumber) -> DispatchResult {
+	pub fn do_initialize(block_number: T::BlockNumber) -> DispatchResult {
 		print("Block is initialized");
 		Ok(())
 	}

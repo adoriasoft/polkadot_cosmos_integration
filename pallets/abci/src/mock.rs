@@ -48,9 +48,10 @@ impl system::Trait for Test {
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 }
+
 impl Trait for Test {
-	type Event = ();
 }
+
 pub type ABCIModule = Module<Test>;
 
 // This function basically just builds a genesis storage key/value store according to
