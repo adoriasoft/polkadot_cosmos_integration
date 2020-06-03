@@ -270,7 +270,7 @@ construct_runtime!(
 		TransactionPayment: transaction_payment::{Module, Storage},
 		Sudo: sudo::{Module, Call, Config<T>, Storage, Event<T>},
 		// Used for the module template in `./template.rs`
-		ABCIModule: abci::{Module},
+		ABCIModule: abci::{Module, Call},
 	}
 );
 

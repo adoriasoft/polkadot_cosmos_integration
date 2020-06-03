@@ -9,10 +9,8 @@
 /// For more guidance on Substrate FRAME, see the example pallet
 /// https://github.com/paritytech/substrate/blob/master/frame/example/src/lib.rs
 
-use frame_support::{decl_module};
+use frame_support::{decl_module, weights::Weight, dispatch::DispatchResult, sp_runtime::print};
 use frame_system::{self as system};
-use frame_support::sp_runtime::print;
-
 
 #[cfg(test)]
 mod mock;
@@ -27,14 +25,29 @@ pub trait Trait: system::Trait {}
 decl_module! {
 	/// The module declaration.
 	pub struct Module<T: Trait> for enum Call where origin: T::Origin {
-        // Block initialization
-        fn on_initialize() {
-            print("Block is initialized");
-        }
 
-   /// Block finalization
-		fn on_finalize() {            
-            print("Block is finalized");
+		/// Block initialization
+		fn on_initialize(now: T::BlockNumber) -> Weight {
+			Self::do_initialize(now);
+			return 0;
 		}
+				
+   		/// Block finalization
+		fn on_finalize() {
+			Self::do_finalize();    
+		}
+	}
+}
+
+impl<T: Trait> Module<T> {
+	
+	fn do_finalize() -> DispatchResult {
+		print("Block is finilized");
+		Ok(())
+	}
+
+	fn do_initialize(block_number: T::BlockNumber) -> DispatchResult {
+		print("Block is initialized");
+		Ok(())
 	}
 }
