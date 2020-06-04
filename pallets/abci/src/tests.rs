@@ -26,3 +26,9 @@ fn transaction_deliver_tx() {
 		assert_ok!(ABCIModule::deliver_tx(Origin::signed(1), message));
 	});
 }
+
+#[test]
+fn transaction_check_tx() {
+	new_test_ext().execute_with(|| {
+	});
+}

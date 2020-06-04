@@ -11,6 +11,13 @@
 
 use frame_support::{decl_module, weights::Weight, dispatch::DispatchResult, sp_runtime::print};
 use frame_system::{self as system};
+use frame_support::sp_runtime::{
+	transaction_validity::{TransactionValidity, TransactionSource, ValidTransaction},
+};
+use frame_support::sp_runtime::traits::{
+	Block as BlockT,
+};
+use frame_support::dispatch::Vec;
 
 #[cfg(test)]
 mod mock;
@@ -54,6 +61,7 @@ decl_module! {
 	}
 }
 
+
 impl<T: Trait> Module<T> {
 	
 	pub fn do_finalize() -> DispatchResult {
@@ -65,4 +73,12 @@ impl<T: Trait> Module<T> {
 		print("Block is initialized");
 		Ok(())
 	}
+	
+	pub fn check_tx (
+			source: TransactionSource,
+			tx: <Block as BlockT>::Extrinsic,
+		) -> TransactionValidity {
+			print("Validate from runtime");
+			ValidTransaction::with_tag_prefix("checkTx").build()
+		}
 }
