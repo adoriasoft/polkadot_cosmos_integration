@@ -14,9 +14,6 @@ use frame_system::{self as system};
 use frame_support::sp_runtime::{
 	transaction_validity::{TransactionValidity, TransactionSource, ValidTransaction},
 };
-use frame_support::sp_runtime::traits::{
-	Block as BlockT,
-};
 use frame_support::dispatch::Vec;
 
 #[cfg(test)]
@@ -38,18 +35,18 @@ decl_module! {
 			Self::do_initialize(now);
 			return 0;
 		}
-				
+
    		/// Block finalization
 		fn on_finalize() {
-			Self::do_finalize();    
+			Self::do_finalize();
 		}
-		
+
 		//Simple unparametrized function, may be useful for test calls to the pallet
 		#[weight = 10]
 		pub fn some_function(origin) {
 			print("some_function")
 		}
-   
+
 		/// Transaction execution
 		#[weight = 0]
 		pub fn deliver_tx(origin, message: Vec<u8>) -> DispatchResult{
@@ -63,7 +60,7 @@ decl_module! {
 
 
 impl<T: Trait> Module<T> {
-	
+
 	pub fn do_finalize() -> DispatchResult {
 		print("Block is finilized");
 		Ok(())
@@ -73,12 +70,8 @@ impl<T: Trait> Module<T> {
 		print("Block is initialized");
 		Ok(())
 	}
-	
-	pub fn check_tx (
-			source: TransactionSource,
-			tx: <Block as BlockT>::Extrinsic,
-		) -> TransactionValidity {
-			print("Validate from runtime");
-			ValidTransaction::with_tag_prefix("checkTx").build()
-		}
+
+	pub fn check_tx(source: TransactionSource, message: &Vec<u8>) {
+		print("Validate from runtime");
+	}
 }

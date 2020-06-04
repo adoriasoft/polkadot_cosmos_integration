@@ -34,6 +34,7 @@ pub use sp_runtime::{Permill, Perbill};
 pub use frame_support::{
 	construct_runtime, parameter_types, StorageValue,
 	traits::{KeyOwnerProofSystem, Randomness},
+	dispatch::IsSubType,
 	weights::{
 		Weight, IdentityFee,
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -352,8 +353,8 @@ impl_runtime_apis! {
 			source: TransactionSource,
 			tx: <Block as BlockT>::Extrinsic,
 		) -> TransactionValidity {
-			 if let Some(&abci::Call::execute(ref transaction)) = IsSubType::<abci::Module<Runtime>>::is_aux_sub_type(&tx.function) {
-				 abci::check_tx(source, tx)
+			 if let Some(&abci::Call::deliver_tx(ref message)) = IsSubType::<ABCIModule, Runtime>::is_sub_type(&tx.function) {
+				 ABCIModule::check_tx(source, &message)
 			 }
 			Executive::validate_transaction(source, tx)
 		}
