@@ -18,3 +18,11 @@ fn block_on_initialize() {
 		assert_ok!(ABCIModule::do_initialize(3));
 	});
 }
+
+#[test]
+fn transaction_deliver_tx() {
+	new_test_ext().execute_with(|| {
+		let message = vec![1, 2, 3, 4, 5];
+		assert_ok!(ABCIModule::deliver_tx(Origin::signed(1), message));
+	});
+}

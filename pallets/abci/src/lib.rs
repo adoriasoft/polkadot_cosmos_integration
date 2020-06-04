@@ -36,6 +36,21 @@ decl_module! {
 		fn on_finalize() {
 			Self::do_finalize();    
 		}
+		
+		//Simple unparametrized function, may be useful for test calls to the pallet
+		#[weight = 10]
+		pub fn some_function(origin) {
+			print("some_function")
+		}
+   
+		/// Transaction execution
+		#[weight = 0]
+		pub fn deliver_tx(origin, message: Vec<u8>) -> DispatchResult{
+			print("Executing transaction, received message:");
+			let converted_message: &[u8] = &message;
+			print(converted_message);
+			Ok(())
+		}
 	}
 }
 
