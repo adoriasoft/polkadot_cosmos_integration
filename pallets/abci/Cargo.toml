@@ -1,11 +1,9 @@
 [package]
-authors = ['Substrate DevHub <https://github.com/substrate-developer-hub>']
-description = 'FRAME pallet template'
+description = 'FRAME pallet abci'
 edition = '2018'
 homepage = 'https://substrate.io'
 license = 'Unlicense'
-name = 'pallet-template'
-repository = 'https://github.com/substrate-developer-hub/substrate-node-template/'
+name = 'pallet-abci'
 version = '2.0.0-rc2'
 
 [dependencies.codec]
