@@ -44,6 +44,8 @@ pub use frame_support::{
 /// Importing a template pallet
 pub use abci;
 
+use sp_runtime::print;
+
 /// An index to a block.
 pub type BlockNumber = u32;
 
@@ -354,7 +356,8 @@ impl_runtime_apis! {
 			tx: <Block as BlockT>::Extrinsic,
 		) -> TransactionValidity {
 			 if let Some(&abci::Call::deliver_tx(ref message)) = IsSubType::<ABCIModule, Runtime>::is_sub_type(&tx.function) {
-				 ABCIModule::check_tx(source, &message)
+				 print("Validate from runtime");
+				 ABCIModule::check_tx(source, &message);
 			 }
 			Executive::validate_transaction(source, tx)
 		}

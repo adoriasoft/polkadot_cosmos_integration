@@ -72,6 +72,6 @@ impl<T: Trait> Module<T> {
 	}
 
 	pub fn check_tx(source: TransactionSource, message: &Vec<u8>) {
-		print("Validate from runtime");
+		print("Validate from pallet");
 	}
 }
