@@ -34,6 +34,7 @@ pub use sp_runtime::{Permill, Perbill};
 pub use frame_support::{
 	construct_runtime, parameter_types, StorageValue,
 	traits::{KeyOwnerProofSystem, Randomness},
+	dispatch::IsSubType,
 	weights::{
 		Weight, IdentityFee,
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -42,6 +43,8 @@ pub use frame_support::{
 
 /// Importing a template pallet
 pub use abci;
+
+use sp_runtime::print;
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -352,6 +355,10 @@ impl_runtime_apis! {
 			source: TransactionSource,
 			tx: <Block as BlockT>::Extrinsic,
 		) -> TransactionValidity {
+			 if let Some(&abci::Call::deliver_tx(ref message)) = IsSubType::<ABCIModule, Runtime>::is_sub_type(&tx.function) {
+				 print("Validate from runtime");
+				 ABCIModule::check_tx(source, &message);
+			 }
 			Executive::validate_transaction(source, tx)
 		}
 	}
