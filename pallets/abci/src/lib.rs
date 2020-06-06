@@ -12,7 +12,7 @@
 use frame_support::{decl_module, weights::Weight, dispatch::DispatchResult, sp_runtime::print};
 use frame_system::{self as system};
 use frame_support::sp_runtime::{
-	transaction_validity::{TransactionValidity, TransactionSource, ValidTransaction},
+	transaction_validity::{TransactionSource},
 };
 use frame_support::dispatch::Vec;
 
@@ -31,8 +31,8 @@ decl_module! {
 	pub struct Module<T: Trait> for enum Call where origin: T::Origin {
 
 		/// Block initialization
-		fn on_initialize(now: T::BlockNumber) -> Weight {
-			Self::do_initialize(now);
+		fn on_initialize(_now: T::BlockNumber) -> Weight {
+			Self::do_initialize(_now);
 			return 0;
 		}
 
@@ -43,15 +43,15 @@ decl_module! {
 
 		//Simple unparametrized function, may be useful for test calls to the pallet
 		#[weight = 10]
-		pub fn some_function(origin) {
+		pub fn some_function(_origin) {
 			print("some_function")
 		}
 
 		/// Transaction execution
 		#[weight = 0]
-		pub fn deliver_tx(origin, message: Vec<u8>) -> DispatchResult{
+		pub fn deliver_tx(_origin, _message: Vec<u8>) -> DispatchResult{
 			print("Executing transaction, received message:");
-			let converted_message: &[u8] = &message;
+			let converted_message: &[u8] = &_message;
 			print(converted_message);
 			Ok(())
 		}
@@ -61,17 +61,17 @@ decl_module! {
 
 impl<T: Trait> Module<T> {
 
-	pub fn do_finalize() -> DispatchResult {
+	pub fn do_finalize() {
 		print("Block is finilized");
-		Ok(())
 	}
 
-	pub fn do_initialize(block_number: T::BlockNumber) -> DispatchResult {
+	pub fn do_initialize(_block_number: T::BlockNumber) {
 		print("Block is initialized");
-		Ok(())
 	}
 
-	pub fn check_tx(source: TransactionSource, message: &Vec<u8>) {
+	pub fn check_tx(_source: TransactionSource, _message: &Vec<u8>) {
 		print("Validate from pallet");
+		let converted_message: &[u8] = &_message;
+		print(converted_message);
 	}
 }
