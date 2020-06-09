@@ -18,3 +18,11 @@ path = "src/helloworld/server.rs"
 [[bin]]
 name = "helloworld-client"
 path = "src/helloworld/client.rs"
+
+[[bin]]
+name = "abci-server"
+path = "src/abci/server.rs"
+
+[[bin]]
+name = "abci-client"
+path = "src/abci/client.rs"
