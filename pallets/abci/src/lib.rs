@@ -50,14 +50,10 @@ decl_module! {
 		/// Transaction execution
 		#[weight = 0]
 		pub fn deliver_tx(_origin, _message: Vec<u8>) -> DispatchResult{
-			print("Executing transaction, received message:");
-			let converted_message: &[u8] = &_message;
-			print(converted_message);
-			Ok(())
+			Self::do_deliver_tx(&_message)
 		}
 	}
 }
-
 
 impl<T: Trait> Module<T> {
 
@@ -69,9 +65,20 @@ impl<T: Trait> Module<T> {
 		print("Block is initialized");
 	}
 
-	pub fn check_tx(_source: TransactionSource, _message: &Vec<u8>) {
+	pub fn do_deliver_tx(_message: &Vec<u8>) -> DispatchResult {
+		print("Executing transaction, received message:");
+		let converted_message: &[u8] = &_message;
+		print(converted_message);
+		Ok(())
+	}
+
+	pub fn do_check_tx(_source: TransactionSource, _message: &Vec<u8>) {
 		print("Validate from pallet");
 		let converted_message: &[u8] = &_message;
 		print(converted_message);
 	}
+}
+
+pub fn do_init_chain() {
+	print("Load initial state");
 }
