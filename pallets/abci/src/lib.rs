@@ -39,6 +39,7 @@ decl_module! {
    		/// Block finalization
 		fn on_finalize() {
 			Self::do_finalize();
+			Self::do_commit();
 		}
 
 		//Simple unparametrized function, may be useful for test calls to the pallet
@@ -60,6 +61,8 @@ impl<T: Trait> Module<T> {
 	pub fn do_finalize() {
 		print("Block is finilized");
 	}
+
+	pub fn do_commit() { print("Block is commited"); }
 
 	pub fn do_initialize(_block_number: T::BlockNumber) {
 		print("Block is initialized");
