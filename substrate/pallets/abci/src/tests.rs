@@ -24,7 +24,7 @@ fn block_on_initialize() {
 fn transaction_deliver_tx() {
 	new_test_ext().execute_with(|| {
 		let message : Vec<u8> = vec![1, 2, 3, 4, 5];
-		assert_ok!(ABCIModule::deliver_tx(Origin::signed(1), message));
+		assert_ok!(ABCIModule::deliver_tx(Origin::signed(Default::default()), message));
 	});
 }
 
