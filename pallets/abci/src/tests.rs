@@ -33,6 +33,6 @@ fn transaction_check_tx() {
 	new_test_ext().execute_with(|| {
 		let source : TransactionSource = TransactionSource::InBlock;
 		let message : Vec<u8> = vec![1, 2, 3, 4, 5];
-		ABCIModule::check_tx(source, &message);
+		ABCIModule::do_check_tx(source, &message);
 	});
 }

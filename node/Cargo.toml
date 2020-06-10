@@ -112,5 +112,11 @@ git = 'https://github.com/paritytech/substrate.git'
 tag = 'v2.0.0-rc2'
 version = '2.0.0-rc2'
 
+[dependencies.abci]
+default-features = false
+package = 'pallet-abci'
+path = '../pallets/abci'
+version = '2.0.0-rc2'
+
 [[bin]]
 name = 'node-template'
