@@ -21,6 +21,13 @@ fn block_on_initialize() {
 }
 
 #[test]
+fn block_on_commit() {
+	new_test_ext().execute_with(|| {
+		ABCIModule::do_commit();
+	});
+}
+
+#[test]
 fn transaction_deliver_tx() {
 	new_test_ext().execute_with(|| {
 		let message : Vec<u8> = vec![1, 2, 3, 4, 5];
@@ -33,6 +40,6 @@ fn transaction_check_tx() {
 	new_test_ext().execute_with(|| {
 		let source : TransactionSource = TransactionSource::InBlock;
 		let message : Vec<u8> = vec![1, 2, 3, 4, 5];
-		ABCIModule::check_tx(source, &message);
+		ABCIModule::do_check_tx(source, &message);
 	});
 }
