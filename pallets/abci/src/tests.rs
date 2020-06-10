@@ -21,6 +21,13 @@ fn block_on_initialize() {
 }
 
 #[test]
+fn block_on_commit() {
+	new_test_ext().execute_with(|| {
+		ABCIModule::do_commit();
+	});
+}
+
+#[test]
 fn transaction_deliver_tx() {
 	new_test_ext().execute_with(|| {
 		let message : Vec<u8> = vec![1, 2, 3, 4, 5];
