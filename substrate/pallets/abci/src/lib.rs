@@ -6,7 +6,7 @@ mod mock;
 mod tests;
 
 use frame_support::{
-    debug, decl_module, dispatch::DispatchResult, dispatch::Vec, sp_runtime::print,
+    debug, decl_storage, decl_module, dispatch::DispatchResult, dispatch::Vec, sp_runtime::print,
     sp_runtime::transaction_validity::TransactionSource, weights::Weight,
 };
 use frame_system::offchain::{AppCrypto, CreateSignedTransaction, SendSignedTransaction, Signer};
@@ -37,6 +37,12 @@ pub trait Trait: CreateSignedTransaction<Call<Self>> {
     type AuthorityId: AppCrypto<Self::Public, Self::Signature>;
     /// The overarching dispatch call type.
     type Call: From<Call<Self>>;
+}
+
+decl_storage! {
+	trait Store for Module<T: Trait> as AbciModule {
+		Requests get(fn requests): Vec<u32>;
+	}
 }
 
 // The pallet's dispatchable functions.

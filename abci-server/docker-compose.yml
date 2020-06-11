@@ -1,0 +1,23 @@
+version: "3"
+
+networks:
+  dev:
+
+volumes:
+  data:
+
+services:
+
+  abci-server:
+    container_name: abci-server
+    build:
+      args:
+        PROJECT: abci-server
+      context: .
+      dockerfile: ./docker/dev.Dockerfile
+    volumes:
+      - ./gen:/go/src/abci-server/gen
+      - ./src:/go/src/abci-server/src
+    ports:
+      - 9090:9090
+      - 8081:8081

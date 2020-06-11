@@ -333,7 +333,7 @@ construct_runtime!(
         Balances: balances::{Module, Call, Storage, Config<T>, Event<T>},
         TransactionPayment: transaction_payment::{Module, Storage},
         Sudo: sudo::{Module, Call, Config<T>, Storage, Event<T>},
-        ABCIModule: abci::{Module, Call},
+        Abci: abci::{Module, Call},
     }
 );
 
@@ -418,8 +418,8 @@ impl_runtime_apis! {
             source: TransactionSource,
             tx: <Block as BlockT>::Extrinsic,
         ) -> TransactionValidity {
-            if let Some(&abci::Call::deliver_tx(ref message)) = IsSubType::<ABCIModule, Runtime>::is_sub_type(&tx.function) {
-                ABCIModule::do_check_tx(source, &message);
+            if let Some(&abci::Call::deliver_tx(ref message)) = IsSubType::<AbciModule, Runtime>::is_sub_type(&tx.function) {
+                AbciModule::do_check_tx(source, &message);
             }
             Executive::validate_transaction(source, tx)
         }
