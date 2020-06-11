@@ -2612,7 +2612,6 @@ dependencies = [
  "futures 0.3.5",
  "log",
  "node-template-runtime",
- "pallet-abci",
  "parking_lot 0.10.2",
  "sc-basic-authorship",
  "sc-cli",
@@ -2813,9 +2812,11 @@ dependencies = [
  "frame-support",
  "frame-system",
  "parity-scale-codec",
+ "sp-application-crypto",
  "sp-core",
  "sp-io",
  "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]

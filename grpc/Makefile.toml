@@ -1,0 +1,31 @@
+[config]
+skip_core_tasks = true
+default_to_workspace = false
+
+[tasks.helloworld-client]
+description = "Starts the helloworld client"
+command = "cargo"
+args = ["run", "--bin", "helloworld-client"]
+
+[tasks.helloworld-server]
+description = "Starts the helloworld server"
+command = "cargo"
+args = ["run", "--bin", "helloworld-server"]
+
+[tasks.helloworld]
+description = "Starts the helloworld server and client"
+run_task = { name = ["helloworld-server", "helloworld-client"], parallel = true }
+
+[tasks.abci-client]
+description = "Starts the abci client"
+command = "cargo"
+args = ["run", "--bin", "abci-client"]
+
+[tasks.abci-server]
+description = "Starts the abci server"
+command = "cargo"
+args = ["run", "--bin", "abci-server"]
+
+[tasks.abci]
+description = "Starts the abci server and client"
+run_task = { name = ["abci-server", "abci-client"], parallel = true }
