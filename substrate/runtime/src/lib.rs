@@ -294,9 +294,7 @@ where
                 debug::warn!("Unable to create signed payload: {:?}", e);
             })
             .ok()?;
-        debug::info!("HERE #1 {:?}", public);
         let signature = raw_payload.using_encoded(|payload| C::sign(payload, public))?;
-        debug::info!("HERE #2");
         let address = IdentityLookup::unlookup(account);
         let (call, extra, _) = raw_payload.deconstruct();
         Some((call, (address, signature.into(), extra)))
