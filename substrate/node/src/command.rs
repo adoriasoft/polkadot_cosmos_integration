@@ -20,9 +20,6 @@ use crate::cli::Cli;
 use crate::service;
 use sc_cli::SubstrateCli;
 
-/// Importing a template pallet
-pub use abci;
-
 impl SubstrateCli for Cli {
 	fn impl_name() -> &'static str {
 		"Substrate Node"
@@ -53,7 +50,6 @@ impl SubstrateCli for Cli {
 	}
 
 	fn load_spec(&self, id: &str) -> Result<Box<dyn sc_service::ChainSpec>, String> {
-		abci::do_init_chain();
 		Ok(match id {
 			"dev" => Box::new(chain_spec::development_config()),
 			"" | "local" => Box::new(chain_spec::local_testnet_config()),

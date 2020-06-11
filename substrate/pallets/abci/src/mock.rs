@@ -1,6 +1,6 @@
 // Creating mock runtime here
 
-use crate::{crypto, Call, Module, Trait};
+pub use crate::{crypto, Call, Module, Trait};
 
 use codec::{Decode, Encode};
 use frame_support::{impl_outer_origin, parameter_types, weights::Weight};
@@ -52,9 +52,9 @@ impl frame_system::Trait for Test {
     type OnKilledAccount = ();
 }
 
-type Extrinsic = TestXt<Call<Test>, ()>;
-type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
-type Signature = MultiSignature;
+pub type Extrinsic = TestXt<Call<Test>, ()>;
+pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
+pub type Signature = MultiSignature;
 
 impl frame_system::offchain::SigningTypes for Test {
     type Public = <Signature as Verify>::Signer;

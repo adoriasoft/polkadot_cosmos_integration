@@ -57,22 +57,33 @@ decl_module! {
         fn offchain_worker(_now: T::BlockNumber) {
             debug::native::info!("Hello from offchain workers!");
             let res = Self::make_request();
-            if let Err(e) = res {
-                debug::error!("Error: {}", e);
+            match res {
+                Ok(results) => {
+                    debug::native::info!("Results: {:?}", results.len());
+                    for val in &results {
+                        match val {
+                            Ok(acc) => debug::info!("Submitted transaction: {:?}", acc),
+                            Err(e) => debug::error!("Failed to submit transaction: {:?}", e),
+                        }
+                    }
+                }
+                Err(e) => {
+                    debug::error!("Error: {}", e);
+                }
             }
         }
 
         //Simple unparametrized function, may be useful for test calls to the pallet
-        #[weight = 10]
+        #[weight = 0]
         pub fn some_function(_origin) {
             debug::native::info!("Some function logic");
         }
 
         /// Transaction execution
         #[weight = 0]
-        pub fn deliver_tx(_origin, _message: Vec<u8>) -> DispatchResult{
+        pub fn deliver_tx(_origin, message: Vec<u8>) -> DispatchResult{
             print("Executing transaction, received message:");
-            let converted_message: &[u8] = &_message;
+            let converted_message: &[u8] = &message;
             print(converted_message);
             Ok(())
         }
@@ -88,13 +99,15 @@ impl<T: Trait> Module<T> {
         print("Block is initialized");
     }
 
-    pub fn check_tx(_source: TransactionSource, _message: &Vec<u8>) {
+    pub fn do_commit() { print("Block is commited") }
+
+    pub fn do_check_tx(_source: TransactionSource, _message: &Vec<u8>) {
         print("Validate from pallet");
         let converted_message: &[u8] = &_message;
         print(converted_message);
     }
 
-    pub fn make_request() -> Result<(), &'static str> {
+    pub fn make_request() -> Result<Vec<Result<T::AccountId, ()>>, &'static str> {
         let signer = Signer::<T, T::AuthorityId>::all_accounts();
         if !signer.can_sign() {
             return Err(
@@ -103,13 +116,9 @@ impl<T: Trait> Module<T> {
 		}
 		// Todo: Make gRPC request
         let results = signer.send_signed_transaction(|_account| Call::some_function());
-		debug::native::info!("Results: {:?}", results.len());
-		for (acc, res) in &results {
-            match res {
-                Ok(()) => debug::info!("[{:?}] Submitted transaction", acc.id),
-                Err(e) => debug::error!("[{:?}] Failed to submit transaction: {:?}", acc.id, e),
-            }
-		}
-        Ok(())
+        Ok(results.iter().map(|(acc, res)| match res {
+            Ok(_) => Ok(acc.id.clone()),
+            Err(_) => Err(()),
+        }).collect())
     }
 }
