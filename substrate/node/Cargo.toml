@@ -18,99 +18,28 @@ log = '0.4.8'
 parking_lot = '0.10.0'
 structopt = '0.3.8'
 
-[dependencies.node-template-runtime]
-path = '../runtime'
-version = '2.0.0-rc2'
+node-template-runtime = { path = '../runtime' }
 
-[dependencies.sc-basic-authorship]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc2'
-version = '0.8.0-rc2'
+sc-basic-authorship = { git = 'https://github.com/paritytech/substrate.git', tag = 'v2.0.0-rc3' }
+sc-cli = { git = 'https://github.com/paritytech/substrate.git', tag = 'v2.0.0-rc3' }
+sc-client-api = { git = 'https://github.com/paritytech/substrate.git', tag = 'v2.0.0-rc3' }
+sc-consensus = { git = 'https://github.com/paritytech/substrate.git', tag = 'v2.0.0-rc3' }
+sc-consensus-aura = { git = 'https://github.com/paritytech/substrate.git', tag = 'v2.0.0-rc3' }
+sc-executor = { git = 'https://github.com/paritytech/substrate.git', tag = 'v2.0.0-rc3' }
+sc-finality-grandpa = { git = 'https://github.com/paritytech/substrate.git', tag = 'v2.0.0-rc3' }
+sc-network = { git = 'https://github.com/paritytech/substrate.git', tag = 'v2.0.0-rc3' }
+sc-service = { git = 'https://github.com/paritytech/substrate.git', tag = 'v2.0.0-rc3' }
+sc-transaction-pool = { git = 'https://github.com/paritytech/substrate.git', tag = 'v2.0.0-rc3' }
+sp-consensus = { git = 'https://github.com/paritytech/substrate.git', tag = 'v2.0.0-rc3' }
+sp-consensus-aura = { git = 'https://github.com/paritytech/substrate.git', tag = 'v2.0.0-rc3' }
+sp-core = { git = 'https://github.com/paritytech/substrate.git', tag = 'v2.0.0-rc3' }
+sp-finality-grandpa = { git = 'https://github.com/paritytech/substrate.git', tag = 'v2.0.0-rc3' }
+sp-inherents = { git = 'https://github.com/paritytech/substrate.git', tag = 'v2.0.0-rc3' }
+sp-runtime = { git = 'https://github.com/paritytech/substrate.git', tag = 'v2.0.0-rc3' }
+sp-transaction-pool = { git = 'https://github.com/paritytech/substrate.git', tag = 'v2.0.0-rc3' }
 
-[dependencies.sc-cli]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc2'
-version = '0.8.0-rc2'
-
-[dependencies.sc-client-api]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc2'
-version = '2.0.0-rc2'
-
-[dependencies.sc-consensus]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc2'
-version = '0.8.0-rc2'
-
-[dependencies.sc-consensus-aura]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc2'
-version = '0.8.0-rc2'
-
-[dependencies.sc-executor]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc2'
-version = '0.8.0-rc2'
-
-[dependencies.sc-finality-grandpa]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc2'
-version = '0.8.0-rc2'
-
-[dependencies.sc-network]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc2'
-version = '0.8.0-rc2'
-
-[dependencies.sc-service]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc2'
-version = '0.8.0-rc2'
-
-[dependencies.sc-transaction-pool]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc2'
-version = '2.0.0-rc2'
-
-[dependencies.sp-consensus]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc2'
-version = '0.8.0-rc2'
-
-[dependencies.sp-consensus-aura]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc2'
-version = '0.8.0-rc2'
-
-[dependencies.sp-core]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc2'
-version = '2.0.0-rc2'
-
-[dependencies.sp-finality-grandpa]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc2'
-version = '2.0.0-rc2'
-
-[dependencies.sp-inherents]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc2'
-version = '2.0.0-rc2'
-
-[dependencies.sp-runtime]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc2'
-version = '2.0.0-rc2'
-
-[dependencies.sp-transaction-pool]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc2'
-version = '2.0.0-rc2'
-
-[build-dependencies.substrate-build-script-utils]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc2'
-version = '2.0.0-rc2'
+[build-dependencies]
+substrate-build-script-utils = { git = 'https://github.com/paritytech/substrate.git', tag = 'v2.0.0-rc3' }
 
 [[bin]]
 name = 'node-template'

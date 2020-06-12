@@ -41,8 +41,10 @@ fn transaction_deliver_tx() {
 fn transaction_check_tx() {
 	new_test_ext().execute_with(|| {
 		let source : TransactionSource = TransactionSource::InBlock;
-		let message : Vec<u8> = vec![1, 2, 3, 4, 5];
-		AbciModule::do_check_tx(source, &message);
+		let messages: Vec<u32> = vec![1, 2, 3, 4, 5];
+		for message in messages {
+			AbciModule::do_check_tx(source, &message);
+		}
 	});
 }
 
