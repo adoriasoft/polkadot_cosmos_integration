@@ -1,7 +1,7 @@
 // Tests to be written here
 
 use crate::mock::*;
-use frame_support::{debug, assert_ok};
+use frame_support::assert_ok;
 use sp_runtime::transaction_validity::TransactionSource;
 use codec::Decode;
 use sp_core::{
@@ -30,8 +30,10 @@ fn block_on_initialize() {
 #[test]
 fn transaction_deliver_tx() {
 	new_test_ext().execute_with(|| {
-		let message : Vec<u8> = vec![1, 2, 3, 4, 5];
-		assert_ok!(AbciModule::deliver_tx(Origin::signed(Default::default()), message));
+		let messages: Vec<u32> = vec![1, 2, 3, 4, 5];
+		for message in messages {
+			assert_ok!(AbciModule::deliver_tx(Origin::signed(Default::default()), message));
+		}
 	});
 }
 
@@ -62,10 +64,8 @@ fn should_submit_signed_transaction_on_chain() {
 	t.register_extension(TransactionPoolExt::new(pool));
 	t.register_extension(KeystoreExt(keystore));
 
-	debug::info!("Hello there");
-	println!("Hello there !");
-
 	t.execute_with(|| {
+		assert_ok!(AbciModule::deliver_tx(Origin::signed(Default::default()), 1));
 		// when
 		let res = AbciModule::make_request();
 		match res {
@@ -87,6 +87,6 @@ fn should_submit_signed_transaction_on_chain() {
 		assert!(pool_state.read().transactions.is_empty());
 		let tx = Extrinsic::decode(&mut &*tx).unwrap();
 		assert_eq!(tx.signature.unwrap().0, 0);
-		assert_eq!(tx.call, Call::some_function());
+		assert_eq!(tx.call, Call::finish_deliver_tx(vec![1]));
 	});
 }
