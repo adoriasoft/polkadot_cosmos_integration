@@ -1,0 +1,41 @@
+syntax = "proto3";
+package abci;
+
+import "google/api/annotations.proto";
+
+message TxResponse {
+}
+
+message CheckTxRequest {
+  string tx = 1;
+}
+
+message DeliverTxRequest {
+  string tx = 1;
+}
+
+message EchoMessage {
+}
+
+
+service Abci {
+  rpc CheckTx(CheckTxRequest) returns (TxResponse) {
+      option (google.api.http) = {
+            post: "/abci/v1/CheckTx"
+            body: "*"
+      };
+  }
+
+  rpc DeliverTx(DeliverTxRequest) returns (TxResponse) {
+      option (google.api.http) = {
+          post: "/abci/v1/DeliverTx"
+          body: "*"
+      };
+  }
+
+  rpc Echo(EchoMessage) returns (EchoMessage) {
+      option (google.api.http) = {
+          get: "/abci/v1/Echo"
+      };
+  }
+}
