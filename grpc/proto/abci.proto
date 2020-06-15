@@ -1,0 +1,44 @@
+syntax = "proto3";
+package abci;
+
+service Abci {
+  rpc CheckTx(CheckTxRequest) returns (TxResponse);
+  rpc DeliverTx(DeliverTxRequest) returns (TxResponse);
+  // Helper function to close server
+  rpc End(EndMessage) returns (EndMessage);
+}
+
+message CheckTxRequest {
+  bytes tx = 1;
+  CheckTxType req_type = 2;
+}
+
+message DeliverTxRequest {
+  bytes tx = 1;
+}
+
+message TxResponse {
+  // Response code.
+  uint32 code = 1;
+  // Result bytes, if any.
+  bytes data = 2;
+  // The output of the application's logger. May be non-deterministic.
+  string log = 3;
+  // Additional information. May be non-deterministic.
+  string info = 4;
+  // Amount of gas requested for transaction.
+  int64 gas_wanted = 5;
+  // Amount of gas consumed by transaction.
+  int64 gas_used = 6;
+  // Key-Value tags for filtering and indexing transactions (eg. by account).
+  map<string, bytes> tags = 7;
+  // Namespace for the Code.
+  string codespace = 8;
+}
+
+enum CheckTxType {
+  CHECK_TX_NEW = 0;
+  CHECK_TX_RECHECK = 1;
+}
+
+message EndMessage {}

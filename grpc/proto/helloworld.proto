@@ -1,0 +1,14 @@
+syntax = "proto3";
+package helloworld;
+
+service Greeter {
+  rpc SayHello(HelloRequest) returns (HelloReply);
+  // Helper function to close server
+  rpc End(EndMessage) returns (EndMessage);
+}
+
+message HelloRequest { string name = 1; }
+
+message HelloReply { string message = 1; }
+
+message EndMessage {}
