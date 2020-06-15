@@ -94,7 +94,7 @@ impl Trait for Test {
     type Call = Call<Test>;
 }
 
-pub type ABCIModule = Module<Test>;
+pub type AbciModule = Module<Test>;
 
 // This function basically just builds a genesis storage key/value store according to
 // our desired mockup.

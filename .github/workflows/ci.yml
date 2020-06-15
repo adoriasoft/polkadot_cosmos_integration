@@ -4,9 +4,15 @@ on:
   push:
     branches:
       - master
+    paths:
+      - 'substrate/*'
+      - 'substrate/**/*'
   pull_request:
     branches:
       - master
+    paths:
+      - 'substrate/*'
+      - 'substrate/**/*'
 
 jobs:
   build_and_test_substrate:

@@ -129,15 +129,15 @@ pub fn native_version() -> NativeVersion {
 }
 
 parameter_types! {
-    pub const BlockHashCount: BlockNumber = 2400;
-    /// We allow for 2 seconds of compute with a 6 second average block time.
-    pub const MaximumBlockWeight: Weight = 2 * WEIGHT_PER_SECOND;
-    pub const AvailableBlockRatio: Perbill = Perbill::from_percent(75);
-    /// Assume 10% of weight for average on_initialize calls.
-    pub const MaximumExtrinsicWeight: Weight = AvailableBlockRatio::get()
-        .saturating_sub(Perbill::from_percent(10)) * MaximumBlockWeight::get();
-    pub const MaximumBlockLength: u32 = 5 * 1024 * 1024;
-    pub const Version: RuntimeVersion = VERSION;
+	pub const BlockHashCount: BlockNumber = 2400;
+	/// We allow for 2 seconds of compute with a 6 second average block time.
+	pub const MaximumBlockWeight: Weight = 2 * WEIGHT_PER_SECOND;
+	pub const AvailableBlockRatio: Perbill = Perbill::from_percent(75);
+	/// Assume 10% of weight for average on_initialize calls.
+	pub MaximumExtrinsicWeight: Weight = AvailableBlockRatio::get()
+		.saturating_sub(Perbill::from_percent(10)) * MaximumBlockWeight::get();
+	pub const MaximumBlockLength: u32 = 5 * 1024 * 1024;
+	pub const Version: RuntimeVersion = VERSION;
 }
 
 impl system::Trait for Runtime {
@@ -333,7 +333,7 @@ construct_runtime!(
         Balances: balances::{Module, Call, Storage, Config<T>, Event<T>},
         TransactionPayment: transaction_payment::{Module, Storage},
         Sudo: sudo::{Module, Call, Config<T>, Storage, Event<T>},
-        ABCIModule: abci::{Module, Call},
+        Abci: abci::{Module, Call},
     }
 );
 
@@ -418,8 +418,8 @@ impl_runtime_apis! {
             source: TransactionSource,
             tx: <Block as BlockT>::Extrinsic,
         ) -> TransactionValidity {
-            if let Some(&abci::Call::deliver_tx(ref message)) = IsSubType::<ABCIModule, Runtime>::is_sub_type(&tx.function) {
-                ABCIModule::do_check_tx(source, &message);
+            if let Some(&abci::Call::deliver_tx(ref message)) = IsSubType::<Abci, Runtime>::is_sub_type(&tx.function) {
+                Abci::do_check_tx(source, &message);
             }
             Executive::validate_transaction(source, tx)
         }
