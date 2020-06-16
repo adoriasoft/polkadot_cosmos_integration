@@ -14,7 +14,7 @@ sp-core = { git = 'https://github.com/paritytech/substrate.git', tag = 'v2.0.0-r
 sp-io = { git = 'https://github.com/paritytech/substrate.git', tag = 'v2.0.0-rc3', default-features = false }
 sp-runtime = { git = 'https://github.com/paritytech/substrate.git', tag = 'v2.0.0-rc3', default-features = false }
 sp-std = { git = 'https://github.com/paritytech/substrate.git', tag = 'v2.0.0-rc3', default-features = false }
-lite-json = { version = "0.1", default-features = false }
+lite-json = { git = "https://github.com/enfipy/lite-json", rev = "f888ba9ea59705e54087f913207071a7cd217485", default-features = false }
 
 [features]
 default = ['std']
