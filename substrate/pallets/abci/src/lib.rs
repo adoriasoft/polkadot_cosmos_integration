@@ -137,7 +137,6 @@ impl<T: Trait> Module<T> {
             print("Validate from pallet");
             let result = Self::fetch_price().map_err(|_| "Failed to fetch price")?;
             res.push(result);
-            // res.push(request_id);
         }
         // Todo: Make gRPC request
         if res.len() > 0 {
