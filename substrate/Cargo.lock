@@ -2257,18 +2257,18 @@ dependencies = [
 
 [[package]]
 name = "lite-json"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "53aca203d7c46e2753f682eed3bbb96ba0b5dbd8588fd608295814c94706376e"
+checksum = "c73e713a23ac6e12074c9e96ef2dfb770921e0cb9244c093bd38424209e0e523"
 dependencies = [
  "lite-parser",
 ]
 
 [[package]]
 name = "lite-parser"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f00d2ba2f7cfd490f4d951209e693b7e9f61dea50e9014cf1cdee82735ef191c"
+checksum = "0c50092e40e0ccd1bf2015a10333fde0502ff95b832b0895dc1ca0d7ac6c52f6"
 dependencies = [
  "paste",
 ]
