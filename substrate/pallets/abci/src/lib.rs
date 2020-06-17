@@ -89,7 +89,7 @@ decl_module! {
         #[weight = 0]
         pub fn deliver_tx(origin, id: u32) -> DispatchResult {
             ensure_signed(origin)?;
-            debug::info!("Received deviler tx request #{}", id);
+            debug::info!("Received deliver tx request #{}", id);
             <Requests>::mutate(|x| x.push(id));
             Ok(())
         }
@@ -107,20 +107,19 @@ decl_module! {
 
 impl<T: Trait> Module<T> {
     pub fn do_finalize() {
-        print("Block is finilized");
+        debug::native::info!("Block is finilized");
     }
 
-    pub fn do_initialize(_block_number: T::BlockNumber) {
-        print("Block is initialized");
+    pub fn do_initialize(block_number: T::BlockNumber) {
+        debug::native::info!("Block is initialized: {:?}", block_number);
     }
 
     pub fn do_commit() {
-        print("Block is commited")
+        debug::native::info!("Block is commited");
     }
 
     pub fn do_check_tx(_source: TransactionSource, message: &u32) {
-        print("Validate from pallet");
-        print(message);
+        debug::native::info!("Validate from pallet: {:?}", message);
     }
 
     pub fn make_request() -> Result<Vec<Result<T::AccountId, ()>>, &'static str> {

@@ -48,47 +48,47 @@ fn transaction_check_tx() {
 	});
 }
 
-// #[test]
-// fn should_submit_signed_transaction_on_chain() {
-// 	const PHRASE: &str = "news slush supreme milk chapter athlete soap sausage put clutch what kitten";
-//
-// 	let (offchain, _offchain_state) = testing::TestOffchainExt::new();
-// 	let (pool, pool_state) = testing::TestTransactionPoolExt::new();
-// 	let keystore = KeyStore::new();
-// 	keystore.write().sr25519_generate_new(
-// 		crate::crypto::Public::ID,
-// 		Some(&format!("{}/hunter1", PHRASE))
-// 	).unwrap();
-//
-//
-// 	let mut t = sp_io::TestExternalities::default();
-// 	t.register_extension(OffchainExt::new(offchain));
-// 	t.register_extension(TransactionPoolExt::new(pool));
-// 	t.register_extension(KeystoreExt(keystore));
-//
-// 	t.execute_with(|| {
-// 		assert_ok!(AbciModule::deliver_tx(Origin::signed(Default::default()), 1));
-// 		// when
-// 		let res = AbciModule::make_request();
-// 		match res {
-// 			Ok(results) => {
-// 				println!("Results: {:?}", results.len());
-// 				for val in &results {
-// 					match val {
-// 						Ok(acc) => println!("Submitted transaction: {:?}", acc),
-// 						Err(e) => println!("Failed to submit transaction: {:?}", e),
-// 					}
-// 				}
-// 			}
-// 			Err(e) => {
-// 				println!("Error: {}", e);
-// 			}
-// 		}
-// 		// then
-// 		let tx = pool_state.write().transactions.pop().unwrap();
-// 		assert!(pool_state.read().transactions.is_empty());
-// 		let tx = Extrinsic::decode(&mut &*tx).unwrap();
-// 		assert_eq!(tx.signature.unwrap().0, 0);
-// 		assert_eq!(tx.call, Call::finish_deliver_tx(vec![1]));
-// 	});
-// }
+#[test]
+fn should_submit_signed_transaction_on_chain() {
+	const PHRASE: &str = "news slush supreme milk chapter athlete soap sausage put clutch what kitten";
+
+	let (offchain, _offchain_state) = testing::TestOffchainExt::new();
+	let (pool, pool_state) = testing::TestTransactionPoolExt::new();
+	let keystore = KeyStore::new();
+	keystore.write().sr25519_generate_new(
+		crate::crypto::Public::ID,
+		Some(&format!("{}/hunter1", PHRASE))
+	).unwrap();
+
+
+	let mut t = sp_io::TestExternalities::default();
+	t.register_extension(OffchainExt::new(offchain));
+	t.register_extension(TransactionPoolExt::new(pool));
+	t.register_extension(KeystoreExt(keystore));
+
+	t.execute_with(|| {
+		assert_ok!(AbciModule::deliver_tx(Origin::signed(Default::default()), 1));
+		// when
+		let res = AbciModule::make_request();
+		match res {
+			Ok(results) => {
+				println!("Results: {:?}", results.len());
+				for val in &results {
+					match val {
+						Ok(acc) => println!("Submitted transaction: {:?}", acc),
+						Err(e) => println!("Failed to submit transaction: {:?}", e),
+					}
+				}
+			}
+			Err(e) => {
+				println!("Error: {}", e);
+			}
+		}
+		// then
+		let tx = pool_state.write().transactions.pop().unwrap();
+		assert!(pool_state.read().transactions.is_empty());
+		let tx = Extrinsic::decode(&mut &*tx).unwrap();
+		assert_eq!(tx.signature.unwrap().0, 0);
+		assert_eq!(tx.call, Call::finish_deliver_tx(vec![1]));
+	});
+}
