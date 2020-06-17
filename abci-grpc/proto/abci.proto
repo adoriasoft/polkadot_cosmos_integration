@@ -7,11 +7,11 @@ message TxResponse {
 }
 
 message CheckTxRequest {
-  string tx = 1;
+  bytes tx = 1;
 }
 
 message DeliverTxRequest {
-  string tx = 1;
+  bytes tx = 1;
 }
 
 message EchoMessage {

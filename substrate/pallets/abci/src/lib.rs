@@ -5,8 +5,10 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+mod abci_grpc;
+
 use frame_support::{
-    debug, decl_module, decl_storage, dispatch::DispatchResult, dispatch::Vec, sp_runtime::print,
+    debug, decl_module, decl_storage, decl_error, dispatch::DispatchResult, dispatch::Vec, sp_runtime::print,
     sp_runtime::transaction_validity::TransactionSource, weights::Weight,
 };
 use sp_std::prelude::*;
@@ -15,7 +17,7 @@ use frame_system::{
     offchain::{AppCrypto, CreateSignedTransaction, SendSignedTransaction, Signer},
 };
 // Uncomment after fix lite_parser with std
-// use lite_json::json::JsonValue;
+use lite_json::json::JsonValue;
 use sp_runtime::offchain::{http, Duration};
 
 pub mod crypto {
@@ -219,9 +221,9 @@ impl<T: Trait> Module<T> {
     /// Parse the price from the given JSON string using `lite-json`.
     ///
     /// Returns `None` when parsing failed or `Some(price in cents)` when parsing is successful.
-    fn parse_price(_price_str: &str) -> Option<u32> {
+    fn parse_price(price_str: &str) -> Option<u32> {
         Some(100)
-        // Uncomment after fix lite_parser with std
+        //Uncomment after fix lite_parser with std
         // let val = lite_json::parse_json(price_str);
         // let price = val.ok().and_then(|v| match v {
         //     JsonValue::Object(obj) => {
@@ -235,7 +237,7 @@ impl<T: Trait> Module<T> {
         //     }
         //     _ => None,
         // })?;
-
+        //
         // let exp = price.fraction_length.checked_sub(2).unwrap_or(0);
         // Some(price.integer as u32 * 100 + (price.fraction / 10_u64.pow(exp)) as u32)
     }

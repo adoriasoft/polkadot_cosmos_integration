@@ -12,7 +12,7 @@ import (
 
 const (
 	address   = "localhost"
-	port      = ":8082"
+	port      = ":8081"
 	defaultTx = "hello from client"
 )
 
@@ -29,10 +29,12 @@ func main() {
 
 	client := abci.NewAbciClient(conn)
 
-	tx := defaultTx
+	tx := []byte(defaultTx)
+
+	log.Printf("%v", []byte("hello from curl!!!"))
 
 	if len(os.Args) > 1 {
-		tx = os.Args[1]
+		tx = []byte(os.Args[1])
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)

@@ -30,12 +30,12 @@ type server struct {
 }
 
 func (s *server) CheckTx(ctx context.Context, in *abci.CheckTxRequest) (*abci.TxResponse, error) {
-	log.Printf("Received CheckTx(), tx: %s", in.Tx)
+	log.Printf("Received CheckTx(), tx: %s", string(in.Tx))
 	return &abci.TxResponse{}, nil
 }
 
 func (s *server) DeliverTx(ctx context.Context, in *abci.DeliverTxRequest) (*abci.TxResponse, error) {
-	log.Printf("Received DeliverTx(), tx: %s", in.Tx)
+	log.Printf("Received DeliverTx(), tx: %s", string(in.Tx))
 	return &abci.TxResponse{}, nil
 }
 

@@ -1,5 +1,6 @@
 // Tests to be written here
 
+use crate::abci_grpc::*;
 use crate::mock::*;
 use frame_support::assert_ok;
 use sp_runtime::transaction_validity::TransactionSource;
@@ -48,6 +49,15 @@ fn transaction_check_tx() {
 	});
 }
 
+
+#[test]
+fn abci_request_Echo() {
+	new_test_ext().execute_with(|| {
+		Echo();
+	});
+}
+
+
 // #[test]
 // fn should_submit_signed_transaction_on_chain() {
 // 	const PHRASE: &str = "news slush supreme milk chapter athlete soap sausage put clutch what kitten";
@@ -92,3 +102,4 @@ fn transaction_check_tx() {
 // 		assert_eq!(tx.call, Call::finish_deliver_tx(vec![1]));
 // 	});
 // }
+
