@@ -49,6 +49,20 @@ fn transaction_check_tx() {
 	});
 }
 
+#[test]
+fn JsonSerDerTest() {
+	let height : u64 = 150;
+	let blk_msg : BlockMessage = BlockMessage{height : height};
+	let expected = format!(r#""height" : {}"#, height);
+	assert_eq!(expected.into_bytes(), blk_msg.serializeToJson());
+
+	let tx : Vec<u8> = vec![1,2 ,3 ,4, 52, 12];
+	let tx_msg : TxMessage = TxMessage{tx: tx};
+	let expected = format!(r#""tx" : [1,2,3,4,52,12]"#);
+	assert_eq!(expected.into_bytes(), tx_msg.serializeToJson());
+
+}
+
 use sp_std::str;
 use sp_runtime::offchain::http;
 

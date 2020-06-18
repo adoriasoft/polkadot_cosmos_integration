@@ -71,8 +71,9 @@ decl_module! {
 
             // Test calls
             abci_grpc::Echo();
-            let data : Vec<&[u8]> = vec![b"{\"tx\": [104,101, 108, 108, 111, 32, 102, 114, 111, 109, 32, 99, 117, 114, 108, 33, 33, 33]}"];
-            abci_grpc::DeliverTx(data);
+
+            let tx_msg = abci_grpc::TxMessage{tx: vec![33, 33, 33, 33]};
+            abci_grpc::DeliverTx(tx_msg);
         }
 
         #[weight = 0]

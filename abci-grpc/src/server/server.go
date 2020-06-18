@@ -29,19 +29,39 @@ type server struct {
 	abci.UnimplementedAbciServer
 }
 
-func (s *server) CheckTx(ctx context.Context, in *abci.CheckTxRequest) (*abci.TxResponse, error) {
+func (s *server) InitChain(ctx context.Context, in *abci.EmptyMessage) (*abci.EmptyMessage, error) {
+	log.Print("received InitChain()")
+	return &abci.EmptyMessage{}, nil
+}
+
+func (s *server) CheckTx(ctx context.Context, in *abci.CheckTxRequest) (*abci.EmptyMessage, error) {
 	log.Printf("Received CheckTx(), tx: %s", string(in.Tx))
-	return &abci.TxResponse{}, nil
+	return &abci.EmptyMessage{}, nil
 }
 
-func (s *server) DeliverTx(ctx context.Context, in *abci.DeliverTxRequest) (*abci.TxResponse, error) {
+func (s *server) DeliverTx(ctx context.Context, in *abci.DeliverTxRequest) (*abci.EmptyMessage, error) {
 	log.Printf("Received DeliverTx(), tx: %s", string(in.Tx))
-	return &abci.TxResponse{}, nil
+	return &abci.EmptyMessage{}, nil
 }
 
-func (s *server) Echo(ctx context.Context, in *abci.EchoMessage) (*abci.EchoMessage, error) {
+func (s *server) OnInitialize(ctx context.Context, in *abci.BlockMessage) (*abci.EmptyMessage, error) {
+	log.Printf("Received OnInitialize(), block height: %d", in.Height)
+	return &abci.EmptyMessage{}, nil
+}
+
+func (s *server) OnFinilize(ctx context.Context, in *abci.BlockMessage) (*abci.EmptyMessage, error) {
+	log.Printf("Received OnFinilize(), block height: %d", in.Height)
+	return &abci.EmptyMessage{}, nil
+}
+
+func (s *server) Commit(ctx context.Context, in *abci.BlockMessage) (*abci.EmptyMessage, error) {
+	log.Printf("Received Commit(), block height: %d", in.Height)
+	return &abci.EmptyMessage{}, nil
+}
+
+func (s *server) Echo(ctx context.Context, in *abci.EmptyMessage) (*abci.EmptyMessage, error) {
 	log.Printf("Received Echo()")
-	return &abci.EchoMessage{}, nil
+	return &abci.EmptyMessage{}, nil
 }
 
 func grpc_http_run() {
