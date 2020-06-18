@@ -5,12 +5,12 @@ use crate::mock::*;
 use frame_support::assert_ok;
 use sp_runtime::transaction_validity::TransactionSource;
 use codec::Decode;
-use sp_core::{
-	offchain::{OffchainExt, TransactionPoolExt, testing},
-	testing::KeyStore,
-	traits::KeystoreExt,
+
+use sp_io::TestExternalities;
+use sp_core::offchain::{
+	OffchainExt,
+	testing,
 };
-use sp_runtime::RuntimeAppPublic;
 
 #[test]
 fn block_on_finalize() {
@@ -49,57 +49,35 @@ fn transaction_check_tx() {
 	});
 }
 
+use sp_std::str;
+use sp_runtime::offchain::http;
 
 #[test]
 fn abci_request_Echo() {
-	new_test_ext().execute_with(|| {
-		Echo();
+	let (offchain, state) = testing::TestOffchainExt::new();
+	let mut t = TestExternalities::default();
+	t.register_extension(OffchainExt::new(offchain));
+
+	t.execute_with(|| {
+		let url : &[u8] = &[ABCI_SERVER_URL,  b"Echo"].concat();
+		let request_url = str::from_utf8(url).unwrap();
+
+		let request = http::Request::get(request_url);
+		let pending = request.send().unwrap();
+
+		// make sure it's sent correctly
+		state.write().fulfill_pending_request(
+			0,
+			testing::PendingRequest {
+				method: "GET".into(),
+				uri: request_url.into(),
+				sent: true,
+				..Default::default()
+			},
+			b"8082".to_vec(),
+			None,
+		);
+
+		let response = pending.wait().unwrap();
 	});
 }
-
-
-// #[test]
-// fn should_submit_signed_transaction_on_chain() {
-// 	const PHRASE: &str = "news slush supreme milk chapter athlete soap sausage put clutch what kitten";
-//
-// 	let (offchain, _offchain_state) = testing::TestOffchainExt::new();
-// 	let (pool, pool_state) = testing::TestTransactionPoolExt::new();
-// 	let keystore = KeyStore::new();
-// 	keystore.write().sr25519_generate_new(
-// 		crate::crypto::Public::ID,
-// 		Some(&format!("{}/hunter1", PHRASE))
-// 	).unwrap();
-//
-//
-// 	let mut t = sp_io::TestExternalities::default();
-// 	t.register_extension(OffchainExt::new(offchain));
-// 	t.register_extension(TransactionPoolExt::new(pool));
-// 	t.register_extension(KeystoreExt(keystore));
-//
-// 	t.execute_with(|| {
-// 		assert_ok!(AbciModule::deliver_tx(Origin::signed(Default::default()), 1));
-// 		// when
-// 		let res = AbciModule::make_request();
-// 		match res {
-// 			Ok(results) => {
-// 				println!("Results: {:?}", results.len());
-// 				for val in &results {
-// 					match val {
-// 						Ok(acc) => println!("Submitted transaction: {:?}", acc),
-// 						Err(e) => println!("Failed to submit transaction: {:?}", e),
-// 					}
-// 				}
-// 			}
-// 			Err(e) => {
-// 				println!("Error: {}", e);
-// 			}
-// 		}
-// 		// then
-// 		let tx = pool_state.write().transactions.pop().unwrap();
-// 		assert!(pool_state.read().transactions.is_empty());
-// 		let tx = Extrinsic::decode(&mut &*tx).unwrap();
-// 		assert_eq!(tx.signature.unwrap().0, 0);
-// 		assert_eq!(tx.call, Call::finish_deliver_tx(vec![1]));
-// 	});
-// }
-
