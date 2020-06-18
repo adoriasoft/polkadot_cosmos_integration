@@ -61,6 +61,7 @@ func (s *server) Commit(ctx context.Context, in *abci.BlockMessage) (*abci.Empty
 
 func (s *server) Echo(ctx context.Context, in *abci.EmptyMessage) (*abci.EmptyMessage, error) {
 	log.Printf("Received Echo()")
+	log.Printf("___________________")
 	return &abci.EmptyMessage{}, nil
 }
 

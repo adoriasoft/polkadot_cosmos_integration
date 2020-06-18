@@ -70,10 +70,20 @@ decl_module! {
             debug::native::info!("Hello from offchain workers!");
 
             // Test calls
-            abci_grpc::Echo();
-
+            let blk_msg = abci_grpc::BlockMessage{height : 115};
             let tx_msg = abci_grpc::TxMessage{tx: vec![33, 33, 33, 33]};
-            abci_grpc::DeliverTx(tx_msg);
+
+            abci_grpc::InitChain();
+
+            abci_grpc::OnInitialize(&blk_msg);
+
+            abci_grpc::CheckTx(&tx_msg);
+            abci_grpc::DeliverTx(&tx_msg);
+
+            abci_grpc::OnFinilize(&blk_msg);
+            abci_grpc::Commit(&blk_msg);
+
+            abci_grpc::Echo();
         }
 
         #[weight = 0]

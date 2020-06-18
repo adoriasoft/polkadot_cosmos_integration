@@ -4,58 +4,22 @@ use frame_support::dispatch::{Vec};
 use frame_support::debug;
 use sp_runtime::offchain::{http, http::Method};
 use sp_std::str;
-use frame_support::assert_ok;
 
-use lite_json::json::{JsonValue, NumberValue};
+use alt_serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 pub const ABCI_SERVER_URL : &[u8] = b"http://localhost:8082/abci/v1/";
 
-fn convert(data : &Vec<u8>) -> String {
-    let mut res = "[".to_string();
-    let data_len = data.len();
-    for (i, el) in data.iter().enumerate() {
-        if i != data.len() - 1 {
-            res.push_str(&format!("{},", el));
-        }
-        else {
-            res.push_str(&format!("{}", el));
-        }
-    }
-    res.push_str("]");
-    return res;
-}
-
-#[test]
-fn convert_test() {
-    let data : Vec<u8> = vec![1 , 2 ,3 ,4];
-    let str_data = convert(&data);
-
-    assert_eq!(str_data, "[1,2,3,4]");
-}
-
-
+#[serde(crate = "alt_serde")]
+#[derive(Serialize, Deserialize)]
 pub struct BlockMessage {
     pub height : u64,
 }
 
+#[serde(crate = "alt_serde")]
+#[derive(Serialize, Deserialize)]
 pub struct TxMessage {
     pub tx : Vec<u8>,
 }
-
-impl BlockMessage {
-    pub fn serializeToJson(&self) -> Vec<u8> {
-        let json = format!(r#""height" : {}"#, self.height);
-        return json.into_bytes();
-    }
-}
-
-impl TxMessage {
-    pub fn serializeToJson(&self) -> Vec<u8> {
-        let json = format!(r#""tx" : {}"#, convert(&self.tx));
-        return json.into_bytes();
-    }
-}
-
 
 pub fn InitChain() {
     let url : &[u8] = &[ABCI_SERVER_URL,  b"InitChain"].concat();
@@ -72,14 +36,16 @@ pub fn InitChain() {
     }
 }
 
-pub fn DeliverTx(tx_msg: TxMessage) {
+pub fn DeliverTx(tx_msg: &TxMessage) {
     let url : &[u8] = &[ABCI_SERVER_URL,  b"DeliverTx"].concat();
     let request_url = str::from_utf8(url).unwrap();
 
+    let serialized_data = serde_json::to_string(tx_msg).unwrap();
+
     let request = http::Request::default()
         .method(Method::Post)
         .url(request_url)
-        .body(vec![tx_msg.serializeToJson()])
+        .body([serialized_data.as_bytes()].to_vec())
         .add_header("Content-Type", "application/json");
 
     let pending = request.send().unwrap();
@@ -91,14 +57,16 @@ pub fn DeliverTx(tx_msg: TxMessage) {
     }
 }
 
-pub fn CheckTx(tx_msg: TxMessage) {
+pub fn CheckTx(tx_msg: &TxMessage) {
     let url : &[u8] = &[ABCI_SERVER_URL,  b"CheckTx"].concat();
     let request_url = str::from_utf8(url).unwrap();
 
+    let serialized_data = serde_json::to_string(tx_msg).unwrap();
+
     let request = http::Request::default()
         .method(Method::Post)
         .url(request_url)
-        .body(vec![tx_msg.serializeToJson()])
+        .body([serialized_data.as_bytes()].to_vec())
         .add_header("Content-Type", "application/json");
 
     let pending = request.send().unwrap();
@@ -110,14 +78,16 @@ pub fn CheckTx(tx_msg: TxMessage) {
     }
 }
 
-pub fn OnInitialize(blockMessage: BlockMessage) {
+pub fn OnInitialize(blk_msg: &BlockMessage) {
     let url : &[u8] = &[ABCI_SERVER_URL,  b"OnInitialize"].concat();
     let request_url = str::from_utf8(url).unwrap();
 
+    let serialized_data = serde_json::to_string(blk_msg).unwrap();
+
     let request = http::Request::default()
         .method(Method::Post)
         .url(request_url)
-        .body(vec![blockMessage.serializeToJson()])
+        .body([serialized_data.as_bytes()].to_vec())
         .add_header("Content-Type", "application/json");
 
     let pending = request.send().unwrap();
@@ -129,14 +99,16 @@ pub fn OnInitialize(blockMessage: BlockMessage) {
     }
 }
 
-pub fn OnFinilize(blockMessage: BlockMessage) {
+pub fn OnFinilize(blk_msg: &BlockMessage) {
     let url : &[u8] = &[ABCI_SERVER_URL,  b"OnFinilize"].concat();
     let request_url = str::from_utf8(url).unwrap();
 
+    let serialized_data = serde_json::to_string(blk_msg).unwrap();
+
     let request = http::Request::default()
         .method(Method::Post)
         .url(request_url)
-        .body(vec![blockMessage.serializeToJson()])
+        .body([serialized_data.as_bytes()].to_vec())
         .add_header("Content-Type", "application/json");
 
     let pending = request.send().unwrap();
@@ -148,14 +120,16 @@ pub fn OnFinilize(blockMessage: BlockMessage) {
     }
 }
 
-pub fn Commit(blockMessage: BlockMessage) {
+pub fn Commit(blk_msg: &BlockMessage) {
     let url : &[u8] = &[ABCI_SERVER_URL,  b"Commit"].concat();
     let request_url = str::from_utf8(url).unwrap();
+
+    let serialized_data = serde_json::to_string(blk_msg).unwrap();
 
     let request = http::Request::default()
         .method(Method::Post)
         .url(request_url)
-        .body(vec![blockMessage.serializeToJson()])
+        .body([serialized_data.as_bytes()].to_vec())
         .add_header("Content-Type", "application/json");
 
     let pending = request.send().unwrap();
