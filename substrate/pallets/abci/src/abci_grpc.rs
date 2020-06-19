@@ -1,10 +1,9 @@
-#![cfg_attr(not(feature = "std"), no_std)]
-
 use alt_serde::{Deserialize, Serialize};
 use frame_support::debug;
 use sp_runtime::offchain::http;
 use sp_std::str;
 use frame_support::dispatch::Vec;
+use codec::{Encode, Decode};
 
 pub const ABCI_SERVER_URL: &[u8] = b"http://localhost:8082/abci/v1/";
 
@@ -15,7 +14,7 @@ pub struct BlockMessage {
 }
 
 #[serde(crate = "alt_serde")]
-#[derive(Serialize, Deserialize)]
+#[derive(Encode, Decode, Default, Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct TxMessage {
     pub tx: Vec<u8>,
 }
@@ -73,8 +72,4 @@ pub fn on_finilize(blk_msg: &BlockMessage) -> Result<(), &'static str> {
 
 pub fn commit(blk_msg: &BlockMessage) -> Result<(), &'static str> {
     post_method(blk_msg, "Commit")
-}
-
-pub fn echo() -> Result<(), &'static str> {
-    get_method("Echo")
 }

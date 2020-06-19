@@ -59,11 +59,6 @@ func (s *server) Commit(ctx context.Context, in *abci.BlockMessage) (*abci.Empty
 	return &abci.EmptyMessage{}, nil
 }
 
-func (s *server) Echo(ctx context.Context, in *abci.EmptyMessage) (*abci.EmptyMessage, error) {
-	log.Printf("Received Echo()")
-	return &abci.EmptyMessage{}, nil
-}
-
 func grpc_http_run() {
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)

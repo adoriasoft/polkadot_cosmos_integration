@@ -3,8 +3,7 @@ package abci;
 
 import "google/api/annotations.proto";
 
-message EmptyMessage {
-}
+message EmptyMessage {}
 
 message CheckTxRequest {
   bytes tx = 1;
@@ -18,9 +17,7 @@ message BlockMessage {
   uint64 height =1;
 }
 
-
 service Abci {
-
   rpc InitChain(EmptyMessage) returns (EmptyMessage) {
     option (google.api.http) = {
         get: "/abci/v1/InitChain"
@@ -59,12 +56,6 @@ service Abci {
       option (google.api.http) = {
           post: "/abci/v1/Commit"
           body: "*"
-      };
-  }
-
-  rpc Echo(EmptyMessage) returns (EmptyMessage) {
-      option (google.api.http) = {
-          get: "/abci/v1/Echo"
       };
   }
 }

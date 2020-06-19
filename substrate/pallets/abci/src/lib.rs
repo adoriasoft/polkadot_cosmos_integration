@@ -14,8 +14,8 @@ use frame_system::{
     ensure_signed,
     offchain::{AppCrypto, CreateSignedTransaction, SendSignedTransaction, Signer},
 };
-use sp_std::prelude::*;
 use sp_runtime::traits::SaturatedConversion;
+use sp_std::prelude::*;
 
 pub mod crypto {
     use sp_core::crypto::KeyTypeId;
@@ -47,8 +47,7 @@ pub trait Trait: CreateSignedTransaction<Call<Self>> {
 
 decl_storage! {
     trait Store for Module<T: Trait> as AbciModule {
-        Requests get(fn requests): Vec<u32>;
-        Results get(fn results): Vec<u32>;
+        Requests get(fn requests): Vec<abci_grpc::TxMessage>;
     }
 }
 
@@ -86,19 +85,20 @@ decl_module! {
         }
 
         #[weight = 0]
-        pub fn deliver_tx(origin, id: u32) -> DispatchResult {
+        pub fn deliver_tx(origin, tx: abci_grpc::TxMessage) -> DispatchResult {
             ensure_signed(origin)?;
-            debug::info!("Received deliver tx request #{}", id);
-            <Requests>::mutate(|x| x.push(id));
+            debug::info!("Received deliver tx request");
+            <Requests>::mutate(|x| x.push(tx));
             Ok(())
         }
 
         #[weight = 0]
-        pub fn finish_deliver_tx(origin, results: Vec<u32>) -> DispatchResult {
+        pub fn finish_deliver_tx(origin, results: Vec<abci_grpc::TxMessage>) -> DispatchResult {
             ensure_signed(origin)?;
             debug::native::info!("Finish deliver tx: {:?}", results);
-            <Requests>::mutate(|x| *x = vec![]);
-            <Results>::mutate(|x| x.extend(results));
+            <Requests>::mutate(|x| x.retain(|r| {
+                results.iter().position(|res| res == r).is_none()
+            }));
             Ok(())
         }
     }
@@ -117,38 +117,46 @@ impl<T: Trait> Module<T> {
         debug::native::info!("Block is commited");
     }
 
-    pub fn do_check_tx(_source: TransactionSource, message: &u32) {
-        debug::native::info!("Validate from pallet: {:?}", message);
+    pub fn do_check_tx(_source: TransactionSource) {
+        debug::native::info!("Validate from pallet");
     }
 
-    pub fn offchain_logic(now: T::BlockNumber) -> Result<Vec<Result<T::AccountId, ()>>, &'static str> {
-        // Test values
-        let blk_msg = abci_grpc::BlockMessage { height: now.saturated_into::<u64>() };
-        let tx_msg = abci_grpc::TxMessage { tx: vec![33, 33, 33, 33] };
+    pub fn offchain_logic(
+        now: T::BlockNumber,
+    ) -> Result<Vec<Result<T::AccountId, ()>>, &'static str> {
+        let blk_msg = abci_grpc::BlockMessage {
+            height: now.saturated_into::<u64>(),
+        };
 
         abci_grpc::init_chain()?;
-
         abci_grpc::on_initialize(&blk_msg)?;
 
-        abci_grpc::check_tx(&tx_msg)?;
-        abci_grpc::deliver_tx(&tx_msg)?;
+        let requests = Self::requests();
+        for tx_msg in &requests {
+            abci_grpc::check_tx(tx_msg)?;
+            abci_grpc::deliver_tx(tx_msg)?;
+        }
 
         abci_grpc::on_finilize(&blk_msg)?;
         abci_grpc::commit(&blk_msg)?;
 
-        abci_grpc::echo()?;
-
-        Self::submit_result(vec![1,2,3])
+        if requests.len() > 0 {
+            Self::submit_result(requests)
+        } else {
+            Ok(vec![])
+        }
     }
 
-    pub fn submit_result(res: Vec<u32>) -> Result<Vec<Result<T::AccountId, ()>>, &'static str> {
+    pub fn submit_result(
+        result: Vec<abci_grpc::TxMessage>,
+    ) -> Result<Vec<Result<T::AccountId, ()>>, &'static str> {
         let signer = Signer::<T, T::AuthorityId>::all_accounts();
         if !signer.can_sign() {
             return Err(
                 "No local accounts available. Consider adding one via `author_insertKey` RPC.",
             )?;
         }
-        let results = signer.send_signed_transaction(|_| Call::finish_deliver_tx(res.clone()));
+        let results = signer.send_signed_transaction(|_| Call::finish_deliver_tx(result.clone()));
         Ok(results
             .iter()
             .map(|(acc, res)| match res {

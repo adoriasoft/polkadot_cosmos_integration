@@ -3,9 +3,7 @@
 use crate::abci_grpc::*;
 use crate::mock::*;
 use frame_support::assert_ok;
-use sp_core::{
-    offchain::{testing, OffchainExt},
-};
+use sp_core::offchain::{testing, OffchainExt};
 use sp_io::TestExternalities;
 use sp_runtime::{offchain::http, transaction_validity::TransactionSource};
 use sp_std::str;
@@ -29,13 +27,30 @@ fn block_on_initialize() {
 #[test]
 fn transaction_deliver_tx() {
     new_test_ext().execute_with(|| {
-        let messages: Vec<u32> = vec![1, 2, 3, 4, 5];
-        for message in messages {
-            assert_ok!(AbciModule::deliver_tx(
-                Origin::signed(Default::default()),
-                message
-            ));
-        }
+        let message_1 = TxMessage {
+            tx: vec![1, 2, 3, 4, 5],
+        };
+        assert_ok!(AbciModule::deliver_tx(
+            Origin::signed(Default::default()),
+            message_1.clone(),
+        ));
+
+        let message_2 = TxMessage {
+            tx: vec![5, 4, 3, 2, 1],
+        };
+        assert_ok!(AbciModule::deliver_tx(
+            Origin::signed(Default::default()),
+            message_2.clone(),
+        ));
+
+        let req = vec![message_1, message_2];
+        assert_eq!(AbciModule::requests(), req);
+
+        assert_ok!(AbciModule::finish_deliver_tx(
+            Origin::signed(Default::default()),
+            vec![req[0].clone()],
+        ));
+        assert_eq!(AbciModule::requests(), vec![req[1].clone()]);
     });
 }
 
@@ -43,10 +58,7 @@ fn transaction_deliver_tx() {
 fn transaction_check_tx() {
     new_test_ext().execute_with(|| {
         let source: TransactionSource = TransactionSource::InBlock;
-        let messages: Vec<u32> = vec![1, 2, 3, 4, 5];
-        for message in messages {
-            AbciModule::do_check_tx(source, &message);
-        }
+        AbciModule::do_check_tx(source);
     });
 }
 
