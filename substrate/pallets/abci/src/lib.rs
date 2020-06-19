@@ -62,31 +62,14 @@ decl_module! {
             return 0;
         }
 
-           /// Block finalization
+        /// Block finalization
         fn on_finalize() {
             Self::do_finalize();
         }
 
         fn offchain_worker(now: T::BlockNumber) {
             debug::native::info!("Hello from offchain workers!");
-
-            // Test values
-            let blk_msg = abci_grpc::BlockMessage { height: now.saturated_into::<u64>() };
-            let tx_msg = abci_grpc::TxMessage { tx: vec![33, 33, 33, 33] };
-
-            abci_grpc::init_chain();
-
-            abci_grpc::on_initialize(&blk_msg);
-
-            abci_grpc::check_tx(&tx_msg);
-            abci_grpc::deliver_tx(&tx_msg);
-
-            abci_grpc::on_finilize(&blk_msg);
-            abci_grpc::commit(&blk_msg);
-
-            abci_grpc::echo();
-
-            match Self::submit_result(vec![1,2,3]) {
+            match Self::offchain_logic(now) {
                 Ok(results) => {
                     debug::native::info!("Results: {:?}", results.len());
                     for val in &results {
@@ -138,6 +121,26 @@ impl<T: Trait> Module<T> {
         debug::native::info!("Validate from pallet: {:?}", message);
     }
 
+    pub fn offchain_logic(now: T::BlockNumber) -> Result<Vec<Result<T::AccountId, ()>>, &'static str> {
+        // Test values
+        let blk_msg = abci_grpc::BlockMessage { height: now.saturated_into::<u64>() };
+        let tx_msg = abci_grpc::TxMessage { tx: vec![33, 33, 33, 33] };
+
+        abci_grpc::init_chain()?;
+
+        abci_grpc::on_initialize(&blk_msg)?;
+
+        abci_grpc::check_tx(&tx_msg)?;
+        abci_grpc::deliver_tx(&tx_msg)?;
+
+        abci_grpc::on_finilize(&blk_msg)?;
+        abci_grpc::commit(&blk_msg)?;
+
+        abci_grpc::echo()?;
+
+        Self::submit_result(vec![1,2,3])
+    }
+
     pub fn submit_result(res: Vec<u32>) -> Result<Vec<Result<T::AccountId, ()>>, &'static str> {
         let signer = Signer::<T, T::AuthorityId>::all_accounts();
         if !signer.can_sign() {
@@ -145,7 +148,7 @@ impl<T: Trait> Module<T> {
                 "No local accounts available. Consider adding one via `author_insertKey` RPC.",
             )?;
         }
-        let results = signer.send_signed_transaction(|_account| Call::finish_deliver_tx(res.clone()));
+        let results = signer.send_signed_transaction(|_| Call::finish_deliver_tx(res.clone()));
         Ok(results
             .iter()
             .map(|(acc, res)| match res {
