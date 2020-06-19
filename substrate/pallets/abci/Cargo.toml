@@ -15,6 +15,10 @@ sp-io = { git = 'https://github.com/paritytech/substrate.git', tag = 'v2.0.0-rc3
 sp-runtime = { git = 'https://github.com/paritytech/substrate.git', tag = 'v2.0.0-rc3', default-features = false }
 sp-std = { git = 'https://github.com/paritytech/substrate.git', tag = 'v2.0.0-rc3', default-features = false }
 lite-json = { version = "0.1.2", default-features = false }
+alt_serde = { version = "1", default-features = false, features = ["derive"] }
+# updated to `alt_serde_json` when latest version supporting feature `alloc` is released
+# serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
+serde_json = { version = "1", default-features = false, git = "https://github.com/Xanewok/json", branch = "no-std", features = ["alloc"] }
 
 [features]
 default = ['std']

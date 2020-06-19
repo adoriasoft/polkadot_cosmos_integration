@@ -3,37 +3,66 @@ package abci;
 
 import "google/api/annotations.proto";
 
-message TxResponse {
+message EmptyMessage {
 }
 
 message CheckTxRequest {
-  string tx = 1;
+  bytes tx = 1;
 }
 
 message DeliverTxRequest {
-  string tx = 1;
+  bytes tx = 1;
 }
 
-message EchoMessage {
+message BlockMessage {
+  uint64 height =1;
 }
 
 
 service Abci {
-  rpc CheckTx(CheckTxRequest) returns (TxResponse) {
+
+  rpc InitChain(EmptyMessage) returns (EmptyMessage) {
+    option (google.api.http) = {
+        get: "/abci/v1/InitChain"
+    };
+  }
+
+  rpc CheckTx(CheckTxRequest) returns (EmptyMessage) {
       option (google.api.http) = {
-            post: "/abci/v1/CheckTx"
-            body: "*"
+          post: "/abci/v1/CheckTx"
+          body: "*"
       };
   }
 
-  rpc DeliverTx(DeliverTxRequest) returns (TxResponse) {
+  rpc DeliverTx(DeliverTxRequest) returns (EmptyMessage) {
       option (google.api.http) = {
           post: "/abci/v1/DeliverTx"
           body: "*"
       };
   }
 
-  rpc Echo(EchoMessage) returns (EchoMessage) {
+  rpc OnInitialize(BlockMessage) returns (EmptyMessage) {
+      option (google.api.http) = {
+          post: "/abci/v1/OnInitialize"
+          body: "*"
+    };
+  }
+
+  rpc OnFinilize(BlockMessage) returns (EmptyMessage) {
+      option (google.api.http) = {
+          post: "/abci/v1/OnFinilize"
+          body: "*"
+    };
+  }
+
+  rpc Commit(BlockMessage) returns (EmptyMessage) {
+      option (google.api.http) = {
+          post: "/abci/v1/Commit"
+          body: "*"
+      };
+  }
+
+  rpc Echo(EmptyMessage) returns (EmptyMessage) {
       option (google.api.http) = {
           get: "/abci/v1/Echo"
       };
