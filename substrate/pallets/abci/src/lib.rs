@@ -1,20 +1,21 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
+mod abci_grpc;
 #[cfg(test)]
 mod mock;
 #[cfg(test)]
 mod tests;
-mod abci_grpc;
 
 use frame_support::{
-    debug, decl_module, decl_storage, dispatch::DispatchResult, dispatch::Vec, sp_runtime::print,
+    debug, decl_module, decl_storage, dispatch::DispatchResult, dispatch::Vec,
     sp_runtime::transaction_validity::TransactionSource, weights::Weight,
 };
-use sp_std::prelude::*;
 use frame_system::{
     ensure_signed,
     offchain::{AppCrypto, CreateSignedTransaction, SendSignedTransaction, Signer},
 };
+use sp_std::prelude::*;
+use sp_runtime::traits::SaturatedConversion;
 
 pub mod crypto {
     use sp_core::crypto::KeyTypeId;
@@ -66,30 +67,45 @@ decl_module! {
             Self::do_finalize();
         }
 
-        fn offchain_worker(_now: T::BlockNumber) {
+        fn offchain_worker(now: T::BlockNumber) {
             debug::native::info!("Hello from offchain workers!");
 
-            // Test calls
-            let blk_msg = abci_grpc::BlockMessage{height : 115};
-            let tx_msg = abci_grpc::TxMessage{tx: vec![33, 33, 33, 33]};
+            // Test values
+            let blk_msg = abci_grpc::BlockMessage { height: now.saturated_into::<u64>() };
+            let tx_msg = abci_grpc::TxMessage { tx: vec![33, 33, 33, 33] };
 
-            abci_grpc::InitChain();
+            abci_grpc::init_chain();
 
-            abci_grpc::OnInitialize(&blk_msg);
+            abci_grpc::on_initialize(&blk_msg);
 
-            abci_grpc::CheckTx(&tx_msg);
-            abci_grpc::DeliverTx(&tx_msg);
+            abci_grpc::check_tx(&tx_msg);
+            abci_grpc::deliver_tx(&tx_msg);
 
-            abci_grpc::OnFinilize(&blk_msg);
-            abci_grpc::Commit(&blk_msg);
+            abci_grpc::on_finilize(&blk_msg);
+            abci_grpc::commit(&blk_msg);
 
-            abci_grpc::Echo();
+            abci_grpc::echo();
+
+            match Self::submit_result(vec![1,2,3]) {
+                Ok(results) => {
+                    debug::native::info!("Results: {:?}", results.len());
+                    for val in &results {
+                        match val {
+                            Ok(acc) => debug::info!("Submitted transaction from: {:?}", acc),
+                            Err(e) => debug::error!("Failed to submit transaction: {:?}", e),
+                        }
+                    }
+                }
+                Err(e) => {
+                    debug::error!("Error: {}", e);
+                }
+            }
         }
 
         #[weight = 0]
         pub fn deliver_tx(origin, id: u32) -> DispatchResult {
             ensure_signed(origin)?;
-            debug::info!("Received deviler tx request #{}", id);
+            debug::info!("Received deliver tx request #{}", id);
             <Requests>::mutate(|x| x.push(id));
             Ok(())
         }
@@ -107,19 +123,35 @@ decl_module! {
 
 impl<T: Trait> Module<T> {
     pub fn do_finalize() {
-        print("Block is finilized");
+        debug::native::info!("Block is finilized");
     }
 
-    pub fn do_initialize(_block_number: T::BlockNumber) {
-        print("Block is initialized");
+    pub fn do_initialize(block_number: T::BlockNumber) {
+        debug::native::info!("Block is initialized: {:?}", block_number);
     }
 
     pub fn do_commit() {
-        print("Block is commited")
+        debug::native::info!("Block is commited");
     }
 
     pub fn do_check_tx(_source: TransactionSource, message: &u32) {
-        print("Validate from pallet");
-        print(message);
+        debug::native::info!("Validate from pallet: {:?}", message);
+    }
+
+    pub fn submit_result(res: Vec<u32>) -> Result<Vec<Result<T::AccountId, ()>>, &'static str> {
+        let signer = Signer::<T, T::AuthorityId>::all_accounts();
+        if !signer.can_sign() {
+            return Err(
+                "No local accounts available. Consider adding one via `author_insertKey` RPC.",
+            )?;
+        }
+        let results = signer.send_signed_transaction(|_account| Call::finish_deliver_tx(res.clone()));
+        Ok(results
+            .iter()
+            .map(|(acc, res)| match res {
+                Ok(_) => Ok(acc.id.clone()),
+                Err(_) => Err(()),
+            })
+            .collect())
     }
 }
