@@ -2276,24 +2276,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "lite-json"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c73e713a23ac6e12074c9e96ef2dfb770921e0cb9244c093bd38424209e0e523"
-dependencies = [
- "lite-parser",
-]
-
-[[package]]
-name = "lite-parser"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0c50092e40e0ccd1bf2015a10333fde0502ff95b832b0895dc1ca0d7ac6c52f6"
-dependencies = [
- "paste",
-]
-
-[[package]]
 name = "lock_api"
 version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2765,7 +2747,6 @@ dependencies = [
  "alt_serde",
  "frame-support",
  "frame-system",
- "lite-json",
  "parity-scale-codec",
  "serde_json 1.0.44",
  "sp-core",

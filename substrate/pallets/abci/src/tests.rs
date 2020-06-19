@@ -76,6 +76,6 @@ fn abci_request_echo() {
             None,
         );
 
-        let response = pending.wait().unwrap();
+        assert_ok!(pending.wait());
     });
 }

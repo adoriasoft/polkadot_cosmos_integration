@@ -1,11 +1,9 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
+use alt_serde::{Deserialize, Serialize};
 use frame_support::debug;
-use frame_support::dispatch::Vec;
-use sp_runtime::offchain::{http, http::Method};
+use sp_runtime::offchain::http;
 use sp_std::str;
-
-use alt_serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 pub const ABCI_SERVER_URL: &[u8] = b"http://localhost:8082/abci/v1/";
 
@@ -21,8 +19,8 @@ pub struct TxMessage {
     pub tx: Vec<u8>,
 }
 
-pub fn init_chain() {
-    let url: &[u8] = &[ABCI_SERVER_URL, b"InitChain"].concat();
+fn get_method(method_name: &str) {
+    let url: &[u8] = &[ABCI_SERVER_URL, method_name.as_bytes()].concat();
     let request_url = str::from_utf8(url).unwrap();
 
     let request = http::Request::get(request_url);
@@ -34,124 +32,50 @@ pub fn init_chain() {
     if response.code != 200 {
         debug::error!("Unexpected http request status code: {}", response.code);
     }
+}
+
+fn post_method<T: Serialize>(msg: &T, method_name: &str) {
+    let url: &[u8] = &[ABCI_SERVER_URL, method_name.as_bytes()].concat();
+    let request_url = str::from_utf8(url).unwrap();
+
+    let serialized_data = serde_json::to_string(msg).unwrap();
+
+    let request = http::Request::post(request_url, [serialized_data.as_bytes()].to_vec())
+        .add_header("Content-Type", "application/json");
+
+    let pending = request.send().unwrap();
+
+    let response = pending.wait().unwrap();
+
+    if response.code != 200 {
+        debug::error!("Unexpected http request status code: {}", response.code);
+    }
+}
+
+pub fn init_chain() {
+    get_method("InitChain");
 }
 
 pub fn deliver_tx(tx_msg: &TxMessage) {
-    let url: &[u8] = &[ABCI_SERVER_URL, b"DeliverTx"].concat();
-    let request_url = str::from_utf8(url).unwrap();
-
-    let serialized_data = serde_json::to_string(tx_msg).unwrap();
-
-    let request = http::Request::default()
-        .method(Method::Post)
-        .url(request_url)
-        .body([serialized_data.as_bytes()].to_vec())
-        .add_header("Content-Type", "application/json");
-
-    let pending = request.send().unwrap();
-
-    let response = pending.wait().unwrap();
-
-    if response.code != 200 {
-        debug::error!("Unexpected http request status code: {}", response.code);
-    }
+    post_method(tx_msg, "DeliverTx");
 }
 
 pub fn check_tx(tx_msg: &TxMessage) {
-    let url: &[u8] = &[ABCI_SERVER_URL, b"CheckTx"].concat();
-    let request_url = str::from_utf8(url).unwrap();
-
-    let serialized_data = serde_json::to_string(tx_msg).unwrap();
-
-    let request = http::Request::default()
-        .method(Method::Post)
-        .url(request_url)
-        .body([serialized_data.as_bytes()].to_vec())
-        .add_header("Content-Type", "application/json");
-
-    let pending = request.send().unwrap();
-
-    let response = pending.wait().unwrap();
-
-    if response.code != 200 {
-        debug::error!("Unexpected http request status code: {}", response.code);
-    }
+    post_method(tx_msg, "CheckTx")
 }
 
 pub fn on_initialize(blk_msg: &BlockMessage) {
-    let url: &[u8] = &[ABCI_SERVER_URL, b"OnInitialize"].concat();
-    let request_url = str::from_utf8(url).unwrap();
-
-    let serialized_data = serde_json::to_string(blk_msg).unwrap();
-
-    let request = http::Request::default()
-        .method(Method::Post)
-        .url(request_url)
-        .body([serialized_data.as_bytes()].to_vec())
-        .add_header("Content-Type", "application/json");
-
-    let pending = request.send().unwrap();
-
-    let response = pending.wait().unwrap();
-
-    if response.code != 200 {
-        debug::error!("Unexpected http request status code: {}", response.code);
-    }
+    post_method(blk_msg, "OnInitialize");
 }
 
 pub fn on_finilize(blk_msg: &BlockMessage) {
-    let url: &[u8] = &[ABCI_SERVER_URL, b"OnFinilize"].concat();
-    let request_url = str::from_utf8(url).unwrap();
-
-    let serialized_data = serde_json::to_string(blk_msg).unwrap();
-
-    let request = http::Request::default()
-        .method(Method::Post)
-        .url(request_url)
-        .body([serialized_data.as_bytes()].to_vec())
-        .add_header("Content-Type", "application/json");
-
-    let pending = request.send().unwrap();
-
-    let response = pending.wait().unwrap();
-
-    if response.code != 200 {
-        debug::error!("Unexpected http request status code: {}", response.code);
-    }
+    post_method(blk_msg, "OnFinilize");
 }
 
 pub fn commit(blk_msg: &BlockMessage) {
-    let url: &[u8] = &[ABCI_SERVER_URL, b"Commit"].concat();
-    let request_url = str::from_utf8(url).unwrap();
-
-    let serialized_data = serde_json::to_string(blk_msg).unwrap();
-
-    let request = http::Request::default()
-        .method(Method::Post)
-        .url(request_url)
-        .body([serialized_data.as_bytes()].to_vec())
-        .add_header("Content-Type", "application/json");
-
-    let pending = request.send().unwrap();
-
-    let response = pending.wait().unwrap();
-
-    if response.code != 200 {
-        debug::error!("Unexpected http request status code: {}", response.code);
-    }
+    post_method(blk_msg, "Commit");
 }
 
 pub fn echo() {
-    let url: &[u8] = &[ABCI_SERVER_URL, b"Echo"].concat();
-    let request_url = str::from_utf8(url).unwrap();
-
-    let request = http::Request::get(request_url);
-
-    let pending = request.send().unwrap();
-
-    let response = pending.wait().unwrap();
-
-    if response.code != 200 {
-        debug::error!("Unexpected http request status code: {}", response.code);
-    }
+    get_method("Echo");
 }
