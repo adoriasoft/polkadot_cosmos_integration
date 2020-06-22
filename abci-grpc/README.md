@@ -30,6 +30,9 @@ docker-compose up
 ### Send HTTP requests
 
 ```sh
-curl -H 'Content-Type: application/json' -XPOST -d '{"tx": "hello from curl!!!!"}' http://localhost:8082/abci/v1/CheckTx
-curl -H 'Content-Type: application/json' -XPOST -d '{"tx": "hello from curl!!!!"}' http://localhost:8082/abci/v1/DeliverTx
+curl -H 'Content-Type: application/json' -XPOST -d '{"tx": [104,101, 108, 108, 111, 32, 102, 114, 111, 109, 32, 99, 117, 114, 108, 33, 33, 33]}' http://localhost:8082/abci/v1/CheckTx
+curl -H 'Content-Type: application/json' -XPOST -d '{"tx": [104,101, 108, 108, 111, 32, 102, 114, 111, 109, 32, 99, 117, 114, 108, 33, 33, 33]}' http://localhost:8082/abci/v1/DeliverTx
 ```
+[104,101, 108, 108, 111, 32, 102, 114, 111, 109, 32, 99, 117, 114, 108, 33, 33, 33] - byte array encoded message "hello from curl!!!"
+
+PATH="/home/leshiy/.cargo/bin:/home/leshiy/.local/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/lib/jvm/default/bin:/usr/bin/site_perl:/usr/bin/vendor_perl:/usr/bin/core_perl:/var/lib/snapd/snap/bin"
