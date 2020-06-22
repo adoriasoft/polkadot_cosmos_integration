@@ -1,10 +1,8 @@
-
 FROM alpine:3.12
 
 RUN apk add --no-cache \
         ca-certificates \
-        gcc \
-        curl
+        gcc curl wget
 
 ENV RUSTUP_HOME=/usr/local/rustup \
     CARGO_HOME=/usr/local/cargo \
@@ -25,9 +23,7 @@ RUN set -eux; \
 
 COPY . ./
 
-RUN curl https://getsubstrate.io -sSf | bash -s -- --fast; \
-    source ~/.cargo/env; \
-    rustup default stable; \
+RUN rustup default stable; \
     rustup update nightly; \
     rustup update stable; \
     rustup target add wasm32-unknown-unknown --toolchain nightly; \
