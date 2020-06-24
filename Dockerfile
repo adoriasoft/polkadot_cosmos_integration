@@ -1,13 +1,14 @@
 FROM alpine:3.12
 
-RUN apk add --no-cache \
-        ca-certificates \
-        gcc curl wget
+RUN apk add --no-cache ca-certificates gcc g++ \
+        make alpine-sdk git musl-dev cmake wget \
+        build-base python3-dev
 
 ENV RUSTUP_HOME=/usr/local/rustup \
     CARGO_HOME=/usr/local/cargo \
     PATH=/usr/local/cargo/bin:$PATH \
-    RUST_VERSION=1.44.1
+    RUST_VERSION=1.44.1 \
+    RUST_BACKTRACE=full
 
 RUN set -eux; \
     url="https://static.rust-lang.org/rustup/archive/1.21.1/x86_64-unknown-linux-musl/rustup-init"; \

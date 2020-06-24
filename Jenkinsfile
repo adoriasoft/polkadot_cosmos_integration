@@ -9,30 +9,29 @@ pipeline {
     stage("GitHub checkout") {
       steps {
         git branch: env.BRANCH, credentialsId: env.GIT_CREDENTIALS, url: env.GIT_REPO, poll: false
-  }
-}
-    stage('Setup environment') {
+      }
+    }
+    stage('Build docker image') {
       steps {
-        sh "curl https://getsubstrate.io -sSf | bash -s -- --fast"
-        sh "source ~/.cargo/env"
-        sh "rustup default stable"
-        sh "rustup update nightly"
-        sh "rustup update stable"
-        sh "rustup target add wasm32-unknown-unknown --toolchain nightly"
-        sh "rustup update"
+        sh "docker build --no-cache -t ${env.JOB_NAME.toLowerCase()}-${env.BUILD_NUMBER} ."
+      }
     }
-  }
-  stage('Build project') {
-    steps { dir('substrate') {
-        sh "cargo clean"
-        sh "cargo build --release"
-    }
-  }
-}
-    stage('Run tests') {
+    stage("Run tests") {
       steps {
-        dir('substrate') { sh "cargo test --all" }
+        sh "docker run -i \
+        --rm ${env.JOB_NAME.toLowerCase()}-${env.BUILD_NUMBER} \
+        cargo test --all"
+      }
+    }
+    stage("Clean docker artifacts") {
+      steps {
+        sh "docker rmi ${env.JOB_NAME.toLowerCase()}-${env.BUILD_NUMBER}"
+      }
     }
   }
-}
+    post {
+      always {
+        deleteDir()
+      }
+    }
 }
