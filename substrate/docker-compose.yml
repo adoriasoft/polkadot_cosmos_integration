@@ -1,17 +1,62 @@
 version: "3.2"
 
 services:
-  dev:
-    container_name: node-template
-    image: parity/rust-builder:latest
-    working_dir: /var/www/node-template
-    ports:
-      - "9944:9944"
-    environment:
-      - CARGO_HOME=/var/www/node-template/.cargo
+
+  first:
+    image: node-template
+    # Local node id: QmRpheLN4JWdAnY7HGJfWFNbfkQCb6tFf4vvA6hgjMZKrR
+    command: |
+      --name "First node"
+      --node-key 0000000000000000000000000000000000000000000000000000000000000001
+      --base-path /res/first
+      --chain local_testnet
+      --unsafe-ws-external
+      --unsafe-rpc-external
+      --rpc-cors "*"
+      --port 30333
+      --telemetry-url ws://telemetry.polkadot.io:1024
+      --alice
+      --validator
     volumes:
-      - .:/var/www/node-template
-      - type: bind
-        source: ./.local
-        target: /root/.local
-    command: bash -c "cargo build --release && ./target/release/node-template --dev --ws-external"
+      - ./res:/res
+    ports:
+      - "9933:9933"
+      - "9944:9944"
+      - "30333:30333"
+
+  second:
+    image: node-template
+    # Local node id: QmSVnNf9HwVMT1Y4cK1P6aoJcEZjmoTXpjKBmAABLMnZEk
+    command: |
+      --name "Second node"
+      --node-key 0000000000000000000000000000000000000000000000000000000000000002
+      --base-path /res/second
+      --chain local_testnet
+      --unsafe-ws-external
+      --unsafe-rpc-external
+      --rpc-cors "*"
+      --port 30333
+      --telemetry-url ws://telemetry.polkadot.io:1024
+      --bob
+      --validator
+    volumes:
+      - ./res:/res
+    ports:
+      - "19933:9933"
+      - "19944:9944"
+      - "30334:30333"
+
+#   dev:
+#     container_name: node-template
+#     image: parity/rust-builder:latest
+#     working_dir: /var/www/node-template
+#     ports:
+#       - "9944:9944"
+#     environment:
+#       - CARGO_HOME=/var/www/node-template/.cargo
+#     volumes:
+#       - .:/var/www/node-template
+#       - type: bind
+#         source: ./.local
+#         target: /root/.local
+#     command: bash -c "cargo build --release && ./target/release/node-template --dev --ws-external"
