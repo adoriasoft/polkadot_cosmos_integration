@@ -90,4 +90,8 @@ module.exports = class Api {
     get query() {
         return this.api.query;
     }
+
+    get api_tx() {
+        return this.api.tx;
+    }
 }

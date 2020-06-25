@@ -1,7 +1,7 @@
 require('module-alias/register')
 const Api = require('@/api');
 const { initAccounts, initSudoAccount } = require('@/utils');
-const { analyzer } = require('@/scenarios');
+const { flow } = require('@/scenarios');
 
 const API_URL = process.env.NODE_ENV !== 'production' ? 'ws://127.0.0.1:9944' : '';
 
@@ -12,10 +12,10 @@ async function start() {
         throw Error('Invalid scenario');
     }
     switch (scenario) {
-        case 'analyzer': {
+        case 'flow': {
             const accounts = initAccounts();
             const sudoAccount = initSudoAccount();
-            await analyzer.start(api, sudoAccount, accounts);
+            await flow.start(api, sudoAccount, accounts);
             return;
         }
     }
