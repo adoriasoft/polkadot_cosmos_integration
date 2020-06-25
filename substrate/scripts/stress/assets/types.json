@@ -1,3 +1,8 @@
 {
-    "String": "Vec<u8>"
+    "Address": "AccountId",
+    "LookupSource": "AccountId",
+    "String": "Vec<u8>",
+    "TxMessage": {
+        "tx": "String"
+    }
 }

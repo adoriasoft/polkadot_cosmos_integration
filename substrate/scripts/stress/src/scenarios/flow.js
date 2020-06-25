@@ -8,10 +8,8 @@ module.exports.start = async (api, sudoAccount, accounts = []) => {
     }
     console.log('Start flow logic')
     try {
-        // Todo: Logic
-        const reuslt = await api.api_tx.abci.deliverTx(1).signAndSend(sudoAccount);
+        const reuslt = await api.api_tx.abci.deliverTx({ tx: "123" }).signAndSend(sudoAccount);
         console.log(reuslt);
-
     } catch (err) {
         console.log(err);
     } finally {

@@ -34,12 +34,6 @@ module.exports = class Api {
                             const res = `${phase.toString()}: ${section}.${method} ${data.toString()}`;
                             if (res.indexOf('Failed') !== -1) {
                                 error = res;
-                            } else if (res.indexOf('treasury.ResourceSupply') !== -1) {
-                                let tmp = data.toString().match(/\[(.*?)\]/);
-                                if (tmp.length != 2) {
-                                    throw Error('Invalid resource supply data');
-                                }
-                                result = tmp[1].split(',')[1];
                             }
                         });
                         if (error) {
