@@ -1,15 +1,15 @@
 {
-  "name": "stress",
+  "name": "request",
   "version": "0.1.0",
   "main": "src/index.js",
   "scripts": {
-    "start": "node src/index.js"
+    "start": "node index.js"
   },
   "license": "UNLICENSED",
   "dependencies": {
-    "@polkadot/api": "^1.22.0-beta.3",
+    "@polkadot/api": "^1.21.1",
     "@polkadot/keyring": "^2.15.1",
-    "@polkadot/types": "^1.22.0-beta.3",
+    "@polkadot/types": "^1.21.1",
     "@polkadot/util": "^2.15.1",
     "@polkadot/util-crypto": "^2.15.1",
     "bn.js": "^5.0.0",
