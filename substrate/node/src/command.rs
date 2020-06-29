@@ -22,8 +22,6 @@ use sc_cli::SubstrateCli;
 
 use sp_runtime::print;
 
-use frame_support::debug;
-
 fn init_chain() -> Result<(), &'static str> {
 	let _res = reqwest::blocking::get("http://localhost:8082/abci/v1/InitChain").map_err(|_| "Failed to send request")?
 	.text().map_err(|_| "Failed to send request")?;
