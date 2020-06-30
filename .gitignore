@@ -24,3 +24,4 @@ target
 node_modules
 
 *pb.*
+token_data

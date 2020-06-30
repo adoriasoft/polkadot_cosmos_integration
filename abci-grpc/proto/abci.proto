@@ -14,7 +14,11 @@ message DeliverTxRequest {
 }
 
 message BlockMessage {
-  uint64 height =1;
+  uint64 height = 1;
+}
+
+message AccountInfo {
+  uint64 amount = 1;
 }
 
 service Abci {
@@ -56,6 +60,12 @@ service Abci {
       option (google.api.http) = {
           post: "/abci/v1/Commit"
           body: "*"
+      };
+  }
+
+  rpc GetAccountInfo(EmptyMessage) returns (AccountInfo) {
+      option (google.api.http) = {
+          get: "/abci/v1/GetAccountInfo"
       };
   }
 }

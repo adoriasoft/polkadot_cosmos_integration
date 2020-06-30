@@ -8,7 +8,6 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/boltdb/bolt"
 	"github.com/golang/glog"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	grpc "google.golang.org/grpc"
@@ -37,17 +36,50 @@ func (s *server) InitChain(ctx context.Context, in *EmptyMessage) (*EmptyMessage
 }
 
 func (s *server) CheckTx(ctx context.Context, in *CheckTxRequest) (*EmptyMessage, error) {
-	log.Printf("Received CheckTx(), tx: %s", string(in.Tx))
+	log.Print("Received CheckTx()")
+
+	message, err := token.DecodeMessage(in.Tx)
+
+	if err != nil {
+		log.Fatal("cannot decode Tx message")
+	}
+
+	err = s.token.ValidateMessage(message)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	return &EmptyMessage{}, nil
 }
 
 func (s *server) DeliverTx(ctx context.Context, in *DeliverTxRequest) (*EmptyMessage, error) {
-	log.Printf("Received DeliverTx(), tx: %s", string(in.Tx))
+	log.Print("Received DeliverTx()")
+
+	message, err := token.DecodeMessage(in.Tx)
+
+	if err != nil {
+		log.Fatal("cannot decode Tx message")
+	}
+
+	err = s.token.ProcessMessage(message)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	return &EmptyMessage{}, nil
 }
 
 func (s *server) OnInitialize(ctx context.Context, in *BlockMessage) (*EmptyMessage, error) {
 	log.Printf("Received OnInitialize(), block height: %d", in.Height)
+
+	err := s.token.MineNewTokens(token.BASE_ACCOUNT)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	return &EmptyMessage{}, nil
 }
 
@@ -99,13 +131,6 @@ func Grpc_run() {
 	RegisterAbciServer(s, &server{token: tk})
 
 	log.Print("Grpc server started")
-	// Open the my.db data file in your current directory.
-	// It will be created if it doesn't exist.
-	db, err := bolt.Open("my.db", 0600, nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
 
 	err = s.Serve(lis)
 
