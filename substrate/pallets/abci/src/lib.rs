@@ -128,7 +128,6 @@ impl<T: Trait> Module<T> {
             height: now.saturated_into::<u64>(),
         };
 
-        abci_grpc::init_chain()?;
         abci_grpc::on_initialize(&blk_msg)?;
 
         let requests = Self::requests();

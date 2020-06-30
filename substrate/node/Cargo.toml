@@ -38,6 +38,8 @@ sp-inherents = { git = 'https://github.com/paritytech/substrate.git', tag = 'v2.
 sp-runtime = { git = 'https://github.com/paritytech/substrate.git', tag = 'v2.0.0-rc3' }
 sp-transaction-pool = { git = 'https://github.com/paritytech/substrate.git', tag = 'v2.0.0-rc3' }
 
+reqwest = { version = "0.10", features = ["json", "blocking"] }
+
 [build-dependencies]
 substrate-build-script-utils = { git = 'https://github.com/paritytech/substrate.git', tag = 'v2.0.0-rc3' }
 
