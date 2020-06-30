@@ -60,7 +60,9 @@ impl SubstrateCli for Cli {
 
 	fn load_spec(&self, id: &str) -> Result<Box<dyn sc_service::ChainSpec>, String> {
 		print("Load initial state");
-		init_chain().unwrap();
+		if let Err(e) = init_chain() {
+			println!("Failed to run init chain: {}", e);
+		}
 		Ok(match id {
 			"dev" => Box::new(chain_spec::development_config()),
 			"" | "local" => Box::new(chain_spec::local_testnet_config()),

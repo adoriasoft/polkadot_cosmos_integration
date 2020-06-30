@@ -19,6 +19,7 @@ pub struct TxMessage {
     pub tx: Vec<u8>,
 }
 
+#[allow(dead_code)]
 fn get_method(method_name: &str) -> Result<(), &'static str> {
     let url: &[u8] = &[ABCI_SERVER_URL, method_name.as_bytes()].concat();
     let request_url = str::from_utf8(url).map_err(|_| "Failed to cast to string")?;
@@ -50,6 +51,7 @@ fn post_method<T: Serialize>(msg: &T, method_name: &str) -> Result<(), &'static 
     Ok(())
 }
 
+#[allow(dead_code)]
 pub fn init_chain() -> Result<(), &'static str> {
     get_method("InitChain")
 }

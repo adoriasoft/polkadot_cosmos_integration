@@ -2627,7 +2627,6 @@ dependencies = [
 name = "node-template"
 version = "2.0.0-rc2"
 dependencies = [
- "frame-support",
  "futures 0.3.5",
  "log",
  "node-template-runtime",
@@ -2860,10 +2859,12 @@ dependencies = [
  "frame-support",
  "frame-system",
  "parity-scale-codec",
+ "reqwest",
  "serde_json 1.0.44",
  "sp-core",
  "sp-io",
  "sp-runtime",
+ "sp-runtime-interface",
  "sp-std",
 ]
 
