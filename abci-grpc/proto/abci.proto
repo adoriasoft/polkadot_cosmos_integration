@@ -21,6 +21,10 @@ message AccountInfo {
   uint64 amount = 1;
 }
 
+message AccountMessage {
+  string account = 1;
+}
+
 service Abci {
   rpc InitChain(EmptyMessage) returns (EmptyMessage) {
     option (google.api.http) = {
@@ -63,9 +67,17 @@ service Abci {
       };
   }
 
-  rpc GetAccountInfo(EmptyMessage) returns (AccountInfo) {
+  rpc GetAccountInfo(AccountMessage) returns (AccountInfo) {
       option (google.api.http) = {
-          get: "/abci/v1/GetAccountInfo"
+          post: "/abci/v1/GetAccountInfo"
+          body: "*"
+      };
+  }
+
+    rpc CreateNewAccount(AccountMessage) returns (AccountInfo) {
+      option (google.api.http) = {
+          post: "/abci/v1/CreateNewAccount"
+          body: "*"
       };
   }
 }

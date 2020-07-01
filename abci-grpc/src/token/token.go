@@ -72,7 +72,7 @@ func (t *Token) ValidateMessage(message TokenMessage) error {
 }
 
 func (t *Token) CreateNewAccount(account string) error {
-	err := t.db.Put([]byte(account), []byte("0"), nil)
+	err := t.db.Put([]byte(account), []byte(strconv.FormatUint(0, 10)), nil)
 
 	return err
 }
@@ -88,7 +88,7 @@ func (t *Token) MineNewTokens(account string) error {
 
 	stored_amount += BASE_TOKENS_AMOUNT
 
-	err = t.db.Put([]byte(account), []byte(string(stored_amount)), nil)
+	err = t.db.Put([]byte(account), []byte(strconv.FormatUint(stored_amount, 10)), nil)
 
 	return err
 }
@@ -129,8 +129,8 @@ func (t *Token) ProcessMessage(message TokenMessage) error {
 
 	amount_to += message.Amount
 
-	err = t.db.Put([]byte(message.To), []byte(string(amount_to)), nil)
-	err = t.db.Put([]byte(message.From), []byte(string(amount_from)), nil)
+	err = t.db.Put([]byte(message.To), []byte(strconv.FormatUint(amount_to, 10)), nil)
+	err = t.db.Put([]byte(message.From), []byte(strconv.FormatUint(amount_from, 10)), nil)
 
 	return err
 }

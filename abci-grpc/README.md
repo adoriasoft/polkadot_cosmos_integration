@@ -32,6 +32,10 @@ docker-compose up
 ```sh
 curl -H 'Content-Type: application/json' -XPOST -d '{"tx": [104,101, 108, 108, 111, 32, 102, 114, 111, 109, 32, 99, 117, 114, 108, 33, 33, 33]}' http://localhost:8082/abci/v1/CheckTx
 curl -H 'Content-Type: application/json' -XPOST -d '{"tx": [104,101, 108, 108, 111, 32, 102, 114, 111, 109, 32, 99, 117, 114, 108, 33, 33, 33]}' http://localhost:8082/abci/v1/DeliverTx
+
+curl -H 'Content-Type: application/json' -XPOST -d '{"account": "Alice"}' http://localhost:8082/abci/v1/GetAccountInfo
+curl -H 'Content-Type: application/json' -XPOST -d '{"account": "Bob"}' http://localhost:8082/abci/v1/CreateNewAccount
+
 ```
 [104,101, 108, 108, 111, 32, 102, 114, 111, 109, 32, 99, 117, 114, 108, 33, 33, 33] - byte array encoded message "hello from curl!!!"
 

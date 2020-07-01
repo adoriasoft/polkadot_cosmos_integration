@@ -27,6 +27,10 @@ async function start() {
     });
     try {
         const sudoAccount = initSudoAccount();
+
+        var text = '{ "From": "Alice", "To": "Bob", "Amount": 20}';
+        var obj = JSON.parse(text);
+
         const reuslt = await api.tx.abci.deliverTx({ tx: "123" }).signAndSend(sudoAccount);
         console.log(reuslt);
     } catch (err) {

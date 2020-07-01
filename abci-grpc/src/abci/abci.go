@@ -93,6 +93,31 @@ func (s *server) Commit(ctx context.Context, in *BlockMessage) (*EmptyMessage, e
 	return &EmptyMessage{}, nil
 }
 
+func (s *server) GetAccountInfo(ctx context.Context, in *AccountMessage) (*AccountInfo, error) {
+	log.Printf("GetAccountInfo(), account: %s", in.Account)
+
+	amount, err := s.token.GetAccountInfo(in.Account)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Printf("amount: %d", amount)
+
+	return &AccountInfo{Amount: amount}, nil
+}
+
+func (s *server) CreateNewAccount(ctx context.Context, in *AccountMessage) (*AccountInfo, error) {
+	log.Printf("CreateNewAccount(), account: %s", in.Account)
+
+	err := s.token.CreateNewAccount(in.Account)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+	return &AccountInfo{Amount: 0}, nil
+}
+
 func Grpc_http_run() {
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
