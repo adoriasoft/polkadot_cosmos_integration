@@ -1,5 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
+#[cfg(feature = "std")]
+mod std_logic;
 mod abci_grpc;
 #[cfg(test)]
 mod mock;
@@ -174,6 +176,7 @@ impl<T: Trait> Module<T> {
 trait MyInterface {
     fn get_hello_world() -> Vec<u8> {
         // println!("Hello world from: {}", data);
+        crate::std_logic::get_something()
     }
 }
 
