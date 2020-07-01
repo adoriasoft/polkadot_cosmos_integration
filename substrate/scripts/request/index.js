@@ -31,7 +31,7 @@ async function start() {
         var text = '{ "From": "Alice", "To": "Bob", "Amount": 20}';
         var obj = JSON.parse(text);
 
-        const reuslt = await api.tx.abci.deliverTx({ tx: "123" }).signAndSend(sudoAccount);
+        const reuslt = await api.tx.abci.deliverTx({ tx: text}).signAndSend(sudoAccount);
         console.log(reuslt);
     } catch (err) {
         console.log(err);
