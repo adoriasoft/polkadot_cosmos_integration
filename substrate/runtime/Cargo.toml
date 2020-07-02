@@ -126,10 +126,15 @@ git = 'https://github.com/paritytech/substrate.git'
 package = 'frame-system'
 tag = 'v2.0.0-rc3'
 
-[dependencies.abci]
+[dependencies.abci_direct]
 default-features = false
-package = 'pallet-abci'
-path = '../pallets/abci'
+package = 'pallet-abci-direct'
+path = '../pallets/abci-direct'
+
+[dependencies.abci_offchain]
+default-features = false
+package = 'pallet-abci-offchain'
+path = '../pallets/abci-offchain'
 
 [dependencies.timestamp]
 default-features = false
@@ -170,7 +175,8 @@ std = [
     'system/std',
     'timestamp/std',
     'transaction-payment/std',
-    'abci/std',
+    'abci_direct/std',
+    'abci_offchain/std',
 ]
 
 [build-dependencies.wasm-builder-runner]

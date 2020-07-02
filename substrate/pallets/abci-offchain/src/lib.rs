@@ -1,7 +1,5 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-#[cfg(feature = "std")]
-mod std_logic;
 mod abci_grpc;
 #[cfg(test)]
 mod mock;
@@ -17,8 +15,6 @@ use frame_system::{
     offchain::{AppCrypto, CreateSignedTransaction, SendSignedTransaction, Signer},
 };
 use sp_runtime::traits::SaturatedConversion;
-use sp_runtime_interface::runtime_interface;
-// use sc_executor::{native_executor_instance, NativeExecutor};
 use sp_std::prelude::*;
 
 pub mod crypto {
@@ -67,8 +63,6 @@ decl_module! {
 
         /// Block finalization
         fn on_finalize() {
-            let tmp = my_interface::get_hello_world();
-            debug::native::info!("Hello: {:?}", tmp);
             Self::do_finalize();
         }
 
@@ -171,18 +165,3 @@ impl<T: Trait> Module<T> {
             .collect())
     }
 }
-
-#[runtime_interface]
-trait MyInterface {
-    fn get_hello_world() -> Vec<u8> {
-        // println!("Hello world from: {}", data);
-        crate::std_logic::get_something()
-    }
-}
-
-// native_executor_instance!(
-//     pub MyExecutor,
-//     substrate_test_runtime::api::dispatch,
-//     substrate_test_runtime::native_version,
-//     (my_interface::HostFunctions, my_interface::HostFunctions),
-// );
