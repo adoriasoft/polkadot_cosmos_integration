@@ -48,8 +48,9 @@ decl_module! {
         }
 
         /// Block finalization
-        fn on_finalize(_now: T::BlockNumber) {
-            // my_interface::on_finalize(&BlockMessage { height });
+        fn on_finalize(now: T::BlockNumber) {
+            let now: u32 = now.into();
+            my_interface::on_finalize(&BlockMessage { height: now as u64 });
             Self::do_finalize();
         }
 
@@ -57,26 +58,19 @@ decl_module! {
         pub fn deliver_tx(origin) -> DispatchResult {
             ensure_signed(origin)?;
             debug::info!("Received deliver tx request");
+            my_interface::deliver_tx(&TxMessage { tx: vec![] });
             Ok(())
         }
     }
 }
 
 impl<T: Trait> Module<T> {
-    pub fn do_finalize() {
-        debug::native::info!("Block is finilized");
+    pub fn do_commit(height: u64) {
+        my_interface::commit(&BlockMessage { height });
     }
 
-    pub fn do_initialize(block_number: T::BlockNumber) {
-        debug::native::info!("Block is initialized: {:?}", block_number);
-    }
-
-    pub fn do_commit() {
-        debug::native::info!("Block is commited");
-    }
-
-    pub fn do_check_tx(_source: TransactionSource) {
-        my_interface::check_tx(&TxMessage { tx: vec![] });
+    pub fn do_check_tx(_source: TransactionSource, tx: Vec<u8>) {
+        my_interface::check_tx(&TxMessage { tx });
     }
 }
 
