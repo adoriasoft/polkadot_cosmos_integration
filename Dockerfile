@@ -1,37 +1,26 @@
-FROM alpine:3.12
+FROM phusion/baseimage:0.10.2
 
-RUN apk add --no-cache ca-certificates gcc g++ \
-        make alpine-sdk git musl-dev cmake wget \
-        build-base python3-dev
+ENV TERM=xterm
+ENV DEBIAN_FRONTEND=noninteractive
 
-ENV RUSTUP_HOME=/usr/local/rustup \
-    CARGO_HOME=/usr/local/cargo \
-    PATH=/usr/local/cargo/bin:$PATH \
-    RUST_VERSION=1.44.1 \
-    RUST_BACKTRACE=full
+RUN apt-get update && \
+	apt-get --yes --force-yes -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade && \
+	apt-get --yes --force-yes -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" dist-upgrade && \
+	apt-get install -y cmake pkg-config libssl-dev git clang curl
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
+ENV PATH=/root/.cargo/bin:$PATH
 
-RUN set -eux; \
-    url="https://static.rust-lang.org/rustup/archive/1.21.1/x86_64-unknown-linux-musl/rustup-init"; \
-    wget "$url"; \
-    echo "0c86d467982bdf5c4b8d844bf8c3f7fc602cc4ac30b29262b8941d6d8b363d7e *rustup-init" | sha256sum -c -; \
-    chmod +x rustup-init; \
-    ./rustup-init -y --no-modify-path --profile minimal --default-toolchain $RUST_VERSION; \
-    rm rustup-init; \
-    chmod -R a+w $RUSTUP_HOME $CARGO_HOME; \
-    rustup --version; \
-    cargo --version; \
-    rustc --version;
+RUN rustup toolchain install nightly && \
+    rustup default nightly && \
+	  rustup target add wasm32-unknown-unknown --toolchain nightly && \
+	  rustup default stable
 
-COPY . ./
-
-RUN rustup default stable; \
-    rustup update nightly; \
-    rustup update stable; \
-    rustup target add wasm32-unknown-unknown --toolchain nightly; \
-    rustup update
+COPY . .
+ARG PROFILE=release
+WORKDIR /substrate
 
 WORKDIR  ./substrate
 RUN cargo clean; \
-    cargo build --release
+    cargo build --$PROFILE
 
 CMD ["cargo","test","--all"]
