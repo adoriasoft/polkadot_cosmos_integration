@@ -18,9 +18,10 @@ type Token struct {
 }
 
 type TokenMessage struct {
-	From   string
-	To     string
-	Amount uint64
+	From      string
+	To        string
+	Amount    uint64
+	Signature string
 }
 
 type TokenError struct {
