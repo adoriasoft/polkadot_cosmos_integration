@@ -1,7 +1,7 @@
 pipeline {
   agent any
   environment {
-    BRANCH = "add_ci_jenkins"
+    BRANCH = "master"
     GIT_CREDENTIALS = "adoriasoft-github"
     GIT_REPO = "git@github.com:adoriasoft/polkadot_cosmos_integration.git"
   }
