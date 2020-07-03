@@ -14,7 +14,7 @@ use frame_support::{
     sp_runtime::transaction_validity::TransactionSource, weights::Weight,
 };
 use frame_system::ensure_signed;
-use sp_runtime::traits::AtLeast32Bit;
+use sp_runtime::traits::SaturatedConversion;
 use sp_runtime_interface::{pass_by::PassByCodec, runtime_interface};
 use sp_std::prelude::*;
 
@@ -42,40 +42,41 @@ decl_module! {
     pub struct Module<T: Trait> for enum Call where origin: T::Origin {
         /// Block initialization
         fn on_initialize(now: T::BlockNumber) -> Weight {
-            let now: u32 = now.into();
-            my_interface::on_initialize(&BlockMessage { height: now as u64 });
+            abci_interface::on_initialize(&BlockMessage { height: now.saturated_into() as u64 });
             return 0;
         }
 
         /// Block finalization
         fn on_finalize(now: T::BlockNumber) {
-            let now: u32 = now.into();
-            my_interface::on_finalize(&BlockMessage { height: now as u64 });
-            Self::do_finalize();
+            abci_interface::on_finalize(&BlockMessage { height: now.saturated_into() as u64 });
         }
 
         #[weight = 0]
         pub fn deliver_tx(origin) -> DispatchResult {
             ensure_signed(origin)?;
             debug::info!("Received deliver tx request");
-            my_interface::deliver_tx(&TxMessage { tx: vec![] });
+            abci_interface::deliver_tx(&TxMessage { tx: vec![] });
             Ok(())
         }
     }
 }
 
 impl<T: Trait> Module<T> {
+    pub fn do_init_chain() {
+        abci_interface::init_chain();
+    }
+
     pub fn do_commit(height: u64) {
-        my_interface::commit(&BlockMessage { height });
+        abci_interface::commit(&BlockMessage { height });
     }
 
     pub fn do_check_tx(_source: TransactionSource, tx: Vec<u8>) {
-        my_interface::check_tx(&TxMessage { tx });
+        abci_interface::check_tx(&TxMessage { tx });
     }
 }
 
 #[runtime_interface]
-trait MyInterface {
+trait AbciInterface {
     fn init_chain() -> bool {
         crate::request::get_method("InitChain").is_ok()
     }
@@ -92,7 +93,7 @@ trait MyInterface {
         crate::request::post_method("OnInitialize", blk_msg).is_ok()
     }
 
-    fn on_finilize(blk_msg: &BlockMessage) -> bool {
+    fn on_finalize(blk_msg: &BlockMessage) -> bool {
         crate::request::post_method("OnFinilize", blk_msg).is_ok()
     }
 
