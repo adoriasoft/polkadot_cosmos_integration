@@ -7,6 +7,8 @@
 
 .DS_Store
 
+*.db
+
 # The cache for docker container dependency
 .cargo
 
@@ -22,3 +24,4 @@ target
 node_modules
 
 *pb.*
+token_data
