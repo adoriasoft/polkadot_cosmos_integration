@@ -66,18 +66,4 @@ service Abci {
           body: "*"
       };
   }
-
-  rpc GetAccountInfo(AccountMessage) returns (AccountInfo) {
-      option (google.api.http) = {
-          post: "/abci/v1/GetAccountInfo"
-          body: "*"
-      };
-  }
-
-    rpc CreateNewAccount(AccountMessage) returns (AccountInfo) {
-      option (google.api.http) = {
-          post: "/abci/v1/CreateNewAccount"
-          body: "*"
-      };
-  }
 }

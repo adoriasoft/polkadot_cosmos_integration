@@ -1,0 +1,74 @@
+package token
+
+import (
+	"crypto"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"log"
+	"strings"
+)
+
+const rand_min_len = 40
+
+func GenerateKeyPair(private_key string) (*ecdsa.PublicKey, *ecdsa.PrivateKey) {
+	var secp256k1 elliptic.Curve = elliptic.P256()
+
+	for len(private_key) < 40 {
+		private_key += "0"
+	}
+
+	rand := strings.NewReader(private_key)
+
+	private, err := ecdsa.GenerateKey(secp256k1, rand)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return &private.PublicKey, private
+}
+
+func Sign(message string, seed string, private_str string) string {
+	private, err := PKBase64Decode(private_str)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var sha256_hasher = crypto.SHA256.New()
+
+	m_hash := sha256_hasher.Sum([]byte(message))
+
+	for len(seed) < 40 {
+		seed += "0"
+	}
+
+	rand := strings.NewReader(seed)
+
+	r, s, err := ecdsa.Sign(rand, private, m_hash)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	signature := &Signature{r, s}
+
+	return SGBase64Encode(signature)
+}
+
+func Verify(sign_str string, message string, public_str string) bool {
+	sign, err := SGBase64Decode(sign_str)
+	if err != nil {
+		return false
+	}
+
+	public, err := PBKBase64Decode(public_str)
+	if err != nil {
+		return false
+	}
+
+	var sha256_hasher = crypto.SHA256.New()
+
+	m_hash := sha256_hasher.Sum([]byte(message))
+	return ecdsa.Verify(public, m_hash, sign.r, sign.s)
+}
