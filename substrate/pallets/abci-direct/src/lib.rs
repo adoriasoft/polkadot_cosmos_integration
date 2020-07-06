@@ -52,10 +52,10 @@ decl_module! {
         }
 
         #[weight = 0]
-        pub fn deliver_tx(origin) -> DispatchResult {
+        pub fn deliver_tx(origin, tx: TxMessage) -> DispatchResult {
             ensure_signed(origin)?;
             debug::info!("Received deliver tx request");
-            abci_interface::deliver_tx(&TxMessage { tx: vec![] });
+            abci_interface::deliver_tx(&tx);
             Ok(())
         }
     }

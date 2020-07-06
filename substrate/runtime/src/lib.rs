@@ -421,8 +421,8 @@ impl_runtime_apis! {
             tx: <Block as BlockT>::Extrinsic,
         ) -> TransactionValidity {
             let res = Executive::validate_transaction(source, tx.clone());
-            if let Some(&abci_direct::Call::deliver_tx()) = IsSubType::<AbciDirect, Runtime>::is_sub_type(&tx.function) {
-                AbciDirect::do_check_tx(source, tx.encode());
+            if let Some(&abci_direct::Call::deliver_tx(ref val)) = IsSubType::<AbciDirect, Runtime>::is_sub_type(&tx.function) {
+                AbciDirect::do_check_tx(source, val.tx.clone());
             }
             res
         }
