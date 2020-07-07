@@ -1,8 +1,10 @@
 package token
 
 import (
+	context "context"
 	"encoding/json"
 	"log"
+	"sync"
 
 	"github.com/syndtr/goleveldb/leveldb"
 )
@@ -13,10 +15,11 @@ const (
 )
 
 type Token struct {
-	db *leveldb.DB
+	db  *leveldb.DB
+	mux sync.Mutex
 }
 
-func InitToken(db_name string) Token {
+func InitToken(db_name string) *Token {
 
 	db, err := leveldb.OpenFile(db_name, nil)
 
@@ -24,15 +27,17 @@ func InitToken(db_name string) Token {
 		log.Fatal(err)
 	}
 
-	t := Token{db}
+	t := Token{db: db}
 
 	t.CreateNewAccount(BASE_ACCOUNT)
 	t.MineNewTokens(BASE_ACCOUNT)
 
-	return t
+	return &t
 }
 
 func (t *Token) ValidateMessage(message TokenMessage) error {
+	t.mux.Lock()
+	defer t.mux.Unlock()
 
 	data, err := t.db.Get([]byte(message.From), nil)
 
@@ -47,7 +52,7 @@ func (t *Token) ValidateMessage(message TokenMessage) error {
 		return &TokenError{"try to spend more than you have"}
 	}
 
-	if Verify(message.Signature, message.signature_message, account_info.PublicKey) == false {
+	if Verify(message.Signature, message.Message, account_info.PublicKey) == false {
 		return &TokenError{"invalid signature"}
 	}
 
@@ -55,6 +60,9 @@ func (t *Token) ValidateMessage(message TokenMessage) error {
 }
 
 func (t *Token) CreateNewAccount(account string) (string, error) {
+	t.mux.Lock()
+	defer t.mux.Unlock()
+
 	public_key, private_key := GenerateKeyPair(account)
 
 	public_key_encoded := PBKBase64Encode(public_key)
@@ -70,6 +78,9 @@ func (t *Token) CreateNewAccount(account string) (string, error) {
 }
 
 func (t *Token) MineNewTokens(account string) error {
+	t.mux.Lock()
+	defer t.mux.Unlock()
+
 	data, err := t.db.Get([]byte(account), nil)
 
 	if err != nil {
@@ -89,6 +100,9 @@ func (t *Token) MineNewTokens(account string) error {
 }
 
 func (t *Token) GetAccountInfo(account string) (uint64, error) {
+	t.mux.Lock()
+	defer t.mux.Unlock()
+
 	data, err := t.db.Get([]byte(account), nil)
 
 	if err != nil {
@@ -102,6 +116,8 @@ func (t *Token) GetAccountInfo(account string) (uint64, error) {
 }
 
 func (t *Token) ProcessMessage(message TokenMessage) error {
+	t.mux.Lock()
+	defer t.mux.Unlock()
 
 	data, err := t.db.Get([]byte(message.From), nil)
 
@@ -116,7 +132,7 @@ func (t *Token) ProcessMessage(message TokenMessage) error {
 		return &TokenError{"try to spend more than you have"}
 	}
 
-	if Verify(message.Signature, message.signature_message, account_from_info.PublicKey) == false {
+	if Verify(message.Signature, message.Message, account_from_info.PublicKey) == false {
 		return &TokenError{"invalid signature"}
 	}
 
@@ -143,5 +159,39 @@ func (t *Token) ProcessMessage(message TokenMessage) error {
 }
 
 func (t *Token) StopToken() {
+	t.mux.Lock()
+	defer t.mux.Unlock()
+
 	t.db.Close()
+}
+
+type ServerToken struct {
+	UnimplementedTokenServer
+	Token *Token
+}
+
+func (s *ServerToken) CreateNewAccount(ctx context.Context, in *AccountMessage) (*AccountPrivateKey, error) {
+	log.Printf("received CreateNewAccount(), account_name: %v", in.AccountName)
+
+	private_key, err := s.Token.CreateNewAccount(in.AccountName)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return &AccountPrivateKey{PrivateKey: private_key}, nil
+}
+
+func (s *ServerToken) GetBalance(ctx context.Context, in *AccountMessage) (*AccountBalance, error) {
+	log.Printf("Received GetBalance()")
+
+	balance, err := s.Token.GetAccountInfo(in.AccountName)
+
+	if err != nil {
+		log.Printf("Cannot find account")
+	}
+
+	log.Printf("account: %v, balance: %v", in.AccountName, balance)
+
+	return &AccountBalance{Balance: balance}, nil
 }

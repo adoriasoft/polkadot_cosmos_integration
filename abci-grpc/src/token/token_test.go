@@ -61,9 +61,9 @@ func TestTokenMessages(t *testing.T) {
 	message.Amount = 2
 	message.From = alice_account
 	message.To = bob_account
-	message.signature_message = "transaction from alice to bob"
+	message.Message = "transaction from alice to bob"
 
-	message.Signature = Sign(message.signature_message, "seed1", alice_private_key)
+	message.Signature, _ = Sign(message.Message, "seed1", alice_private_key)
 
 	err := token.ValidateMessage(message)
 

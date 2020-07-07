@@ -28,11 +28,11 @@ func GenerateKeyPair(private_key string) (*ecdsa.PublicKey, *ecdsa.PrivateKey) {
 	return &private.PublicKey, private
 }
 
-func Sign(message string, seed string, private_str string) string {
+func Sign(message string, seed string, private_str string) (string, error) {
 	private, err := PKBase64Decode(private_str)
 
 	if err != nil {
-		log.Fatal(err)
+		return "", err
 	}
 
 	var sha256_hasher = crypto.SHA256.New()
@@ -48,12 +48,12 @@ func Sign(message string, seed string, private_str string) string {
 	r, s, err := ecdsa.Sign(rand, private, m_hash)
 
 	if err != nil {
-		log.Fatal(err)
+		return "", err
 	}
 
 	signature := &Signature{r, s}
 
-	return SGBase64Encode(signature)
+	return SGBase64Encode(signature), nil
 }
 
 func Verify(sign_str string, message string, public_str string) bool {

@@ -17,14 +17,6 @@ message BlockMessage {
   uint64 height = 1;
 }
 
-message AccountInfo {
-  uint64 amount = 1;
-}
-
-message AccountMessage {
-  string account = 1;
-}
-
 service Abci {
   rpc InitChain(EmptyMessage) returns (EmptyMessage) {
     option (google.api.http) = {

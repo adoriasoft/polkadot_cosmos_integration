@@ -6,24 +6,17 @@ import (
 )
 
 func main() {
-	log.Print("Start")
+	log.Print("Start sign")
 
-	public, private := token.GenerateKeyPair("private key")
+	private_key_encoded := "MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQglWBgX4mTlp1BVfS3uQfNPF9xfi7PeKxC4XLk1WU080GhRANCAARF09Qag4BNEEET4LYf3Q3w12k9AnoArBhB2cpZ1F3IqOZyFpbEOr63W2kbPz97p7OlFLAwqILHxsJvnHkqVQYy"
 
-	pub_encoded := token.PBKBase64Encode(public)
+	message := "Sign this pls"
 
-	public, _ = token.PBKBase64Decode(pub_encoded)
+	signature, err := token.Sign(message, "seed2", private_key_encoded)
 
-	encoded := token.PKBase64Encode(private)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	private, _ = token.PKBase64Decode(encoded)
-
-	signature := token.Sign("sign this pls", "fucking seed", private)
-
-	encoded_signature := token.SGBase64Encode(signature)
-	signature, _ = token.SGBase64Decode(encoded_signature)
-
-	result := token.Verify(signature, "sign this pls", public)
-
-	log.Printf("Result: %t", result)
+	log.Printf("signature: %v", signature)
 }

@@ -12,11 +12,11 @@ import (
 )
 
 type TokenMessage struct {
-	From              string
-	To                string
-	Amount            uint64
-	signature_message string
-	Signature         string
+	From      string
+	To        string
+	Amount    uint64
+	Message   string
+	Signature string
 }
 
 type TokenError struct {
