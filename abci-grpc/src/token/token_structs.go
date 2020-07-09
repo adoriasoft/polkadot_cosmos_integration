@@ -15,7 +15,6 @@ type TokenMessage struct {
 	From      string
 	To        string
 	Amount    uint64
-	Message   string
 	Signature string
 }
 
@@ -93,7 +92,7 @@ func SGBase64Decode(data string) (*Signature, error) {
 	return &Signature{r: r, s: s}, nil
 }
 
-func PKBase64Encode(k *ecdsa.PrivateKey) string {
+func SKBase64Encode(k *ecdsa.PrivateKey) string {
 	bytes, err := x509.MarshalPKCS8PrivateKey(k)
 
 	if err != nil {
@@ -103,7 +102,7 @@ func PKBase64Encode(k *ecdsa.PrivateKey) string {
 	return base64.StdEncoding.EncodeToString(bytes)
 }
 
-func PKBase64Decode(data string) (*ecdsa.PrivateKey, error) {
+func SKBase64Decode(data string) (*ecdsa.PrivateKey, error) {
 
 	decoded, err := base64.StdEncoding.DecodeString(data)
 
@@ -120,7 +119,7 @@ func PKBase64Decode(data string) (*ecdsa.PrivateKey, error) {
 	return private_key.(*ecdsa.PrivateKey), nil
 }
 
-func PBKBase64Encode(k *ecdsa.PublicKey) string {
+func PKBase64Encode(k *ecdsa.PublicKey) string {
 	bytes, err := x509.MarshalPKIXPublicKey(k)
 
 	if err != nil {
@@ -131,7 +130,7 @@ func PBKBase64Encode(k *ecdsa.PublicKey) string {
 
 }
 
-func PBKBase64Decode(data string) (*ecdsa.PublicKey, error) {
+func PKBase64Decode(data string) (*ecdsa.PublicKey, error) {
 
 	decoded, err := base64.StdEncoding.DecodeString(data)
 

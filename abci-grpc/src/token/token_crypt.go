@@ -29,7 +29,7 @@ func GenerateKeyPair(private_key string) (*ecdsa.PublicKey, *ecdsa.PrivateKey) {
 }
 
 func Sign(message string, seed string, private_str string) (string, error) {
-	private, err := PKBase64Decode(private_str)
+	private, err := SKBase64Decode(private_str)
 
 	if err != nil {
 		return "", err
@@ -62,7 +62,7 @@ func Verify(sign_str string, message string, public_str string) bool {
 		return false
 	}
 
-	public, err := PBKBase64Decode(public_str)
+	public, err := PKBase64Decode(public_str)
 	if err != nil {
 		return false
 	}

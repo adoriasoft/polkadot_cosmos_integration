@@ -4,6 +4,7 @@ import (
 	context "context"
 	"encoding/json"
 	"log"
+	"strconv"
 	"sync"
 
 	"github.com/syndtr/goleveldb/leveldb"
@@ -17,6 +18,16 @@ const (
 type Token struct {
 	db  *leveldb.DB
 	mux sync.Mutex
+}
+
+func check_signature(message *TokenMessage, pk_encoded string) error {
+	sign_message := message.From + message.To + strconv.FormatUint(message.Amount, 10)
+
+	if Verify(message.Signature, sign_message, pk_encoded) == false {
+		return &TokenError{"invalid signature"}
+	}
+
+	return nil
 }
 
 func InitToken(db_name string) *Token {
@@ -52,11 +63,7 @@ func (t *Token) ValidateMessage(message TokenMessage) error {
 		return &TokenError{"try to spend more than you have"}
 	}
 
-	if Verify(message.Signature, message.Message, account_info.PublicKey) == false {
-		return &TokenError{"invalid signature"}
-	}
-
-	return nil
+	return check_signature(&message, account_info.PublicKey)
 }
 
 func (t *Token) CreateNewAccount(account string) (string, error) {
@@ -65,8 +72,8 @@ func (t *Token) CreateNewAccount(account string) (string, error) {
 
 	public_key, private_key := GenerateKeyPair(account)
 
-	public_key_encoded := PBKBase64Encode(public_key)
-	private_key_encoded := PKBase64Encode(private_key)
+	public_key_encoded := PKBase64Encode(public_key)
+	private_key_encoded := SKBase64Encode(private_key)
 
 	account_info := AccountInfo{Amount: 0, PublicKey: public_key_encoded}
 
@@ -132,8 +139,10 @@ func (t *Token) ProcessMessage(message TokenMessage) error {
 		return &TokenError{"try to spend more than you have"}
 	}
 
-	if Verify(message.Signature, message.Message, account_from_info.PublicKey) == false {
-		return &TokenError{"invalid signature"}
+	err = check_signature(&message, account_from_info.PublicKey)
+
+	if err != nil {
+		return err
 	}
 
 	account_from_info.Amount -= message.Amount
