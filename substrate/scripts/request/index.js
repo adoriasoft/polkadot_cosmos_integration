@@ -28,7 +28,7 @@ async function start() {
     try {
         const sudoAccount = initSudoAccount();
 
-        var text = '{ "From": "Alice", "To": "Bob", "Amount": 20}';
+        var text = '{ "From": "Alice", "To": "Bob", "Amount": 10, "Message": "Sign this pls", "Signature": "IAAAAFYGvVjlXarhJEWpwEJUlfMy3uYifvs4ZcEWS5MI0fQvIAAAAPGrMq2aS4fUBZpAc4uLxLrbSNnEcaHwWWrw6YQPMamH"}';
         var obj = JSON.parse(text);
 
         const reuslt = await api.tx.abci.deliverTx({ tx: text}).signAndSend(sudoAccount);

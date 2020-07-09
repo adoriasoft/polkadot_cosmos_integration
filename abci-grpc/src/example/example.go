@@ -1,25 +1,22 @@
 package main
 
 import (
-	"abci-grpc/src/token_crypt"
+	"abci-grpc/src/token"
 	"log"
 )
 
 func main() {
-	log.Print("Start")
+	log.Print("Start sign")
 
-	public, private := token_crypt.GenerateKeyPair("private key")
+	private_key_encoded := "MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQglWBgX4mTlp1BVfS3uQfNPF9xfi7PeKxC4XLk1WU080GhRANCAARF09Qag4BNEEET4LYf3Q3w12k9AnoArBhB2cpZ1F3IqOZyFpbEOr63W2kbPz97p7OlFLAwqILHxsJvnHkqVQYy"
 
-	encoded := token_crypt.PKBase64Encode(private)
+	message := "Sign this pls"
 
-	private, _ = token_crypt.PKBase64Decode(encoded)
+	signature, err := token.Sign(message, "seed2", private_key_encoded)
 
-	signature := token_crypt.Sign("sign this pls", "fucking seed", private)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	encoded_signature := token_crypt.SGBase64Encode(signature)
-	signature, _ = token_crypt.SGBase64Decode(encoded_signature)
-
-	result := token_crypt.Verify(signature, "sign this pls", public)
-
-	log.Printf("Result: %t", result)
+	log.Printf("signature: %v", signature)
 }

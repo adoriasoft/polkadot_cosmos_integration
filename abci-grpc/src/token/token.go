@@ -1,9 +1,10 @@
 package token
 
 import (
+	context "context"
 	"encoding/json"
 	"log"
-	"strconv"
+	"sync"
 
 	"github.com/syndtr/goleveldb/leveldb"
 )
@@ -14,48 +15,29 @@ const (
 )
 
 type Token struct {
-	db *leveldb.DB
+	db  *leveldb.DB
+	mux sync.Mutex
 }
 
-type TokenMessage struct {
-	From      string
-	To        string
-	Amount    uint64
-	Signature string
-}
+func InitToken(db_name string) *Token {
 
-type TokenError struct {
-	err_message string
-}
-
-func (t_er *TokenError) Error() string {
-	return t_er.err_message
-}
-
-func DecodeMessage(bytes []byte) (TokenMessage, error) {
-	m := TokenMessage{}
-	err := json.Unmarshal(bytes, &m)
-
-	return m, err
-}
-
-func InitToken() Token {
-
-	db, err := leveldb.OpenFile("token_data", nil)
+	db, err := leveldb.OpenFile(db_name, nil)
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	t := Token{db}
+	t := Token{db: db}
 
 	t.CreateNewAccount(BASE_ACCOUNT)
 	t.MineNewTokens(BASE_ACCOUNT)
 
-	return t
+	return &t
 }
 
 func (t *Token) ValidateMessage(message TokenMessage) error {
+	t.mux.Lock()
+	defer t.mux.Unlock()
 
 	data, err := t.db.Get([]byte(message.From), nil)
 
@@ -63,48 +45,79 @@ func (t *Token) ValidateMessage(message TokenMessage) error {
 		return &TokenError{"cant find account"}
 	}
 
-	available_amount, err := strconv.ParseUint(string(data), 10, 64)
+	var account_info AccountInfo
+	json.Unmarshal(data, &account_info)
 
-	if available_amount < message.Amount {
+	if account_info.Amount < message.Amount {
 		return &TokenError{"try to spend more than you have"}
+	}
+
+	if Verify(message.Signature, message.Message, account_info.PublicKey) == false {
+		return &TokenError{"invalid signature"}
 	}
 
 	return nil
 }
 
-func (t *Token) CreateNewAccount(account string) error {
-	err := t.db.Put([]byte(account), []byte(strconv.FormatUint(0, 10)), nil)
+func (t *Token) CreateNewAccount(account string) (string, error) {
+	t.mux.Lock()
+	defer t.mux.Unlock()
 
-	return err
+	public_key, private_key := GenerateKeyPair(account)
+
+	public_key_encoded := PBKBase64Encode(public_key)
+	private_key_encoded := PKBase64Encode(private_key)
+
+	account_info := AccountInfo{Amount: 0, PublicKey: public_key_encoded}
+
+	bytes, _ := json.Marshal(account_info)
+
+	err := t.db.Put([]byte(account), bytes, nil)
+
+	return private_key_encoded, err
 }
 
 func (t *Token) MineNewTokens(account string) error {
+	t.mux.Lock()
+	defer t.mux.Unlock()
+
 	data, err := t.db.Get([]byte(account), nil)
 
 	if err != nil {
 		return &TokenError{"cant find account"}
 	}
 
-	stored_amount, err := strconv.ParseUint(string(data), 10, 64)
+	var account_info AccountInfo
+	json.Unmarshal(data, &account_info)
 
-	stored_amount += BASE_TOKENS_AMOUNT
+	account_info.Amount += BASE_TOKENS_AMOUNT
 
-	err = t.db.Put([]byte(account), []byte(strconv.FormatUint(stored_amount, 10)), nil)
+	bytes, _ := json.Marshal(account_info)
+
+	err = t.db.Put([]byte(account), bytes, nil)
 
 	return err
 }
 
 func (t *Token) GetAccountInfo(account string) (uint64, error) {
+	t.mux.Lock()
+	defer t.mux.Unlock()
+
 	data, err := t.db.Get([]byte(account), nil)
 
 	if err != nil {
 		return 0, &TokenError{"cant find account"}
 	}
 
-	return strconv.ParseUint(string(data), 10, 64)
+	var account_info AccountInfo
+	json.Unmarshal(data, &account_info)
+
+	return account_info.Amount, nil
 }
 
 func (t *Token) ProcessMessage(message TokenMessage) error {
+	t.mux.Lock()
+	defer t.mux.Unlock()
 
 	data, err := t.db.Get([]byte(message.From), nil)
 
@@ -112,13 +125,18 @@ func (t *Token) ProcessMessage(message TokenMessage) error {
 		return &TokenError{"cant find 'from' account"}
 	}
 
-	amount_from, err := strconv.ParseUint(string(data), 10, 64)
+	var account_from_info AccountInfo
+	json.Unmarshal(data, &account_from_info)
 
-	if amount_from < message.Amount {
+	if account_from_info.Amount < message.Amount {
 		return &TokenError{"try to spend more than you have"}
 	}
 
-	amount_from -= message.Amount
+	if Verify(message.Signature, message.Message, account_from_info.PublicKey) == false {
+		return &TokenError{"invalid signature"}
+	}
+
+	account_from_info.Amount -= message.Amount
 
 	data, err = t.db.Get([]byte(message.To), nil)
 
@@ -126,16 +144,54 @@ func (t *Token) ProcessMessage(message TokenMessage) error {
 		return &TokenError{"cant find account 'to'"}
 	}
 
-	amount_to, err := strconv.ParseUint(string(data), 10, 64)
+	var account_to_info AccountInfo
+	json.Unmarshal(data, &account_to_info)
 
-	amount_to += message.Amount
+	account_to_info.Amount += message.Amount
 
-	err = t.db.Put([]byte(message.To), []byte(strconv.FormatUint(amount_to, 10)), nil)
-	err = t.db.Put([]byte(message.From), []byte(strconv.FormatUint(amount_from, 10)), nil)
+	bytes, _ := json.Marshal(account_to_info)
+	t.db.Put([]byte(message.To), bytes, nil)
 
-	return err
+	bytes, _ = json.Marshal(account_from_info)
+	t.db.Put([]byte(message.From), bytes, nil)
+
+	return nil
 }
 
 func (t *Token) StopToken() {
+	t.mux.Lock()
+	defer t.mux.Unlock()
+
 	t.db.Close()
+}
+
+type ServerToken struct {
+	UnimplementedTokenServer
+	Token *Token
+}
+
+func (s *ServerToken) CreateNewAccount(ctx context.Context, in *AccountMessage) (*AccountPrivateKey, error) {
+	log.Printf("received CreateNewAccount(), account_name: %v", in.AccountName)
+
+	private_key, err := s.Token.CreateNewAccount(in.AccountName)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return &AccountPrivateKey{PrivateKey: private_key}, nil
+}
+
+func (s *ServerToken) GetBalance(ctx context.Context, in *AccountMessage) (*AccountBalance, error) {
+	log.Printf("Received GetBalance()")
+
+	balance, err := s.Token.GetAccountInfo(in.AccountName)
+
+	if err != nil {
+		log.Printf("Cannot find account")
+	}
+
+	log.Printf("account: %v, balance: %v", in.AccountName, balance)
+
+	return &AccountBalance{Balance: balance}, nil
 }

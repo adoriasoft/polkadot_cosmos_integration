@@ -17,14 +17,6 @@ message BlockMessage {
   uint64 height = 1;
 }
 
-message AccountInfo {
-  uint64 amount = 1;
-}
-
-message AccountMessage {
-  string account = 1;
-}
-
 service Abci {
   rpc InitChain(EmptyMessage) returns (EmptyMessage) {
     option (google.api.http) = {
@@ -63,20 +55,6 @@ service Abci {
   rpc Commit(BlockMessage) returns (EmptyMessage) {
       option (google.api.http) = {
           post: "/abci/v1/Commit"
-          body: "*"
-      };
-  }
-
-  rpc GetAccountInfo(AccountMessage) returns (AccountInfo) {
-      option (google.api.http) = {
-          post: "/abci/v1/GetAccountInfo"
-          body: "*"
-      };
-  }
-
-    rpc CreateNewAccount(AccountMessage) returns (AccountInfo) {
-      option (google.api.http) = {
-          post: "/abci/v1/CreateNewAccount"
           body: "*"
       };
   }

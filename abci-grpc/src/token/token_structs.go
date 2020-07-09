@@ -1,23 +1,54 @@
-package token_crypt
+package token
 
 import (
 	"bytes"
-	"crypto"
 	"crypto/ecdsa"
-	"crypto/elliptic"
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/binary"
+	"encoding/json"
 	"log"
 	"math/big"
-	"strings"
 )
 
-const rand_min_len = 40
+type TokenMessage struct {
+	From      string
+	To        string
+	Amount    uint64
+	Message   string
+	Signature string
+}
+
+type TokenError struct {
+	err_message string
+}
+
+type AccountInfo struct {
+	Amount    uint64
+	PublicKey string
+}
 
 type Signature struct {
 	r *big.Int
 	s *big.Int
+}
+
+func (t_er *TokenError) Error() string {
+	return t_er.err_message
+}
+
+func DecodeMessage(bytes []byte) (TokenMessage, error) {
+	var m TokenMessage
+	err := json.Unmarshal(bytes, &m)
+
+	return m, err
+}
+
+func DecodeAccountInfo(bytes []byte) (AccountInfo, error) {
+	var a_info AccountInfo
+	err := json.Unmarshal(bytes, &a_info)
+
+	return a_info, err
 }
 
 func SGBase64Encode(signature *Signature) string {
@@ -63,7 +94,7 @@ func SGBase64Decode(data string) (*Signature, error) {
 }
 
 func PKBase64Encode(k *ecdsa.PrivateKey) string {
-	bytes, err := x509.MarshalECPrivateKey(k)
+	bytes, err := x509.MarshalPKCS8PrivateKey(k)
 
 	if err != nil {
 		log.Fatal(err)
@@ -80,56 +111,39 @@ func PKBase64Decode(data string) (*ecdsa.PrivateKey, error) {
 		return nil, err
 	}
 
-	private_key, err := x509.ParseECPrivateKey(decoded)
+	private_key, err := x509.ParsePKCS8PrivateKey(decoded)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return private_key, nil
+	return private_key.(*ecdsa.PrivateKey), nil
 }
 
-func GenerateKeyPair(private_key string) (*ecdsa.PublicKey, *ecdsa.PrivateKey) {
-	var secp256k1 elliptic.Curve = elliptic.P256()
-
-	for len(private_key) < 40 {
-		private_key += "0"
-	}
-
-	rand := strings.NewReader(private_key)
-
-	private, err := ecdsa.GenerateKey(secp256k1, rand)
+func PBKBase64Encode(k *ecdsa.PublicKey) string {
+	bytes, err := x509.MarshalPKIXPublicKey(k)
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	return &private.PublicKey, private
+	return base64.StdEncoding.EncodeToString(bytes)
+
 }
 
-func Sign(message string, seed string, private *ecdsa.PrivateKey) *Signature {
-	var sha256_hasher = crypto.SHA256.New()
+func PBKBase64Decode(data string) (*ecdsa.PublicKey, error) {
 
-	m_hash := sha256_hasher.Sum([]byte(message))
-
-	for len(seed) < 40 {
-		seed += "0"
-	}
-
-	rand := strings.NewReader(seed)
-
-	r, s, err := ecdsa.Sign(rand, private, m_hash)
+	decoded, err := base64.StdEncoding.DecodeString(data)
 
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
-	return &Signature{r, s}
-}
+	private_key, err := x509.ParsePKIXPublicKey(decoded)
 
-func Verify(sign *Signature, message string, public *ecdsa.PublicKey) bool {
-	var sha256_hasher = crypto.SHA256.New()
+	if err != nil {
+		return nil, err
+	}
 
-	m_hash := sha256_hasher.Sum([]byte(message))
-	return ecdsa.Verify(public, m_hash, sign.r, sign.s)
+	return private_key.(*ecdsa.PublicKey), nil
 }
