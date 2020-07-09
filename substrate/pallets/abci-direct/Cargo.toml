@@ -1,6 +1,6 @@
 [package]
-name = 'pallet-abci'
-description = 'FRAME pallet abci'
+name = 'pallet-abci-direct'
+description = 'Pallet ABCI module with runtime interfaces'
 edition = '2018'
 homepage = 'https://substrate.io'
 license = 'Unlicense'
@@ -14,8 +14,10 @@ sp-core = { git = 'https://github.com/paritytech/substrate.git', tag = 'v2.0.0-r
 sp-io = { git = 'https://github.com/paritytech/substrate.git', tag = 'v2.0.0-rc3', default-features = false }
 sp-runtime = { git = 'https://github.com/paritytech/substrate.git', tag = 'v2.0.0-rc3', default-features = false }
 sp-std = { git = 'https://github.com/paritytech/substrate.git', tag = 'v2.0.0-rc3', default-features = false }
+sp-runtime-interface = { git = 'https://github.com/paritytech/substrate.git', tag = 'v2.0.0-rc3', default-features = false }
 alt_serde = { version = "1", default-features = false, features = ["derive"] }
 serde_json = { version = "1", default-features = false, git = "https://github.com/Xanewok/json", branch = "no-std", features = ["alloc"] }
+isahc = { version = "0.9", optional = true }
 
 [features]
 default = ['std']
@@ -27,4 +29,6 @@ std = [
 	"sp-io/std",
 	"sp-runtime/std",
 	"sp-std/std",
+	"sp-runtime-interface/std",
+	"isahc",
 ]

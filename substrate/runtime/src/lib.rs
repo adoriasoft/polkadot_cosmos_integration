@@ -46,9 +46,6 @@ pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 pub use timestamp::Call as TimestampCall;
 
-/// Importing a template pallet
-pub use abci;
-
 /// An index to a block.
 pub type BlockNumber = u32;
 
@@ -314,8 +311,12 @@ where
     type OverarchingCall = Call;
 }
 
-impl abci::Trait for Runtime {
-    type AuthorityId = abci::crypto::AuthId;
+impl abci_offchain::Trait for Runtime {
+    type AuthorityId = abci_offchain::crypto::AuthId;
+    type Call = Call;
+}
+
+impl abci_direct::Trait for Runtime {
     type Call = Call;
 }
 
@@ -333,7 +334,8 @@ construct_runtime!(
         Balances: balances::{Module, Call, Storage, Config<T>, Event<T>},
         TransactionPayment: transaction_payment::{Module, Storage},
         Sudo: sudo::{Module, Call, Config<T>, Storage, Event<T>},
-        Abci: abci::{Module, Call},
+        AbciOffchain: abci_offchain::{Module, Call},
+        AbciDirect: abci_direct::{Module, Call},
     }
 );
 
@@ -418,10 +420,11 @@ impl_runtime_apis! {
             source: TransactionSource,
             tx: <Block as BlockT>::Extrinsic,
         ) -> TransactionValidity {
-            if let Some(&abci::Call::deliver_tx(_)) = IsSubType::<Abci, Runtime>::is_sub_type(&tx.function) {
-                Abci::do_check_tx(source);
+            let res = Executive::validate_transaction(source, tx.clone());
+            if let Some(&abci_direct::Call::deliver_tx(ref val)) = IsSubType::<AbciDirect, Runtime>::is_sub_type(&tx.function) {
+                AbciDirect::do_check_tx(source, val.tx.clone());
             }
-            Executive::validate_transaction(source, tx)
+            res
         }
     }
 

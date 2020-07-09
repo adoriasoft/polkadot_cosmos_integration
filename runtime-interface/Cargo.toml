@@ -4,7 +4,6 @@ panic = 'unwind'
 [workspace]
 members = [
     'node',
-    'pallets/abci-direct',
-    'pallets/abci-offchain',
+    'pallets/template',
     'runtime',
 ]

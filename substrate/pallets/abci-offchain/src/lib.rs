@@ -68,20 +68,20 @@ decl_module! {
 
         fn offchain_worker(now: T::BlockNumber) {
             debug::native::info!("Hello from offchain workers!");
-            match Self::offchain_logic(now) {
-                Ok(results) => {
-                    debug::native::info!("Results: {:?}", results.len());
-                    for val in &results {
-                        match val {
-                            Ok(acc) => debug::info!("Submitted transaction from: {:?}", acc),
-                            Err(e) => debug::error!("Failed to submit transaction: {:?}", e),
-                        }
-                    }
-                }
-                Err(e) => {
-                    debug::error!("Error: {}", e);
-                }
-            }
+            // match Self::offchain_logic(now) {
+            //     Ok(results) => {
+            //         debug::native::info!("Results: {:?}", results.len());
+            //         for val in &results {
+            //             match val {
+            //                 Ok(acc) => debug::info!("Submitted transaction from: {:?}", acc),
+            //                 Err(e) => debug::error!("Failed to submit transaction: {:?}", e),
+            //             }
+            //         }
+            //     }
+            //     Err(e) => {
+            //         debug::error!("Error: {}", e);
+            //     }
+            // }
         }
 
         #[weight = 0]
