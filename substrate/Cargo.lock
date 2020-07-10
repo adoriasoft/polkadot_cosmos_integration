@@ -2691,7 +2691,7 @@ dependencies = [
 
 [[package]]
 name = "node-template"
-version = "2.0.0-rc2"
+version = "2.0.0-rc3"
 dependencies = [
  "futures 0.3.5",
  "log",
@@ -2721,7 +2721,7 @@ dependencies = [
 
 [[package]]
 name = "node-template-runtime"
-version = "2.0.0-rc2"
+version = "2.0.0-rc3"
 dependencies = [
  "frame-executive",
  "frame-support",
@@ -2920,7 +2920,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-abci-direct"
-version = "2.0.0-rc2"
+version = "2.0.0-rc3"
 dependencies = [
  "alt_serde",
  "frame-support",
@@ -2937,7 +2937,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-abci-offchain"
-version = "2.0.0-rc2"
+version = "2.0.0-rc3"
 dependencies = [
  "alt_serde",
  "frame-support",

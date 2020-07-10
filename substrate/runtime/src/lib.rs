@@ -46,6 +46,9 @@ pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 pub use timestamp::Call as TimestampCall;
 
+pub use abci_direct;
+pub use abci_offchain;
+
 /// An index to a block.
 pub type BlockNumber = u32;
 
