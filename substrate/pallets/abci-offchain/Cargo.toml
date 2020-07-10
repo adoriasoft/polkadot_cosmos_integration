@@ -4,7 +4,7 @@ description = 'Pallet ABCI module with offchain workers'
 edition = '2018'
 homepage = 'https://substrate.io'
 license = 'Unlicense'
-version = '2.0.0-rc2'
+version = '2.0.0-rc3'
 
 [dependencies]
 codec = { package = 'parity-scale-codec', version = '1.3.0', features = ['derive'], default-features = false }

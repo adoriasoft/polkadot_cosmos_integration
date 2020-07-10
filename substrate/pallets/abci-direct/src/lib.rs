@@ -76,7 +76,7 @@ impl<T: Trait> Module<T> {
 }
 
 #[runtime_interface]
-trait AbciInterface {
+pub trait AbciInterface {
     fn init_chain() -> bool {
         crate::request::get_method("InitChain").is_ok()
     }
