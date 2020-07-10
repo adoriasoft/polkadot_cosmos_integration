@@ -40,3 +40,24 @@ curl -H 'Content-Type: application/json' -XPOST -d '{"account_name": "Bob"}' htt
 
 ```
 PATH="/home/leshiy/.cargo/bin:/home/leshiy/.local/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/lib/jvm/default/bin:/usr/bin/site_perl:/usr/bin/vendor_perl:/usr/bin/core_perl:/var/lib/snapd/snap/bin"
+
+### Build docker image
+
+To scratch image:
+
+```sh
+GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o ./app
+
+docker build -f docker/scratch.Dockerfile -t cosmos_node . 
+```
+
+### Build spec
+
+To build specs for local testnet:
+
+```sh
+docker run -it --rm node build-spec --disable-default-bootnode --chain local > res/customSpec.json
+docker run -it --rm -v "$(pwd)/res:/res" node build-spec --chain=res/customSpec.json --raw --disable-default-bootnode > res/customSpecRaw.json
+```
+
+Demo server IP: `164.90.208.88`.
