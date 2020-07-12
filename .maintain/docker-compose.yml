@@ -2,6 +2,22 @@ version: "3.2"
 
 services:
 
+  nginx:
+    image: nginx:1.17.9
+    volumes:
+    - ./nginx.conf:/etc/nginx/nginx.conf
+    - ./site:/usr/share/nginx/html
+    - ./letsencrypt:/etc/letsencrypt/
+    restart: on-failure
+    ports:
+    - 80:80
+    - 443:443
+    depends_on:
+    - first
+    - first_cosmos
+    - second
+    - second_cosmos
+
   first:
     image: node
     # Local node id: QmRpheLN4JWdAnY7HGJfWFNbfkQCb6tFf4vvA6hgjMZKrR
