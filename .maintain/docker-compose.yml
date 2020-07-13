@@ -1,0 +1,83 @@
+version: "3.2"
+
+services:
+
+  nginx:
+    image: nginx:1.17.9
+    volumes:
+    - ./nginx.conf:/etc/nginx/nginx.conf
+    - ./site:/usr/share/nginx/html
+    - ./letsencrypt:/etc/letsencrypt/
+    restart: on-failure
+    ports:
+    - 80:80
+    - 443:443
+    depends_on:
+    - first
+    - first_cosmos
+    - second
+    - second_cosmos
+
+  first:
+    image: node
+    # Local node id: QmRpheLN4JWdAnY7HGJfWFNbfkQCb6tFf4vvA6hgjMZKrR
+    command: |
+      --name "First node"
+      --node-key 0000000000000000000000000000000000000000000000000000000000000001
+      --base-path /res/first
+      --unsafe-ws-external
+      --unsafe-rpc-external
+      --rpc-cors "*"
+      --chain=./res/customSpecRaw.json
+      --port 30333
+      --ws-port 9944
+      --rpc-port 9933
+      --telemetry-url 'ws://telemetry.polkadot.io:1024 0'
+      --validator
+      --alice
+      --rpc-methods=Unsafe
+    environment:
+      ABCI_SERVER_URL: http://first_cosmos:8082/abci/v1/
+    volumes:
+      - ./res:/res
+    ports:
+      - "9933:9933"
+      - "9944:9944"
+      - "30333:30333"
+    links:
+      - first_cosmos
+
+  first_cosmos:
+    image: cosmos_node
+
+  second:
+    image: node
+    # Local node id: QmSVnNf9HwVMT1Y4cK1P6aoJcEZjmoTXpjKBmAABLMnZEk
+    command: |
+      --name "Second node"
+      --node-key 0000000000000000000000000000000000000000000000000000000000000002
+      --base-path /res/second
+      --unsafe-ws-external
+      --unsafe-rpc-external
+      --rpc-cors "*"
+      --chain=./res/customSpecRaw.json
+      --port 30333
+      --ws-port 9944
+      --rpc-port 9933
+      --telemetry-url 'ws://telemetry.polkadot.io:1024 0'
+      --validator
+      --bob
+      --rpc-methods=Unsafe
+    environment:
+      ABCI_SERVER_URL: http://second_cosmos:8082/abci/v1/
+    volumes:
+      - ./res:/res
+    ports:
+      - "19933:9933"
+      - "19944:9944"
+      - "30334:30333"
+    links:
+      - second_cosmos
+
+  second_cosmos:
+    image: cosmos_node

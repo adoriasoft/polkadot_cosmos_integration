@@ -37,6 +37,16 @@ docker-compose up
 ```sh
 curl -H 'Content-Type: application/json' -XPOST -d '{"account_name": "Alice"}' http://localhost:8082/token/v1/GetBalance
 curl -H 'Content-Type: application/json' -XPOST -d '{"account_name": "Bob"}' http://localhost:8082/token/v1/CreateNewAccount
-
 ```
+
 PATH="/home/leshiy/.cargo/bin:/home/leshiy/.local/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/lib/jvm/default/bin:/usr/bin/site_perl:/usr/bin/vendor_perl:/usr/bin/core_perl:/var/lib/snapd/snap/bin"
+
+### Build docker image
+
+To scratch image:
+
+```sh
+GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o ./app
+
+docker build -f docker/scratch.Dockerfile -t cosmos_node . 
+```
