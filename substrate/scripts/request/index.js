@@ -2,7 +2,7 @@ require('module-alias/register')
 const { ApiPromise, WsProvider } = require('@polkadot/api');
 const { Keyring } = require('@polkadot/keyring');
 
-const API_URL = process.env.NODE_ENV !== 'production' ? 'ws://127.0.0.1:9944' : '';
+const API_URL = process.env.NODE_ENV !== 'production' ? 'ws://127.0.0.1:9944' : 'wss://polka.adoriasoft.com/first';
 
 const defaultTypes = {
     "Address": "AccountId",

@@ -19,7 +19,7 @@ services:
     - second_cosmos
 
   first:
-    image: node
+    image: andoriasoft/node:latest
     # Local node id: QmRpheLN4JWdAnY7HGJfWFNbfkQCb6tFf4vvA6hgjMZKrR
     command: |
       --name "First node"
@@ -48,10 +48,10 @@ services:
       - first_cosmos
 
   first_cosmos:
-    image: cosmos_node
+    image: andoriasoft/cosmos-node:latest
 
   second:
-    image: node
+    image: andoriasoft/node:latest
     # Local node id: QmSVnNf9HwVMT1Y4cK1P6aoJcEZjmoTXpjKBmAABLMnZEk
     command: |
       --name "Second node"
@@ -80,4 +80,4 @@ services:
       - second_cosmos
 
   second_cosmos:
-    image: cosmos_node
+    image: andoriasoft/cosmos-node:latest
