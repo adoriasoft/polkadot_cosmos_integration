@@ -13,7 +13,9 @@ func main() {
 
 	alice_private_key_encoded := "MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQglWBgX4mTlp1BVfS3uQfNPF9xfi7PeKxC4XLk1WU080GhRANCAARF09Qag4BNEEET4LYf3Q3w12k9AnoArBhB2cpZ1F3IqOZyFpbEOr63W2kbPz97p7OlFLAwqILHxsJvnHkqVQYy"
 
-	message := "Alice" + "Bob" + strconv.Itoa(5000)
+	//alex_private_key := "MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgYGBgX76TmohBVfOwyBvEeRmLm0ToZaAXARQF8c2oI7GhRANCAASBH4duntdIcDjSFxTLwa/roku6tJtQoCjJhH2gfQ7vFX12A9HpvK4VbIH0w+C4P9OSwqHJAua2ar/OmCEcZvPC"
+
+	message := "Alice" + "Alex" + strconv.Itoa(4000)
 
 	log.Print(message)
 

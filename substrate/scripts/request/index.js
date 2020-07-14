@@ -2,7 +2,7 @@ require('module-alias/register')
 const { ApiPromise, WsProvider } = require('@polkadot/api');
 const { Keyring } = require('@polkadot/keyring');
 
-const API_URL = process.env.NODE_ENV !== 'production' ? 'ws://127.0.0.1:9944' : '';
+const API_URL = process.env.NODE_ENV !== 'production' ? 'ws://127.0.0.1:9944' : 'wss://polka.adoriasoft.com/first';
 
 const defaultTypes = {
     "Address": "AccountId",
@@ -28,7 +28,7 @@ async function start() {
     try {
         const sudoAccount = initSudoAccount();
 
-        var text = '{ "From": "Alice", "To": "Bob", "Amount": 2000, "Signature": "IAAAAFdb20bY0pE/qTXMi4PnUTSQOAzFQ6DJNuF3+hMq4g3tIAAAAMkaqjYc+vG4W2p+wu8JnM0ClIuJ2fclSGJU/YvwEzgQ"}';
+        var text = '{ "From": "Alice", "To": "Alex", "Amount": 4000, "Signature": "IAAAAOM6uUoQYmboLlGlSf2DVJhoQ1uGuTgZcLPiE9onV5zIIAAAAPox8pBXRBO2r3mH5S+PNJftIAIJJoGQNSCVREKaBCpo"}';
         var obj = JSON.parse(text);
 
         const reuslt = await api.tx.abciDirect.deliverTx({ tx: text}).signAndSend(sudoAccount);

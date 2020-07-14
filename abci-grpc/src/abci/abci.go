@@ -33,6 +33,7 @@ func (s *ServerABCI) CheckTx(ctx context.Context, in *CheckTxRequest) (*EmptyMes
 		return nil, err
 	}
 
+	log.Print("Received CheckTx() successful")
 	return &EmptyMessage{}, nil
 }
 
@@ -53,6 +54,7 @@ func (s *ServerABCI) DeliverTx(ctx context.Context, in *DeliverTxRequest) (*Empt
 		return nil, err
 	}
 
+	log.Print("Received DeliverTx() successful")
 	return &EmptyMessage{}, nil
 }
 
