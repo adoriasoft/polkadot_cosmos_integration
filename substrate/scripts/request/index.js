@@ -28,10 +28,10 @@ async function start() {
     try {
         const sudoAccount = initSudoAccount();
 
-        var text = '{ "From": "Alice", "To": "Bob", "Amount": 10, "Message": "Sign this pls", "Signature": "IAAAAFYGvVjlXarhJEWpwEJUlfMy3uYifvs4ZcEWS5MI0fQvIAAAAPGrMq2aS4fUBZpAc4uLxLrbSNnEcaHwWWrw6YQPMamH"}';
+        var text = '{ "From": "Alice", "To": "Bob", "Amount": 2000, "Signature": "IAAAAFdb20bY0pE/qTXMi4PnUTSQOAzFQ6DJNuF3+hMq4g3tIAAAAMkaqjYc+vG4W2p+wu8JnM0ClIuJ2fclSGJU/YvwEzgQ"}';
         var obj = JSON.parse(text);
 
-        const reuslt = await api.tx.abci.deliverTx({ tx: text}).signAndSend(sudoAccount);
+        const reuslt = await api.tx.abciDirect.deliverTx({ tx: text}).signAndSend(sudoAccount);
         console.log(reuslt);
     } catch (err) {
         console.log(err);
