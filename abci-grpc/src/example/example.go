@@ -15,9 +15,11 @@ func main() {
 
 	//alex_private_key := "MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgYGBgX76TmohBVfOwyBvEeRmLm0ToZaAXARQF8c2oI7GhRANCAASBH4duntdIcDjSFxTLwa/roku6tJtQoCjJhH2gfQ7vFX12A9HpvK4VbIH0w+C4P9OSwqHJAua2ar/OmCEcZvPC"
 
-	message := "Alice" + "Alex" + strconv.Itoa(4000)
+	from := "Alice"
+	to := "Alex"
+	amount := 4000
 
-	log.Print(message)
+	message := from + to + strconv.Itoa(amount)
 
 	signature, err := token.Sign(message, "sign_seed", alice_private_key_encoded)
 
@@ -25,5 +27,5 @@ func main() {
 		log.Fatal(err)
 	}
 
-	log.Printf("signature: %v", signature)
+	log.Printf("{ \"From\": \"%v\", \"To\": \"%v\", \"Amount\": %v, \"Signature\": \"%v\"}", from, to, amount, signature)
 }
