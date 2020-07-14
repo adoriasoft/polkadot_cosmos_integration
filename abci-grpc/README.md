@@ -24,14 +24,6 @@ protoc -I=./proto --go_out=plugins=grpc,paths=source_relative:./src/token ./prot
 protoc -I=./proto --grpc-gateway_out=logtostderr=true,paths=source_relative:./src/token ./proto/token.proto
 ```
 
-### Run and execute
-
-Run via `docker-compose`:
-
-```sh
-docker-compose up
-```
-
 ### Send HTTP requests
 
 ```sh
@@ -39,14 +31,13 @@ curl -H 'Content-Type: application/json' -XPOST -d '{"account_name": "Alice"}' h
 curl -H 'Content-Type: application/json' -XPOST -d '{"account_name": "Bob"}' http://localhost:8082/token/v1/CreateNewAccount
 ```
 
-PATH="/home/leshiy/.cargo/bin:/home/leshiy/.local/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/lib/jvm/default/bin:/usr/bin/site_perl:/usr/bin/vendor_perl:/usr/bin/core_perl:/var/lib/snapd/snap/bin"
-
 ### Build docker image
 
 To scratch image:
 
 ```sh
+cd src/server/
 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o ./app
-
-docker build -f docker/scratch.Dockerfile -t cosmos_node . 
+docker build -f ../../docker/scratch.Dockerfile -t andoriasoft/cosmos-node:latest .
+rm ./app
 ```
