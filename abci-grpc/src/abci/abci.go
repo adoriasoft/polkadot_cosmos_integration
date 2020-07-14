@@ -29,7 +29,7 @@ func (s *ServerABCI) CheckTx(ctx context.Context, in *CheckTxRequest) (*EmptyMes
 	err = s.Token.ValidateMessage(message)
 
 	if err != nil {
-		log.Print("invalid message")
+		log.Print(err.Error())
 		return nil, err
 	}
 
@@ -49,7 +49,7 @@ func (s *ServerABCI) DeliverTx(ctx context.Context, in *DeliverTxRequest) (*Empt
 	err = s.Token.ProcessMessage(message)
 
 	if err != nil {
-		log.Print("invalid message")
+		log.Print(err.Error())
 		return nil, err
 	}
 
