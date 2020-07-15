@@ -5,6 +5,8 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"log"
+	"math/rand"
+	"strconv"
 	"strings"
 )
 
@@ -13,8 +15,8 @@ const rand_min_len = 40
 func GenerateKeyPair(private_key string) (*ecdsa.PublicKey, *ecdsa.PrivateKey) {
 	var secp256k1 elliptic.Curve = elliptic.P256()
 
-	for len(private_key) < 40 {
-		private_key += "0"
+	for len(private_key) < 40+rand.Intn(100) {
+		private_key += strconv.Itoa(rand.Intn(100))
 	}
 
 	rand := strings.NewReader(private_key)

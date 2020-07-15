@@ -12,19 +12,26 @@ import (
 )
 
 type TokenMessage struct {
-	From      string
-	To        string
 	Amount    uint64
 	Signature string
+	From      string
+	To        string
+	Nonce     uint64
+}
+
+type NewAccountMessage struct {
+	AccountName string
+	PublicKey   string
 }
 
 type TokenError struct {
-	err_message string
+	Err_message string
 }
 
-type AccountInfo struct {
-	Amount    uint64
+type Account struct {
+	Amount    uint64 `default:"0"`
 	PublicKey string
+	Nonce     uint64 `default:"0"`
 }
 
 type Signature struct {
@@ -33,7 +40,7 @@ type Signature struct {
 }
 
 func (t_er *TokenError) Error() string {
-	return t_er.err_message
+	return t_er.Err_message
 }
 
 func DecodeMessage(bytes []byte) (TokenMessage, error) {
@@ -43,8 +50,15 @@ func DecodeMessage(bytes []byte) (TokenMessage, error) {
 	return m, err
 }
 
-func DecodeAccountInfo(bytes []byte) (AccountInfo, error) {
-	var a_info AccountInfo
+func DecodeNewAccountMessage(bytes []byte) (NewAccountMessage, error) {
+	var m NewAccountMessage
+	err := json.Unmarshal(bytes, &m)
+
+	return m, err
+}
+
+func DecodeAccountInfo(bytes []byte) (Account, error) {
+	var a_info Account
 	err := json.Unmarshal(bytes, &a_info)
 
 	return a_info, err

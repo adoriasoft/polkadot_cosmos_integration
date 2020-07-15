@@ -19,43 +19,66 @@ func (s *ServerABCI) InitChain(ctx context.Context, in *EmptyMessage) (*EmptyMes
 func (s *ServerABCI) CheckTx(ctx context.Context, in *CheckTxRequest) (*EmptyMessage, error) {
 	log.Print("Received CheckTx()")
 
-	message, err := token.DecodeMessage(in.Tx)
+	tx_message, err1 := token.DecodeMessage(in.Tx)
+	acc_message, err2 := token.DecodeNewAccountMessage(in.Tx)
 
-	if err != nil {
+	if err1 != nil && err2 != nil {
 		log.Print("cannot decode Tx message")
-		return nil, err
+		return nil, &token.TokenError{"cannot decode Tx message"}
 	}
 
-	err = s.Token.ValidateMessage(message)
+	var error_message string
+	if err1 == nil {
+		err := s.Token.ValidateMessage(tx_message)
 
-	if err != nil {
-		log.Print(err.Error())
-		return nil, err
+		if err != nil {
+			error_message = err.Error()
+		} else {
+			log.Print("Received CheckTx() successful")
+			return &EmptyMessage{}, nil
+		}
 	}
 
-	log.Print("Received CheckTx() successful")
-	return &EmptyMessage{}, nil
+	log.Print(error_message)
+	return nil, &token.TokenError{error_message}
 }
 
 func (s *ServerABCI) DeliverTx(ctx context.Context, in *DeliverTxRequest) (*EmptyMessage, error) {
 	log.Print("Received DeliverTx()")
 
-	message, err := token.DecodeMessage(in.Tx)
+	tx_message, err1 := token.DecodeMessage(in.Tx)
+	acc_message, err2 := token.DecodeNewAccountMessage(in.Tx)
 
-	if err != nil {
+	if err1 != nil && err2 != nil {
 		log.Print("cannot decode Tx message")
-		return nil, err
+		return nil, &token.TokenError{"cannot decode Tx message"}
 	}
 
-	err = s.Token.ProcessMessage(message)
+	var error_message string
+	if err1 == nil {
+		err := s.Token.ProcessMessage(tx_message)
 
-	if err != nil {
-		log.Print(err.Error())
-		return nil, err
+		if err != nil {
+			error_message = err.Error()
+		} else {
+			log.Print("Received DeliverTx() successful")
+			return &EmptyMessage{}, nil
+		}
 	}
 
-	log.Print("Received DeliverTx() successful")
-	return &EmptyMessage{}, nil
+	if err2 == nil {
+		err := s.Token.CreateNewAccount(acc_message.AccountName, acc_message.PublicKey)
+
+		if err != nil {
+			error_message = err.Error()
+		} else {
+			log.Print("Received DeliverTx() successful")
+			return &EmptyMessage{}, nil
+		}
+	}
+
+	log.Print(error_message)
+	return nil, &token.TokenError{error_message}
 }
 
 func (s *ServerABCI) OnInitialize(ctx context.Context, in *BlockMessage) (*EmptyMessage, error) {
