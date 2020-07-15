@@ -31,13 +31,11 @@ curl -H 'Content-Type: application/json' -XPOST -d '{"account_name": "Alice"}' h
 curl -H 'Content-Type: application/json' -XPOST -d '{"account_name": "Bob"}' http://localhost:8082/token/v1/CreateNewAccount
 ```
 
-### Build docker image
+### Build and publish docker image
 
-To scratch image:
+Run these commands:
 
 ```sh
-cd src/server/
-GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o ./app
-docker build -f ../../docker/scratch.Dockerfile -t andoriasoft/cosmos-node:latest .
-rm ./app
+docker build -t andoriasoft/cosmos-node:latest .
+docker push andoriasoft/cosmos-node:latest
 ```
