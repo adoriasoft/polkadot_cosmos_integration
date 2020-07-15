@@ -23,3 +23,17 @@ docker run -it --rm -v "$(pwd)/res:/res" node build-spec --chain=res/customSpec.
 ```
 
 Demo server IP: `164.90.208.88`.
+
+### Run docker compose
+
+To run docker-compose file in this folder you need to init nginx with ssl certs, and execute next command:
+
+```sh
+docker-compose up -d
+```
+
+After launching docker containers you can see logs with next command:
+
+```sh
+docker-compose logs --tail 100 -f
+```
