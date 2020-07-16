@@ -46,14 +46,14 @@ How to generate transactions, create new account, send tokens to the another acc
 
 ### Prepare environment
 
-To start the substarte node with token realisation first start token application
+To start the substarte node with token implementation first start token application
 
 ```
 cd src/server
 go run .
 ```
 
-Than you can run the substrate node
+Then you can run the substrate node
 
 ```
 cd ../../../substrate
@@ -64,10 +64,9 @@ cargo build
 Great!!! Now you have already started substarte node with the token application.
 ## Account generation
 
-To generate account open src/generate_tx/generate_tx.go comment line with the token.GenerateTransactionMessage function and public keys,
-specify the account name for the token.GenerateKeyPairForAccount function, this function will print the private key that you should to save somewhere and transaction that you have to broadcast to the substrate network
+To generate a key pair for a new account open src/generate_tx/generate_tx.go, comment line with the token.GenerateTransactionMessage function and public keys, specify the account name for the token.GenerateKeyPairForAccount function. This function will print the private key that you should save somewhere, and message for transaction that should be broadcast to the substrate network.
 
-Here is the code that you should have to execute
+The code will look like
 
 ```
 package main
@@ -88,14 +87,19 @@ cd src/generate_tx
 go run .
 ```
 
-ATTENTION!!!! SAVE THE PRIVATE KEY THAT WILL BE PRINTED, IF NOT WE NOT ABLE TO RESTORE IT
+ATTENTION!!!! SAVE THE PRIVATE KEY THAT WILL BE PRINTED, IT CAN`T BE RECOVERED
 
 ## Tokens sending
 
-To generate transactions for the tokens sending open src/generate_tx/generate_tx.go comment line with the token.GenerateKeyPairForAccount,
-specify the account name FROM, TO, AMOUNT, PRIVATE_KEY, NONCE for the token.GenerateTransactionMessage function, this function will print the transaction that you have to broadcast to the substrate network, that we will look later.
+To generate transactions to send tokens from one account to another, open src/generate_tx/generate_tx.go, comment line with the token.GenerateKeyPairForAccount, specify parameters
+FROM - sender`s name,
+TO - receiver's name,
+AMOUNT - number of tokens,
+PRIVATE_KEY - sender's private key,
+NONCE - the number of transaction sent by the sender
+for the token.GenerateTransactionMessage function. This function will print the message for transaction that should be broadcast to the substrate network, that we will look later.
 
-Here is the code that you should have to execute
+The code will look like
 
 ```
 package main
@@ -123,7 +127,7 @@ ATTENTION!!!! SAVE THE PRIVATE KEY THAT WILL BE PRINTED, IF NOT WE NOT ABLE TO R
 
 ## Broadcast transactions to the substrate net
 
-To broadcast transaction to the substarte net and further execute the token logic you should follow to the next steps
+To broadcast transaction to the substrate net and further execute the token logic you should ffollow the next steps
 
 1. Go to the https://polkadot.js.org/apps/
 2. Go to the 'Settings' -> 'Developer' and replace the code to the next one
@@ -141,7 +145,7 @@ To broadcast transaction to the substarte net and further execute the token logi
 
 ## Get the account info
 
-To get the account info with the balance and current nonce, that is important to specify while transaction generation, execute:
+To get the account info with the balance and current nonce, that must be specified for transaction generation, execute:
 ```
 curl -H 'Content-Type: application/json' -XPOST -d '{"account_name": "Alice"}' http://localhost:8082/token/v1/GetAccountInfo
 ```
