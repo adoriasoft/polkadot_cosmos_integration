@@ -6,7 +6,7 @@ Server for gRPC ABCI REST API.
 
 ### Install protobuf libraries
 
-Install all of the protobuf libraries [here](https://github.com/grpc-ecosystem/grpc-gateway) and make sure to have valid $PATH that points on golang `bin/` folder.
+Install all of the protobuf libraries [here](https://grpc.io/docs/languages/go/quickstart/) and make sure to have valid $PATH that points on golang `bin/` folder.
 
 ### Code generation
 
