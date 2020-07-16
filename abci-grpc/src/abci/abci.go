@@ -20,7 +20,7 @@ func (s *ServerABCI) CheckTx(ctx context.Context, in *CheckTxRequest) (*EmptyMes
 	log.Print("Received CheckTx()")
 
 	tx_message, err1 := token.DecodeMessage(in.Tx)
-	acc_message, err2 := token.DecodeNewAccountMessage(in.Tx)
+	_, err2 := token.DecodeNewAccountMessage(in.Tx)
 
 	if err1 != nil && err2 != nil {
 		log.Print("cannot decode Tx message")

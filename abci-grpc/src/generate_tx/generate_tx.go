@@ -12,7 +12,7 @@ func main() {
 
 	//alice_private_key := "MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgnmlvaImLkJlJXvu7vQ7t4Y6rqH/5jVsyuTa6B5vGC7KhRANCAAQTCnjgKkLm/7X9lRF2R+04RubrNk4Z5i6nRQkBGWICHNmwgITyEI5I6NUNtHN71zrP0DPV8m6G7GYADX1O4WHw"
 
-	token.GenerateTransactionMessage("Alex", "Bob", 1000, alex_private_key)
+	token.GenerateTransactionMessage("Alex", "Bob", 1000, alex_private_key, 0)
 
 	token.GenerateKeyPairForAccount("Alex")
 }
