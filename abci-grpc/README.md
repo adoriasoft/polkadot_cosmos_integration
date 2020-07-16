@@ -27,8 +27,7 @@ protoc -I=./proto --grpc-gateway_out=logtostderr=true,paths=source_relative:./sr
 ### Send HTTP requests
 
 ```sh
-curl -H 'Content-Type: application/json' -XPOST -d '{"account_name": "Alice"}' http://localhost:8082/token/v1/GetBalance
-curl -H 'Content-Type: application/json' -XPOST -d '{"account_name": "Bob"}' http://localhost:8082/token/v1/CreateNewAccount
+curl -H 'Content-Type: application/json' -XPOST -d '{"account_name": "Alice"}' http://localhost:8082/token/v1/GetAccountInfo
 ```
 
 ### Build and publish docker image
