@@ -12,16 +12,16 @@ import (
 )
 
 type TokenMessage struct {
-	Amount    uint64
-	Signature string
-	From      string
-	To        string
-	Nonce     uint64
+	Amount    uint64 `json:"Amount"`
+	Signature string `json:"Signature"`
+	From      string `json:"From"`
+	To        string `json:"To"`
+	Nonce     uint64 `json:"Nonce"`
 }
 
 type NewAccountMessage struct {
-	AccountName string
-	PublicKey   string
+	AccountName string `json:"AccountName"`
+	PublicKey   string `json:"PublicKey"`
 }
 
 type TokenError struct {
@@ -47,12 +47,20 @@ func DecodeMessage(bytes []byte) (TokenMessage, error) {
 	var m TokenMessage
 	err := json.Unmarshal(bytes, &m)
 
+	if m.Amount == 0 && m.Nonce == 0 && m.From == "" && m.To == "" && m.Signature == "" {
+		return m, &TokenError{"cant decode message"}
+	}
+
 	return m, err
 }
 
 func DecodeNewAccountMessage(bytes []byte) (NewAccountMessage, error) {
 	var m NewAccountMessage
 	err := json.Unmarshal(bytes, &m)
+
+	if m.AccountName == "" && m.PublicKey == "" {
+		return m, &TokenError{"cant decode message"}
+	}
 
 	return m, err
 }
