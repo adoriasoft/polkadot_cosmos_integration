@@ -10,7 +10,7 @@ mod tests;
 use alt_serde::{Deserialize, Serialize};
 use codec::{Decode, Encode};
 use frame_support::{
-    debug, decl_module, dispatch::DispatchResult, dispatch::Vec,
+    debug, decl_module, decl_error, dispatch::DispatchResult, dispatch::Vec,
     sp_runtime::transaction_validity::TransactionSource, weights::Weight,
 };
 use frame_system::ensure_signed;
@@ -36,6 +36,13 @@ pub trait Trait: frame_system::Trait {
     type Call: From<Call<Self>>;
 }
 
+decl_error! {
+    pub enum Error for Module<T: Trait> {
+        /// Cosmos returned an error
+        CosmosError,
+    }
+}
+
 // The pallet's dispatchable functions.
 decl_module! {
     /// The module declaration.
@@ -55,8 +62,10 @@ decl_module! {
         pub fn deliver_tx(origin, tx: TxMessage) -> DispatchResult {
             ensure_signed(origin)?;
             debug::info!("Received deliver tx request");
-            abci_interface::deliver_tx(&tx);
-            Ok(())
+            match abci_interface::deliver_tx(&tx) {
+                true => Ok(()),
+                false => Err(<Error<T>>::CosmosError.into()),
+            }
         }
     }
 }
