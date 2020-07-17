@@ -150,6 +150,13 @@ To get the account info with the balance and current nonce, that must be specifi
 curl -H 'Content-Type: application/json' -XPOST -d '{"account_name": "Alice"}' http://localhost:8082/token/v1/GetAccountInfo
 ```
 
+## Run Tests
+
+```
+cd src/token
+go test
+```
+
 
 
 
