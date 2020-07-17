@@ -1,4 +1,6 @@
-/// To execute most of these tests you need to run Cosmos node with gRPC ABCI.
+// To execute most of these tests you need to run Cosmos node with gRPC ABCI.
+
+/*
 
 use super::{TxMessage, BlockMessage, abci_interface};
 use crate::mock::*;
@@ -80,3 +82,5 @@ fn test_block_message_commit() {
         assert_eq!(abci_interface::commit(&blk_msg), true);
     });
 }
+
+*/
