@@ -27,6 +27,8 @@ protoc -I=./proto --grpc-gateway_out=logtostderr=true,paths=source_relative:./sr
 ### Send HTTP requests
 
 ```sh
+curl -H 'Content-Type: application/json' -XPOST -d '{"account_name": "Alice"}' https://polka.adoriasoft.com/token/v1/GetAccountInfo
+
 curl -H 'Content-Type: application/json' -XPOST -d '{"account_name": "Alice"}' http://localhost:8082/token/v1/GetAccountInfo
 ```
 
@@ -156,13 +158,3 @@ curl -H 'Content-Type: application/json' -XPOST -d '{"account_name": "Alice"}' h
 cd src/token
 go test
 ```
-
-
-
-
-
-
-
-
-
-
