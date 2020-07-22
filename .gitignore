@@ -23,6 +23,6 @@ target
 
 node_modules
 
-*pb.*
+# *pb.*
 token_data
 test*
