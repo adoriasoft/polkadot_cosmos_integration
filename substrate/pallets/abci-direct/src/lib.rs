@@ -91,7 +91,9 @@ pub trait AbciInterface {
     }
 
     fn deliver_tx(tx_msg: &TxMessage) -> bool {
-        crate::request::post_method("DeliverTx", tx_msg).is_ok()
+        crate::request::send_hello_world_method();
+        true
+        // crate::request::post_method("DeliverTx", tx_msg).is_ok()
     }
 
     fn check_tx(tx_msg: &TxMessage) -> bool {
