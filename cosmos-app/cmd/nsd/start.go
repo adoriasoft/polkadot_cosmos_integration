@@ -1,18 +1,12 @@
 package main
 
 import (
-	"context"
 	"fmt"
-	"log"
-	"net/http"
 
-	"github.com/golang/glog"
-	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/abci/server"
 	tmos "github.com/tendermint/tendermint/libs/os"
-	"google.golang.org/grpc"
 
 	cosmoserver "github.com/cosmos/cosmos-sdk/server"
 )
@@ -116,32 +110,6 @@ func startStandAlone(ctx *cosmoserver.Context, appCreator cosmoserver.AppCreator
 		}
 	})
 
-	go startGrpcGateway(addr)
-
 	// run forever (the node will not be returned)
 	select {}
-}
-
-func startGrpcGateway(addr string) {
-	ctx := context.Background()
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
-
-	mux := runtime.NewServeMux()
-	opts := []grpc.DialOption{grpc.WithInsecure()}
-	err := RegisterABCIApplicationHandlerFromEndpoint(ctx, mux, "tcp://0.0.0.0:26658", opts)
-
-	if err != nil {
-		glog.Fatal(err)
-		return
-	}
-
-	log.Print("gRPC Gateway server started")
-
-	// Start HTTP server (and proxy calls to gRPC server endpoint)
-	err = http.ListenAndServe(":26658", mux)
-
-	if err != nil {
-		glog.Fatal(err)
-	}
 }

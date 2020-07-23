@@ -11,6 +11,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "abci"
+version = "2.0.0-rc3"
+dependencies = [
+ "prost",
+ "tokio 0.2.21",
+ "tonic",
+ "tonic-build",
+]
+
+[[package]]
 name = "addr2line"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -703,9 +713,9 @@ dependencies = [
 
 [[package]]
 name = "curl"
-version = "0.4.30"
+version = "0.4.31"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b0447a642435be046540f042950d874a4907f9fee28c0513a0beb3ba89f91eb7"
+checksum = "9447ad28eee2a5cfb031c329d46bef77487244fff6a724b378885b8691a35f78"
 dependencies = [
  "curl-sys",
  "libc",
@@ -718,9 +728,9 @@ dependencies = [
 
 [[package]]
 name = "curl-sys"
-version = "0.4.32+curl-7.70.0"
+version = "0.4.33+curl-7.71.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "834425a2f22fdd621434196965bf99fbfd9eaed96348488e27b7ac40736c560b"
+checksum = "3e9818ea018327f79c811612f29b9834d2abddbe7db81460a2d5c7e12946b337"
 dependencies = [
  "cc",
  "libc",
@@ -1784,9 +1794,9 @@ checksum = "47be2f14c678be2fdcab04ab1171db51b2762ce6f0a8ee87c8dd4a04ed216135"
 
 [[package]]
 name = "isahc"
-version = "0.9.5"
+version = "0.9.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f54e7cf252df9a36605ccfabea2a754ad30c24b51b77f830486e555ac8e76bce"
+checksum = "fb136468b33e585d7b62aa4a4dce4da580494b73a17f8ca4778e51c6774ba7ac"
 dependencies = [
  "bytes 0.5.4",
  "crossbeam-channel",
@@ -2758,10 +2768,9 @@ dependencies = [
  "frame-executive",
  "frame-support",
  "frame-system",
- "pallet-abci-direct",
- "pallet-abci-offchain",
  "pallet-aura",
  "pallet-balances",
+ "pallet-cosmos-abci",
  "pallet-grandpa",
  "pallet-randomness-collective-flip",
  "pallet-sudo",
@@ -2951,43 +2960,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-abci-direct"
-version = "2.0.0-rc3"
-dependencies = [
- "alt_serde",
- "frame-support",
- "frame-system",
- "isahc",
- "parity-scale-codec",
- "prost",
- "serde_json 1.0.44",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-runtime-interface",
- "sp-std",
- "tokio 0.2.21",
- "tonic",
- "tonic-build",
-]
-
-[[package]]
-name = "pallet-abci-offchain"
-version = "2.0.0-rc3"
-dependencies = [
- "alt_serde",
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "serde_json 1.0.44",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-runtime-interface",
- "sp-std",
-]
-
-[[package]]
 name = "pallet-aura"
 version = "2.0.0-rc3"
 source = "git+https://github.com/paritytech/substrate.git?tag=v2.0.0-rc3#34695a85650b58bcd7d7e2a677cafc2921251d68"
@@ -3017,6 +2989,24 @@ dependencies = [
  "parity-scale-codec",
  "serde",
  "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-cosmos-abci"
+version = "2.0.0-rc3"
+dependencies = [
+ "abci",
+ "alt_serde",
+ "frame-support",
+ "frame-system",
+ "isahc",
+ "parity-scale-codec",
+ "serde_json 1.0.44",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-runtime-interface",
  "sp-std",
 ]
 

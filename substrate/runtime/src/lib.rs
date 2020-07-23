@@ -8,15 +8,13 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-use codec::Encode;
 use grandpa::fg_primitives;
 use grandpa::{AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::traits::{
-    BlakeTwo256, Block as BlockT, IdentifyAccount, IdentityLookup, NumberFor, Saturating,
-    StaticLookup, Verify,
+    BlakeTwo256, Block as BlockT, IdentifyAccount, IdentityLookup, NumberFor, Saturating, Verify,
 };
 use sp_runtime::{
     create_runtime_str, generic, impl_opaque_keys,
@@ -46,8 +44,7 @@ pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 pub use timestamp::Call as TimestampCall;
 
-pub use abci_direct;
-pub use abci_offchain;
+pub use cosmos_abci;
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -129,15 +126,15 @@ pub fn native_version() -> NativeVersion {
 }
 
 parameter_types! {
-	pub const BlockHashCount: BlockNumber = 2400;
-	/// We allow for 2 seconds of compute with a 6 second average block time.
-	pub const MaximumBlockWeight: Weight = 2 * WEIGHT_PER_SECOND;
-	pub const AvailableBlockRatio: Perbill = Perbill::from_percent(75);
-	/// Assume 10% of weight for average on_initialize calls.
-	pub MaximumExtrinsicWeight: Weight = AvailableBlockRatio::get()
-		.saturating_sub(Perbill::from_percent(10)) * MaximumBlockWeight::get();
-	pub const MaximumBlockLength: u32 = 5 * 1024 * 1024;
-	pub const Version: RuntimeVersion = VERSION;
+    pub const BlockHashCount: BlockNumber = 2400;
+    /// We allow for 2 seconds of compute with a 6 second average block time.
+    pub const MaximumBlockWeight: Weight = 2 * WEIGHT_PER_SECOND;
+    pub const AvailableBlockRatio: Perbill = Perbill::from_percent(75);
+    /// Assume 10% of weight for average on_initialize calls.
+    pub MaximumExtrinsicWeight: Weight = AvailableBlockRatio::get()
+        .saturating_sub(Perbill::from_percent(10)) * MaximumBlockWeight::get();
+    pub const MaximumBlockLength: u32 = 5 * 1024 * 1024;
+    pub const Version: RuntimeVersion = VERSION;
 }
 
 impl system::Trait for Runtime {
@@ -258,68 +255,7 @@ impl sudo::Trait for Runtime {
     type Call = Call;
 }
 
-impl<LocalCall> system::offchain::CreateSignedTransaction<LocalCall> for Runtime
-where
-    Call: From<LocalCall>,
-{
-    fn create_transaction<C: system::offchain::AppCrypto<Self::Public, Self::Signature>>(
-        call: Call,
-        public: <Signature as sp_runtime::traits::Verify>::Signer,
-        account: AccountId,
-        nonce: Index,
-    ) -> Option<(
-        Call,
-        <UncheckedExtrinsic as sp_runtime::traits::Extrinsic>::SignaturePayload,
-    )> {
-        // take the biggest period possible.
-        let period = BlockHashCount::get()
-            .checked_next_power_of_two()
-            .map(|c| c / 2)
-            .unwrap_or(2) as u64;
-        // The `System::block_number` is initialized with `n+1`,
-        // so the actual block number is `n`.
-        let current_block = System::block_number() as u64 - 1;
-        let tip = 0;
-        let extra: SignedExtra = (
-            system::CheckSpecVersion::<Runtime>::new(),
-            system::CheckTxVersion::<Runtime>::new(),
-            system::CheckGenesis::<Runtime>::new(),
-            system::CheckEra::<Runtime>::from(generic::Era::mortal(period, current_block)),
-            system::CheckNonce::<Runtime>::from(nonce),
-            system::CheckWeight::<Runtime>::new(),
-            transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
-        );
-        let raw_payload = SignedPayload::new(call, extra)
-            .map_err(|e| {
-                debug::warn!("Unable to create signed payload: {:?}", e);
-            })
-            .ok()?;
-        let signature = raw_payload.using_encoded(|payload| C::sign(payload, public))?;
-        let address = IdentityLookup::unlookup(account);
-        let (call, extra, _) = raw_payload.deconstruct();
-        Some((call, (address, signature.into(), extra)))
-    }
-}
-
-impl system::offchain::SigningTypes for Runtime {
-    type Public = <Signature as sp_runtime::traits::Verify>::Signer;
-    type Signature = Signature;
-}
-
-impl<C> system::offchain::SendTransactionTypes<C> for Runtime
-where
-    Call: From<C>,
-{
-    type Extrinsic = UncheckedExtrinsic;
-    type OverarchingCall = Call;
-}
-
-impl abci_offchain::Trait for Runtime {
-    type AuthorityId = abci_offchain::crypto::AuthId;
-    type Call = Call;
-}
-
-impl abci_direct::Trait for Runtime {
+impl cosmos_abci::Trait for Runtime {
     type Call = Call;
 }
 
@@ -337,8 +273,7 @@ construct_runtime!(
         Balances: balances::{Module, Call, Storage, Config<T>, Event<T>},
         TransactionPayment: transaction_payment::{Module, Storage},
         Sudo: sudo::{Module, Call, Config<T>, Storage, Event<T>},
-        AbciOffchain: abci_offchain::{Module, Call},
-        AbciDirect: abci_direct::{Module, Call},
+        CosmosAbci: cosmos_abci::{Module, Call},
     }
 );
 
@@ -424,8 +359,8 @@ impl_runtime_apis! {
             tx: <Block as BlockT>::Extrinsic,
         ) -> TransactionValidity {
             let res = Executive::validate_transaction(source, tx.clone());
-            if let Some(&abci_direct::Call::deliver_tx(ref val)) = IsSubType::<AbciDirect, Runtime>::is_sub_type(&tx.function) {
-                AbciDirect::do_check_tx(source, val.tx.clone());
+            if let Some(&cosmos_abci::Call::deliver_tx(ref val)) = IsSubType::<CosmosAbci, Runtime>::is_sub_type(&tx.function) {
+                CosmosAbci::do_check_tx(source, val.tx.clone());
             }
             res
         }

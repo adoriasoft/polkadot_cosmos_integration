@@ -90,8 +90,8 @@ pub trait AbciInterface {
         crate::request::get_method("InitChain").is_ok()
     }
 
-    fn deliver_tx(tx_msg: &TxMessage) -> bool {
-        crate::request::send_hello_world_method();
+    fn deliver_tx(_tx_msg: &TxMessage) -> bool {
+        abci::send_test_method(crate::request::get_server_url());
         true
         // crate::request::post_method("DeliverTx", tx_msg).is_ok()
     }

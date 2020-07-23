@@ -1,0 +1,41 @@
+syntax = "proto3";
+package abci;
+
+//----------------------------------------
+// Request types
+
+message RequestEcho {
+    string message = 1;
+}
+
+message RequestDeliverTx {
+    bytes tx = 1;
+}
+
+message RequestCommit {}
+
+//----------------------------------------
+// Response types
+
+message ResponseEcho {
+    string message = 1;
+}
+
+message ResponseDeliverTx {
+    uint32 code = 1;
+}
+
+message ResponseCommit {
+    // reserve 1
+    bytes data          = 2;
+    int64 retain_height = 3;
+}
+
+//----------------------------------------
+// Service Definition
+
+service Abci {
+    rpc Echo(RequestEcho) returns (ResponseEcho);
+    rpc DeliverTx(RequestDeliverTx) returns (ResponseDeliverTx);
+    rpc Commit(RequestCommit) returns (ResponseCommit);
+}
