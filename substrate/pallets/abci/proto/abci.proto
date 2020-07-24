@@ -1,41 +1,19 @@
 syntax = "proto3";
-package abci;
+package token_abci;
 
-//----------------------------------------
-// Request types
+message EmptyMessage {}
 
-message RequestEcho {
-    string message = 1;
-}
+message CheckTxRequest { bytes tx = 1; }
 
-message RequestDeliverTx {
-    bytes tx = 1;
-}
+message DeliverTxRequest { bytes tx = 1; }
 
-message RequestCommit {}
+message BlockMessage { uint64 height = 1; }
 
-//----------------------------------------
-// Response types
-
-message ResponseEcho {
-    string message = 1;
-}
-
-message ResponseDeliverTx {
-    uint32 code = 1;
-}
-
-message ResponseCommit {
-    // reserve 1
-    bytes data          = 2;
-    int64 retain_height = 3;
-}
-
-//----------------------------------------
-// Service Definition
-
-service Abci {
-    rpc Echo(RequestEcho) returns (ResponseEcho);
-    rpc DeliverTx(RequestDeliverTx) returns (ResponseDeliverTx);
-    rpc Commit(RequestCommit) returns (ResponseCommit);
+service TokenAbci {
+  rpc InitChain(EmptyMessage) returns (EmptyMessage);
+  rpc CheckTx(CheckTxRequest) returns (EmptyMessage);
+  rpc DeliverTx(DeliverTxRequest) returns (EmptyMessage);
+  rpc OnInitialize(BlockMessage) returns (EmptyMessage);
+  rpc OnFinilize(BlockMessage) returns (EmptyMessage);
+  rpc Commit(BlockMessage) returns (EmptyMessage);
 }
