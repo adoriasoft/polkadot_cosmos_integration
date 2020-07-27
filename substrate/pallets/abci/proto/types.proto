@@ -1,5 +1,5 @@
 syntax = "proto3";
-package types;
+package tendermint.abci.types;
 
 //----------------------------------------
 // Request types
