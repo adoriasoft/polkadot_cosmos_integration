@@ -2,8 +2,6 @@
 
 #[cfg(test)]
 mod mock;
-#[cfg(feature = "std")]
-mod request;
 #[cfg(test)]
 mod tests;
 
@@ -49,66 +47,61 @@ decl_module! {
     pub struct Module<T: Trait> for enum Call where origin: T::Origin {
         /// Block initialization
         fn on_initialize(now: T::BlockNumber) -> Weight {
-            abci_interface::on_initialize(&BlockMessage { height: now.saturated_into() as u64 });
+            // abci_interface::on_initialize(&BlockMessage { height: now.saturated_into() as u64 });
             return 0;
         }
 
         /// Block finalization
         fn on_finalize(now: T::BlockNumber) {
-            abci_interface::on_finalize(&BlockMessage { height: now.saturated_into() as u64 });
+            // abci_interface::on_finalize(&BlockMessage { height: now.saturated_into() as u64 });
         }
 
         #[weight = 0]
         pub fn deliver_tx(origin, tx: TxMessage) -> DispatchResult {
             ensure_signed(origin)?;
             debug::info!("Received deliver tx request");
-            match abci_interface::deliver_tx(&tx) {
-                true => Ok(()),
-                false => Err(<Error<T>>::CosmosError.into()),
-            }
+            // match abci_interface::deliver_tx(&tx) {
+            //     true => Ok(()),
+            //     false => Err(<Error<T>>::CosmosError.into()),
+            // }
+            Ok(())
         }
     }
 }
 
 impl<T: Trait> Module<T> {
     pub fn do_init_chain() {
-        abci_interface::init_chain();
+        // abci_interface::init_chain();
     }
 
     pub fn do_commit(height: u64) {
-        abci_interface::commit(&BlockMessage { height });
+        // abci_interface::commit(&BlockMessage { height });
     }
 
     pub fn do_check_tx(_source: TransactionSource, tx: Vec<u8>) {
-        abci_interface::check_tx(&TxMessage { tx });
+        // abci_interface::check_tx(&TxMessage { tx });
+    }
+}
+
+#[cfg(feature = "std")]
+pub fn get_server_url() -> String {
+    match std::env::var("ABCI_SERVER_URL") {
+        Ok(val) => val,
+        Err(_) => abci::DEFAULT_ABCI_URL.to_owned(),
     }
 }
 
 #[runtime_interface]
 pub trait AbciInterface {
-    fn init_chain() -> bool {
-        crate::request::get_method("InitChain").is_ok()
+    fn echo() -> DispatchResult {
+        Ok(())
     }
 
-    fn deliver_tx(_tx_msg: &TxMessage) -> bool {
-        abci::send_test_method(crate::request::get_server_url());
-        true
-        // crate::request::post_method("DeliverTx", tx_msg).is_ok()
+    fn deliver_tx() {
+        // abci::send_test_method(crate::request::get_server_url());
     }
 
-    fn check_tx(tx_msg: &TxMessage) -> bool {
-        crate::request::post_method("CheckTx", tx_msg).is_ok()
-    }
+    fn check_tx() {}
 
-    fn on_initialize(blk_msg: &BlockMessage) -> bool {
-        crate::request::post_method("OnInitialize", blk_msg).is_ok()
-    }
-
-    fn on_finalize(blk_msg: &BlockMessage) -> bool {
-        crate::request::post_method("OnFinilize", blk_msg).is_ok()
-    }
-
-    fn commit(blk_msg: &BlockMessage) -> bool {
-        crate::request::post_method("Commit", blk_msg).is_ok()
-    }
+    fn commit() {}
 }

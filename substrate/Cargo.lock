@@ -15,6 +15,7 @@ name = "abci"
 version = "2.0.0-rc3"
 dependencies = [
  "prost",
+ "prost-types",
  "tokio 0.2.21",
  "tonic",
  "tonic-build",
@@ -5995,7 +5996,6 @@ dependencies = [
  "pin-project-lite",
  "signal-hook-registry",
  "slab",
- "tokio-macros",
  "winapi 0.3.8",
 ]
 
@@ -6072,17 +6072,6 @@ dependencies = [
  "bytes 0.4.12",
  "futures 0.1.29",
  "log",
-]
-
-[[package]]
-name = "tokio-macros"
-version = "0.2.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f0c3acc6aa564495a0f2e1d59fab677cd7f81a19994cfc7f3ad0e64301560389"
-dependencies = [
- "proc-macro2",
- "quote 1.0.6",
- "syn 1.0.25",
 ]
 
 [[package]]
