@@ -13,6 +13,11 @@ Install all of the protobuf libraries [here](https://grpc.io/docs/languages/go/q
 To generate code for golang via protoc run next commands:
 
 ```sh
+# Generate gRPC stub for the abci
+protoc -I=./proto --go_out=plugins=grpc,paths=source_relative:./src/abci ./proto/abci.proto
+# Generate reverse-proxy using protoc-gen-grpc-gateway for the abci
+protoc -I=./proto --grpc-gateway_out=logtostderr=true,paths=source_relative:./src/abci ./proto/abci.proto
+
 # Generate gRPC stub for the token
 protoc -I=./proto --go_out=plugins=grpc,paths=source_relative:./src/token ./proto/token.proto
 # Generate reverse-proxy using protoc-gen-grpc-gateway for the token
