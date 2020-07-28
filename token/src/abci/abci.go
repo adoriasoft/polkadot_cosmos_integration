@@ -1,22 +1,24 @@
 package abci
 
 import (
+	proto "github.com/tendermint/tendermint/abci/types"
+
 	"abci-grpc/src/token"
 	context "context"
 	"log"
 )
 
 type ServerABCI struct {
-	UnimplementedAbciServer
+	proto.UnimplementedABCIApplicationServer
 	Token *token.Token
 }
 
-func (s *ServerABCI) InitChain(ctx context.Context, in *EmptyMessage) (*EmptyMessage, error) {
+func (s *ServerABCI) InitChain(ctx context.Context, in *proto.RequestInitChain) (*proto.ResponseInitChain, error) {
 	log.Print("received InitChain()")
-	return &EmptyMessage{}, nil
+	return &proto.ResponseInitChain{}, nil
 }
 
-func (s *ServerABCI) CheckTx(ctx context.Context, in *CheckTxRequest) (*EmptyMessage, error) {
+func (s *ServerABCI) CheckTx(ctx context.Context, in *proto.RequestCheckTx) (*proto.ResponseCheckTx, error) {
 	log.Print("Received CheckTx()")
 
 	tx_message, err1 := token.DecodeMessage(in.Tx)
@@ -35,7 +37,7 @@ func (s *ServerABCI) CheckTx(ctx context.Context, in *CheckTxRequest) (*EmptyMes
 			error_message = err.Error()
 		} else {
 			log.Print("Received CheckTx() successful")
-			return &EmptyMessage{}, nil
+			return &proto.ResponseCheckTx{}, nil
 		}
 	}
 
@@ -43,7 +45,7 @@ func (s *ServerABCI) CheckTx(ctx context.Context, in *CheckTxRequest) (*EmptyMes
 	return nil, &token.TokenError{error_message}
 }
 
-func (s *ServerABCI) DeliverTx(ctx context.Context, in *DeliverTxRequest) (*EmptyMessage, error) {
+func (s *ServerABCI) DeliverTx(ctx context.Context, in *proto.RequestDeliverTx) (*proto.ResponseDeliverTx, error) {
 	log.Print("Received DeliverTx()")
 
 	tx_message, err1 := token.DecodeMessage(in.Tx)
@@ -62,7 +64,7 @@ func (s *ServerABCI) DeliverTx(ctx context.Context, in *DeliverTxRequest) (*Empt
 			error_message = err.Error()
 		} else {
 			log.Print("Received DeliverTx() successful")
-			return &EmptyMessage{}, nil
+			return &proto.ResponseDeliverTx{}, nil
 		}
 	}
 
@@ -73,7 +75,7 @@ func (s *ServerABCI) DeliverTx(ctx context.Context, in *DeliverTxRequest) (*Empt
 			error_message = err.Error()
 		} else {
 			log.Print("Received DeliverTx() successful")
-			return &EmptyMessage{}, nil
+			return &proto.ResponseDeliverTx{}, nil
 		}
 	}
 
@@ -81,8 +83,8 @@ func (s *ServerABCI) DeliverTx(ctx context.Context, in *DeliverTxRequest) (*Empt
 	return nil, &token.TokenError{error_message}
 }
 
-func (s *ServerABCI) OnInitialize(ctx context.Context, in *BlockMessage) (*EmptyMessage, error) {
-	log.Printf("Received OnInitialize(), block height: %d", in.Height)
+func (s *ServerABCI) BeginBlock(ctx context.Context, in *proto.RequestBeginBlock) (*proto.ResponseBeginBlock, error) {
+	log.Printf("Received BeginBlock(), block height: %d", in.Header.Height)
 
 	err := s.Token.MineNewTokens(token.BASE_ACCOUNT)
 
@@ -91,15 +93,15 @@ func (s *ServerABCI) OnInitialize(ctx context.Context, in *BlockMessage) (*Empty
 		return nil, err
 	}
 
-	return &EmptyMessage{}, nil
+	return &proto.ResponseBeginBlock{}, nil
 }
 
-func (s *ServerABCI) OnFinilize(ctx context.Context, in *BlockMessage) (*EmptyMessage, error) {
-	log.Printf("Received OnFinilize(), block height: %d", in.Height)
-	return &EmptyMessage{}, nil
+func (s *ServerABCI) EndBlock(ctx context.Context, in *proto.RequestEndBlock) (*proto.ResponseEndBlock, error) {
+	log.Printf("Received EndBlock(), block height: %d", in.Height)
+	return &proto.ResponseEndBlock{}, nil
 }
 
-func (s *ServerABCI) Commit(ctx context.Context, in *BlockMessage) (*EmptyMessage, error) {
-	log.Printf("Received Commit(), block height: %d", in.Height)
-	return &EmptyMessage{}, nil
+func (s *ServerABCI) Commit(ctx context.Context, in *proto.RequestCommit) (*proto.ResponseCommit, error) {
+	log.Printf("Received Commit()")
+	return &proto.ResponseCommit{}, nil
 }
