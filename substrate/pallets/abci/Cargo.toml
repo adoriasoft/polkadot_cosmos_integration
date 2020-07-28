@@ -1,0 +1,16 @@
+[package]
+name = 'abci'
+description = 'Cosmos ABCI library to communicate with Cosmos Applications'
+edition = '2018'
+homepage = 'https://substrate.io'
+license = 'Unlicense'
+version = '2.0.0-rc3'
+
+[dependencies]
+tokio = { version = '0.2', features = ['rt-threaded', 'time', 'blocking'] }
+tonic = { version = '0.3.0', features = ['tls'] }
+prost = { version = '0.6' }
+prost-types = { version = '0.6' }
+
+[build-dependencies]
+tonic-build = { version = '0.3.0', features = ['prost'] }

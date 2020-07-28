@@ -19,7 +19,7 @@ native_executor_instance!(
 	pub Executor,
 	node_template_runtime::api::dispatch,
 	node_template_runtime::native_version,
-    node_template_runtime::abci_direct::abci_interface::HostFunctions,
+    node_template_runtime::cosmos_abci::abci_interface::HostFunctions,
 );
 
 /// Starts a `ServiceBuilder` for a full service.
