@@ -2,16 +2,15 @@
 name = 'abci'
 description = 'Cosmos ABCI library to communicate with Cosmos Applications'
 edition = '2018'
-homepage = 'https://substrate.io'
-license = 'Unlicense'
-version = '2.0.0-rc3'
+version = '0.1.0'
 
 [dependencies]
 tokio = { version = '0.2', features = ['rt-threaded', 'time', 'blocking'] }
 tonic = { version = '0.3.0', features = ['tls'] }
 prost = { version = '0.6' }
-prost-types = { version = '0.6' }
-lazy_static = { version = "1.2.0" }
+prost-types = '0.6'
+lazy_static = '1.2.0'
+owning_ref = '0.4.1'
 
 [build-dependencies]
 tonic-build = { version = '0.3.0', features = ['prost'] }

@@ -1,8 +1,14 @@
 pub mod protos;
 
+use lazy_static::lazy_static;
+use owning_ref::MutexGuardRefMut;
 use protos::abci_application_client;
-use std::time::Duration;
+use std::{sync::Mutex, time::Duration};
 use tokio::runtime::Runtime;
+
+lazy_static! {
+    static ref ABCI_CLIENT: Mutex<Option<Client>> = Mutex::new(None);
+}
 
 pub const DEFAULT_ABCI_URL: &str = "tcp://localhost:26658";
 
@@ -14,16 +20,29 @@ pub struct Client {
     client: AbciClient,
 }
 
+pub fn connect_or_get_connection<'ret>(
+    abci_endpoint: &str,
+) -> AbciResult<MutexGuardRefMut<'ret, Option<Client>, Client>> {
+    let mut client = ABCI_CLIENT.lock()?;
+    if client.is_none() {
+        *client = Some(Client::connect(abci_endpoint)?);
+    }
+    // Here we create a ref to the inner value of the mutex guard.
+    // Unwrap should never panic as we set it previously.
+    let res = MutexGuardRefMut::new(client).map_mut(|mg| mg.as_mut().unwrap());
+    Ok(res)
+}
+
 impl Client {
-    pub fn connect(abci_endpoint: &str) -> Self {
-        let mut rt = Runtime::new().unwrap();
+    pub fn connect(abci_endpoint: &str) -> AbciResult<Self> {
+        let mut rt = Runtime::new()?;
         let future = connect(abci_endpoint);
         let client = rt.block_on(async move {
             tokio::time::timeout(Duration::from_secs(1), future)
                 .await
                 .expect("failed to set timeout for future")
-        }).unwrap();
-        Client { rt, client }
+        })?;
+        Ok(Client { rt, client })
     }
 
     pub fn echo(&mut self, message: String) -> AbciResult<()> {
@@ -149,66 +168,70 @@ async fn connect(abci_endpoint: &str) -> AbciResult<AbciClient> {
     Ok(client)
 }
 
-
-/// Static client variable
-#[macro_use]
-extern crate lazy_static;
-use std::sync::Mutex;
-
-lazy_static! {
-    pub static ref ABCI_Client: Mutex<Client> = Mutex::new(Client::connect(DEFAULT_ABCI_URL));
-}
-
 #[cfg(test)]
 mod test {
     use super::*;
 
     #[test]
     fn test_abci_echo() {
-        let result = ABCI_Client.lock().unwrap().echo("Hello there".to_owned());
-        println!("result: {:?}", result);
+        let result = connect_or_get_connection(DEFAULT_ABCI_URL)
+            .unwrap()
+            .echo("Hello there".to_owned());
+        println!("echo result: {:?}", result);
         assert_eq!(result.is_ok(), true);
     }
 
     #[test]
     fn test_abci_deliver_tx() {
-        let result = ABCI_Client.lock().unwrap().deliver_tx(Vec::new());
-        println!("result: {:?}", result);
+        let result = connect_or_get_connection(DEFAULT_ABCI_URL)
+            .unwrap()
+            .deliver_tx(Vec::new());
+        println!("deliver_tx result: {:?}", result);
         assert_eq!(result.is_ok(), true);
     }
 
     #[test]
     fn test_abci_check_tx() {
-        let result = ABCI_Client.lock().unwrap().check_tx(Vec::new(), 0);
-        println!("result: {:?}", result);
+        let result = connect_or_get_connection(DEFAULT_ABCI_URL)
+            .unwrap()
+            .check_tx(Vec::new(), 0);
+        println!("check_tx result: {:?}", result);
         assert_eq!(result.is_ok(), true);
     }
 
     #[test]
     fn test_abci_init_chain() {
-        let result = ABCI_Client.lock().unwrap().init_chain("chain_id".to_owned(), Vec::new());
-        println!("result: {:?}", result);
+        let result = connect_or_get_connection(DEFAULT_ABCI_URL)
+            .unwrap()
+            .init_chain("chain_id".to_owned(), Vec::new());
+        println!("init_chain result: {:?}", result);
         assert_eq!(result.is_ok(), true);
     }
 
     #[test]
     fn test_abci_begin_block() {
-        let result = ABCI_Client.lock().unwrap().begin_block(Vec::new());
-        println!("result: {:?}", result);
+        let result = connect_or_get_connection(DEFAULT_ABCI_URL)
+            .unwrap()
+            .begin_block(Vec::new());
+        println!("begin_block result: {:?}", result);
         assert_eq!(result.is_ok(), true);
     }
 
     #[test]
     fn test_abci_end_block() {
-        let result = ABCI_Client.lock().unwrap().end_block(10);
-        println!("result: {:?}", result);
+        let result = connect_or_get_connection(DEFAULT_ABCI_URL)
+            .unwrap()
+            .end_block(10);
+        println!("end_block result: {:?}", result);
         assert_eq!(result.is_ok(), true);
     }
 
     #[test]
     fn test_abci_commit() {
-        let result = ABCI_Client.lock().unwrap().commit();
-        println!("result: {:?}", result);
+        let result = connect_or_get_connection(DEFAULT_ABCI_URL)
+            .unwrap()
+            .commit();
+        println!("commit result: {:?}", result);
         assert_eq!(result.is_ok(), true);
     }
 }
