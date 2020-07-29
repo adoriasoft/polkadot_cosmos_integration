@@ -8,11 +8,10 @@ mod tests;
 use alt_serde::{Deserialize, Serialize};
 use codec::{Decode, Encode};
 use frame_support::{
-    debug, decl_module, decl_error, dispatch::DispatchResult, dispatch::Vec,
-    sp_runtime::transaction_validity::TransactionSource, weights::Weight,
+    debug, decl_module, decl_error, dispatch::DispatchResult, dispatch::Vec, weights::Weight,
 };
 use frame_system::ensure_signed;
-use sp_runtime::traits::SaturatedConversion;
+// use sp_runtime::traits::SaturatedConversion;
 use sp_runtime_interface::{pass_by::PassByCodec, runtime_interface};
 use sp_std::prelude::*;
 
@@ -70,16 +69,8 @@ decl_module! {
 }
 
 impl<T: Trait> Module<T> {
-    pub fn do_init_chain() {
-        // abci_interface::init_chain();
-    }
-
-    pub fn do_commit(height: u64) {
-        // abci_interface::commit(&BlockMessage { height });
-    }
-
-    pub fn do_check_tx(_source: TransactionSource, tx: Vec<u8>) {
-        // abci_interface::check_tx(&TxMessage { tx });
+    pub fn check_tx(tx: Vec<u8>) -> DispatchResult {
+        abci_interface::check_tx(tx)
     }
 }
 
@@ -97,11 +88,29 @@ pub trait AbciInterface {
         Ok(())
     }
 
-    fn deliver_tx() {
-        // abci::send_test_method(crate::request::get_server_url());
+    fn check_tx(tx: Vec<u8>) -> DispatchResult {
+        let mut client = abci::Client::connect(abci::DEFAULT_ABCI_URL).unwrap();
+        let result = client.check_tx(tx, 0).map_err(|_| "Check transaction failed")?;
+        Ok(result)
     }
 
-    fn check_tx() {}
+    fn deliver_tx() -> DispatchResult {
+        Ok(())
+    }
 
-    fn commit() {}
+    fn init_chain() -> DispatchResult {
+        Ok(())
+    }
+
+    fn begin_block() -> DispatchResult {
+        Ok(())
+    }
+
+    fn end_block() -> DispatchResult {
+        Ok(())
+    }
+
+    fn commit() -> DispatchResult {
+        Ok(())
+    }
 }
