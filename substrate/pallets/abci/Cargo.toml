@@ -11,6 +11,7 @@ tokio = { version = '0.2', features = ['rt-threaded', 'time', 'blocking'] }
 tonic = { version = '0.3.0', features = ['tls'] }
 prost = { version = '0.6' }
 prost-types = { version = '0.6' }
+lazy_static = { version = "1.2.0" }
 
 [build-dependencies]
 tonic-build = { version = '0.3.0', features = ['prost'] }

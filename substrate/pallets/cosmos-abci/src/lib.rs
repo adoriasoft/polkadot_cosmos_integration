@@ -84,33 +84,61 @@ pub fn get_server_url() -> String {
 
 #[runtime_interface]
 pub trait AbciInterface {
-    fn echo() -> DispatchResult {
-        Ok(())
-    }
 
-    fn check_tx(tx: Vec<u8>) -> DispatchResult {
-        let mut client = abci::Client::connect(abci::DEFAULT_ABCI_URL).unwrap();
-        let result = client.check_tx(tx, 0).map_err(|_| "Check transaction failed")?;
+
+    fn echo() -> DispatchResult {
+        let result = abci::ABCI_Client.lock().unwrap()
+            .echo("Hello from runtime interface".to_owned())
+            .map_err(|_| "echo failed")?;
+
         Ok(result)
     }
 
-    fn deliver_tx() -> DispatchResult {
-        Ok(())
+    fn check_tx(tx: Vec<u8>) -> DispatchResult {
+        let result = abci::ABCI_Client.lock().unwrap()
+        .check_tx(tx, 0)
+        .map_err(|_| "check_tx failed")?;
+
+        Ok(result)
     }
 
-    fn init_chain() -> DispatchResult {
-        Ok(())
+    fn deliver_tx(tx: Vec<u8>) -> DispatchResult {
+        let result = abci::ABCI_Client.lock().unwrap()
+        .deliver_tx(tx)
+        .map_err(|_| "deliver_tx failed")?;
+        
+        Ok(result)
     }
 
-    fn begin_block() -> DispatchResult {
-        Ok(())
+    fn init_chain(chain_id: String, app_state_bytes: Vec<u8>) -> DispatchResult {
+        let result = abci::ABCI_Client.lock().unwrap()
+        .init_chain(chain_id, app_state_bytes)
+        .map_err(|_| "init_chain failed")?;
+
+        Ok(result)
     }
 
-    fn end_block() -> DispatchResult {
-        Ok(())
+    fn begin_block(hash: Vec<u8>) -> DispatchResult {
+        let result = abci::ABCI_Client.lock().unwrap()
+        .begin_block(hash)
+        .map_err(|_| "begin_block failed")?;
+
+        Ok(result)
+    }
+
+    fn end_block(height: i64) -> DispatchResult {
+        let result = abci::ABCI_Client.lock().unwrap()
+        .end_block(height)
+        .map_err(|_| "end_block failed")?;
+
+        Ok(result)
     }
 
     fn commit() -> DispatchResult {
-        Ok(())
+        let result = abci::ABCI_Client.lock().unwrap()
+        .commit()
+        .map_err(|_| "commit failed")?;
+
+        Ok(result)
     }
 }
