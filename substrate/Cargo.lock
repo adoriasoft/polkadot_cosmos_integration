@@ -12,8 +12,10 @@ dependencies = [
 
 [[package]]
 name = "abci"
-version = "2.0.0-rc3"
+version = "0.1.0"
 dependencies = [
+ "lazy_static",
+ "owning_ref",
  "prost",
  "prost-types",
  "tokio 0.2.21",

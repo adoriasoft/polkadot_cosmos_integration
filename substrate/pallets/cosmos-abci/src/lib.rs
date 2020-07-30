@@ -5,28 +5,13 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-use alt_serde::{Deserialize, Serialize};
-use codec::{Decode, Encode};
 use frame_support::{
-    debug, decl_module, decl_error, dispatch::DispatchResult, dispatch::Vec,
-    sp_runtime::transaction_validity::TransactionSource, weights::Weight,
+    debug, decl_error, decl_module, dispatch::DispatchResult, dispatch::Vec, weights::Weight,
 };
 use frame_system::ensure_signed;
-use sp_runtime::traits::SaturatedConversion;
-use sp_runtime_interface::{pass_by::PassByCodec, runtime_interface};
+// use sp_runtime::traits::SaturatedConversion;
+use sp_runtime_interface::runtime_interface;
 use sp_std::prelude::*;
-
-#[serde(crate = "alt_serde")]
-#[derive(Encode, Decode, Serialize, Deserialize, PassByCodec)]
-pub struct BlockMessage {
-    pub height: u64,
-}
-
-#[serde(crate = "alt_serde")]
-#[derive(Encode, Decode, Default, Clone, Debug, PartialEq, Serialize, Deserialize, PassByCodec)]
-pub struct TxMessage {
-    pub tx: Vec<u8>,
-}
 
 /// The pallet's configuration trait.
 pub trait Trait: frame_system::Trait {
@@ -47,39 +32,28 @@ decl_module! {
     pub struct Module<T: Trait> for enum Call where origin: T::Origin {
         /// Block initialization
         fn on_initialize(now: T::BlockNumber) -> Weight {
-            // abci_interface::on_initialize(&BlockMessage { height: now.saturated_into() as u64 });
+            // now.saturated_into() as u64;
             return 0;
         }
 
         /// Block finalization
         fn on_finalize(now: T::BlockNumber) {
-            // abci_interface::on_finalize(&BlockMessage { height: now.saturated_into() as u64 });
+            // now.saturated_into() as u64;
         }
 
         #[weight = 0]
-        pub fn deliver_tx(origin, tx: TxMessage) -> DispatchResult {
+        pub fn deliver_tx(origin, tx: Vec<u8>) -> DispatchResult {
             ensure_signed(origin)?;
             debug::info!("Received deliver tx request");
-            // match abci_interface::deliver_tx(&tx) {
-            //     true => Ok(()),
-            //     false => Err(<Error<T>>::CosmosError.into()),
-            // }
+            abci_interface::deliver_tx(tx)?;
             Ok(())
         }
     }
 }
 
 impl<T: Trait> Module<T> {
-    pub fn do_init_chain() {
-        // abci_interface::init_chain();
-    }
-
-    pub fn do_commit(height: u64) {
-        // abci_interface::commit(&BlockMessage { height });
-    }
-
-    pub fn do_check_tx(_source: TransactionSource, tx: Vec<u8>) {
-        // abci_interface::check_tx(&TxMessage { tx });
+    pub fn check_tx(tx: Vec<u8>) -> DispatchResult {
+        abci_interface::check_tx(tx)
     }
 }
 
@@ -94,14 +68,58 @@ pub fn get_server_url() -> String {
 #[runtime_interface]
 pub trait AbciInterface {
     fn echo() -> DispatchResult {
-        Ok(())
+        let result = abci::connect_or_get_connection(&get_server_url())
+            .map_err(|_| "failed to setup connection")?
+            .echo("Hello from runtime interface".to_owned())
+            .map_err(|_| "echo failed")?;
+        Ok(result)
     }
 
-    fn deliver_tx() {
-        // abci::send_test_method(crate::request::get_server_url());
+    fn check_tx(tx: Vec<u8>) -> DispatchResult {
+        let result = abci::connect_or_get_connection(&get_server_url())
+            .map_err(|_| "failed to setup connection")?
+            .check_tx(tx, 0)
+            .map_err(|_| "check_tx failed")?;
+        Ok(result)
     }
 
-    fn check_tx() {}
+    fn deliver_tx(tx: Vec<u8>) -> DispatchResult {
+        let result = abci::connect_or_get_connection(&get_server_url())
+            .map_err(|_| "failed to setup connection")?
+            .deliver_tx(tx)
+            .map_err(|_| "deliver_tx failed")?;
+        Ok(result)
+    }
 
-    fn commit() {}
+    fn init_chain(chain_id: &str, app_state_bytes: Vec<u8>) -> DispatchResult {
+        let result = abci::connect_or_get_connection(&get_server_url())
+            .map_err(|_| "failed to setup connection")?
+            .init_chain(chain_id.to_owned(), app_state_bytes)
+            .map_err(|_| "init_chain failed")?;
+        Ok(result)
+    }
+
+    fn begin_block(hash: Vec<u8>) -> DispatchResult {
+        let result = abci::connect_or_get_connection(&get_server_url())
+            .map_err(|_| "failed to setup connection")?
+            .begin_block(hash)
+            .map_err(|_| "begin_block failed")?;
+        Ok(result)
+    }
+
+    fn end_block(height: i64) -> DispatchResult {
+        let result = abci::connect_or_get_connection(&get_server_url())
+            .map_err(|_| "failed to setup connection")?
+            .end_block(height)
+            .map_err(|_| "end_block failed")?;
+        Ok(result)
+    }
+
+    fn commit() -> DispatchResult {
+        let result = abci::connect_or_get_connection(&get_server_url())
+            .map_err(|_| "failed to setup connection")?
+            .commit()
+            .map_err(|_| "commit failed")?;
+        Ok(result)
+    }
 }

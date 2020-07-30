@@ -21,77 +21,81 @@ func (s *ServerABCI) InitChain(ctx context.Context, in *proto.RequestInitChain) 
 func (s *ServerABCI) CheckTx(ctx context.Context, in *proto.RequestCheckTx) (*proto.ResponseCheckTx, error) {
 	log.Print("Received CheckTx()")
 
-	tx_message, err1 := token.DecodeMessage(in.Tx)
-	_, err2 := token.DecodeNewAccountMessage(in.Tx)
+	return &proto.ResponseCheckTx{}, nil
 
-	if err1 != nil && err2 != nil {
-		log.Print("cannot decode Tx message")
-		return nil, &token.TokenError{"cannot decode Tx message"}
-	}
+	// tx_message, err1 := token.DecodeMessage(in.Tx)
+	// _, err2 := token.DecodeNewAccountMessage(in.Tx)
 
-	var error_message string
-	if err1 == nil {
-		err := s.Token.ValidateMessage(tx_message)
+	// if err1 != nil && err2 != nil {
+	// 	log.Print("cannot decode Tx message")
+	// 	return nil, &token.TokenError{"cannot decode Tx message"}
+	// }
 
-		if err != nil {
-			error_message = err.Error()
-		} else {
-			log.Print("Received CheckTx() successful")
-			return &proto.ResponseCheckTx{}, nil
-		}
-	}
+	// var error_message string
+	// if err1 == nil {
+	// 	err := s.Token.ValidateMessage(tx_message)
 
-	log.Print(error_message)
-	return nil, &token.TokenError{error_message}
+	// 	if err != nil {
+	// 		error_message = err.Error()
+	// 	} else {
+	// 		log.Print("Received CheckTx() successful")
+	// 		return &proto.ResponseCheckTx{}, nil
+	// 	}
+	// }
+
+	// log.Print(error_message)
+	// return nil, &token.TokenError{error_message}
 }
 
 func (s *ServerABCI) DeliverTx(ctx context.Context, in *proto.RequestDeliverTx) (*proto.ResponseDeliverTx, error) {
 	log.Print("Received DeliverTx()")
 
-	tx_message, err1 := token.DecodeMessage(in.Tx)
-	acc_message, err2 := token.DecodeNewAccountMessage(in.Tx)
+	return &proto.ResponseDeliverTx{}, nil
 
-	if err1 != nil && err2 != nil {
-		log.Print("cannot decode Tx message")
-		return nil, &token.TokenError{"cannot decode Tx message"}
-	}
+	// tx_message, err1 := token.DecodeMessage(in.Tx)
+	// acc_message, err2 := token.DecodeNewAccountMessage(in.Tx)
 
-	var error_message string
-	if err1 == nil {
-		err := s.Token.ProcessMessage(tx_message)
+	// if err1 != nil && err2 != nil {
+	// 	log.Print("cannot decode Tx message")
+	// 	return nil, &token.TokenError{"cannot decode Tx message"}
+	// }
 
-		if err != nil {
-			error_message = err.Error()
-		} else {
-			log.Print("Received DeliverTx() successful")
-			return &proto.ResponseDeliverTx{}, nil
-		}
-	}
+	// var error_message string
+	// if err1 == nil {
+	// 	err := s.Token.ProcessMessage(tx_message)
 
-	if err2 == nil {
-		err := s.Token.CreateNewAccount(acc_message.AccountName, acc_message.PublicKey)
+	// 	if err != nil {
+	// 		error_message = err.Error()
+	// 	} else {
+	// 		log.Print("Received DeliverTx() successful")
+	// 		return &proto.ResponseDeliverTx{}, nil
+	// 	}
+	// }
 
-		if err != nil {
-			error_message = err.Error()
-		} else {
-			log.Print("Received DeliverTx() successful")
-			return &proto.ResponseDeliverTx{}, nil
-		}
-	}
+	// if err2 == nil {
+	// 	err := s.Token.CreateNewAccount(acc_message.AccountName, acc_message.PublicKey)
 
-	log.Print(error_message)
-	return nil, &token.TokenError{error_message}
+	// 	if err != nil {
+	// 		error_message = err.Error()
+	// 	} else {
+	// 		log.Print("Received DeliverTx() successful")
+	// 		return &proto.ResponseDeliverTx{}, nil
+	// 	}
+	// }
+
+	// log.Print(error_message)
+	// return nil, &token.TokenError{error_message}
 }
 
 func (s *ServerABCI) BeginBlock(ctx context.Context, in *proto.RequestBeginBlock) (*proto.ResponseBeginBlock, error) {
 	log.Printf("Received BeginBlock(), block height: %d", in.Header.Height)
 
-	err := s.Token.MineNewTokens(token.BASE_ACCOUNT)
+	// err := s.Token.MineNewTokens(token.BASE_ACCOUNT)
 
-	if err != nil {
-		log.Print("cannot mine new tokens")
-		return nil, err
-	}
+	// if err != nil {
+	// 	log.Print("cannot mine new tokens")
+	// 	return nil, err
+	// }
 
 	return &proto.ResponseBeginBlock{}, nil
 }
@@ -104,4 +108,10 @@ func (s *ServerABCI) EndBlock(ctx context.Context, in *proto.RequestEndBlock) (*
 func (s *ServerABCI) Commit(ctx context.Context, in *proto.RequestCommit) (*proto.ResponseCommit, error) {
 	log.Printf("Received Commit()")
 	return &proto.ResponseCommit{}, nil
+}
+
+func (s *ServerABCI) Echo(ctx context.Context, in *proto.RequestEcho) (*proto.ResponseEcho, error) {
+	log.Printf("Received Echo()")
+	log.Print(in.Message)
+	return &proto.ResponseEcho{Message: in.Message}, nil
 }

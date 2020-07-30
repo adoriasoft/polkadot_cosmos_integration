@@ -33,8 +33,6 @@ fn test_call_deliver_tx() {
         "#;
         let tx_message = TxMessage { tx: tx.as_bytes().to_vec() };
 
-        AbciModule::do_check_tx(source, tx_message.tx.clone());
-
         assert_ok!(AbciModule::deliver_tx(
             Origin::signed(Default::default()),
             tx_message,
