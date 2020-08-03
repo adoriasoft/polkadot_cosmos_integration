@@ -9,7 +9,7 @@ use frame_support::{
     debug, decl_error, decl_module, dispatch::DispatchResult, dispatch::Vec, weights::Weight,
 };
 use frame_system::ensure_signed;
-// use sp_runtime::traits::SaturatedConversion;
+use sp_runtime::traits::SaturatedConversion;
 use sp_runtime_interface::runtime_interface;
 use sp_std::prelude::*;
 
@@ -32,13 +32,38 @@ decl_module! {
     pub struct Module<T: Trait> for enum Call where origin: T::Origin {
         /// Block initialization
         fn on_initialize(now: T::BlockNumber) -> Weight {
-            // now.saturated_into() as u64;
+            match abci_interface::begin_block(
+                "test-chain-id",
+                now.saturated_into() as i64,
+                vec![],
+                "cosmos106vrzv5xkheqhjm023pxcxlqmcjvuhtfyachz4".as_bytes().to_vec(),
+            ) {
+                Err(err) => {
+                    // We have to panic, as if cosmos will not have some blocks - it will fail.
+                    panic!("Begin block failed: {:?}", err);
+                },
+                _ => {},
+            }
             return 0;
         }
 
         /// Block finalization
         fn on_finalize(now: T::BlockNumber) {
-            // now.saturated_into() as u64;
+            match abci_interface::end_block(now.saturated_into() as i64) {
+                Ok(_) => {
+                    match abci_interface::commit() {
+                        Err(err) => {
+                            // We have to panic, as if cosmos will not have some blocks - it will fail.
+                            panic!("Commit failed: {:?}", err);
+                        },
+                        _ => {},
+                    }
+                },
+                Err(err) => {
+                    // We have to panic, as if cosmos will not have some blocks - it will fail.
+                    panic!("End block failed: {:?}", err);
+                },
+            }
         }
 
         #[weight = 0]
@@ -72,7 +97,8 @@ pub trait AbciInterface {
             .map_err(|_| "failed to setup connection")?
             .echo("Hello from runtime interface".to_owned())
             .map_err(|_| "echo failed")?;
-        Ok(result)
+        debug::debug!("Result: {:?}", result);
+        Ok(())
     }
 
     fn check_tx(tx: Vec<u8>) -> DispatchResult {
@@ -80,7 +106,8 @@ pub trait AbciInterface {
             .map_err(|_| "failed to setup connection")?
             .check_tx(tx, 0)
             .map_err(|_| "check_tx failed")?;
-        Ok(result)
+        debug::debug!("Result: {:?}", result);
+        Ok(())
     }
 
     fn deliver_tx(tx: Vec<u8>) -> DispatchResult {
@@ -88,7 +115,8 @@ pub trait AbciInterface {
             .map_err(|_| "failed to setup connection")?
             .deliver_tx(tx)
             .map_err(|_| "deliver_tx failed")?;
-        Ok(result)
+        debug::debug!("Result: {:?}", result);
+        Ok(())
     }
 
     fn init_chain(chain_id: &str, app_state_bytes: Vec<u8>) -> DispatchResult {
@@ -96,15 +124,22 @@ pub trait AbciInterface {
             .map_err(|_| "failed to setup connection")?
             .init_chain(chain_id.to_owned(), app_state_bytes)
             .map_err(|_| "init_chain failed")?;
-        Ok(result)
+        debug::debug!("Result: {:?}", result);
+        Ok(())
     }
 
-    fn begin_block(hash: Vec<u8>) -> DispatchResult {
+    fn begin_block(
+        chain_id: &str,
+        height: i64,
+        hash: Vec<u8>,
+        proposer_address: Vec<u8>,
+    ) -> DispatchResult {
         let result = abci::connect_or_get_connection(&get_server_url())
             .map_err(|_| "failed to setup connection")?
-            .begin_block(hash)
+            .begin_block(chain_id.to_owned(), height, hash, proposer_address)
             .map_err(|_| "begin_block failed")?;
-        Ok(result)
+        debug::debug!("Result: {:?}", result);
+        Ok(())
     }
 
     fn end_block(height: i64) -> DispatchResult {
@@ -112,7 +147,8 @@ pub trait AbciInterface {
             .map_err(|_| "failed to setup connection")?
             .end_block(height)
             .map_err(|_| "end_block failed")?;
-        Ok(result)
+        debug::debug!("Result: {:?}", result);
+        Ok(())
     }
 
     fn commit() -> DispatchResult {
@@ -120,6 +156,7 @@ pub trait AbciInterface {
             .map_err(|_| "failed to setup connection")?
             .commit()
             .map_err(|_| "commit failed")?;
-        Ok(result)
+        debug::debug!("Result: {:?}", result);
+        Ok(())
     }
 }

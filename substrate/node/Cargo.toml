@@ -18,6 +18,7 @@ log = '0.4.8'
 parking_lot = '0.10.0'
 structopt = '0.3.8'
 
+abci = { path = '../pallets/abci' }
 node-template-runtime = { path = '../runtime' }
 
 sc-basic-authorship = { git = 'https://github.com/paritytech/substrate.git', tag = 'v2.0.0-rc3' }
@@ -37,8 +38,6 @@ sp-finality-grandpa = { git = 'https://github.com/paritytech/substrate.git', tag
 sp-inherents = { git = 'https://github.com/paritytech/substrate.git', tag = 'v2.0.0-rc3' }
 sp-runtime = { git = 'https://github.com/paritytech/substrate.git', tag = 'v2.0.0-rc3' }
 sp-transaction-pool = { git = 'https://github.com/paritytech/substrate.git', tag = 'v2.0.0-rc3' }
-
-reqwest = { version = "0.10", features = ["json", "blocking"] }
 
 [build-dependencies]
 substrate-build-script-utils = { git = 'https://github.com/paritytech/substrate.git', tag = 'v2.0.0-rc3' }

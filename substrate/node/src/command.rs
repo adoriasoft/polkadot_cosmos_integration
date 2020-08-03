@@ -22,73 +22,86 @@ use sc_cli::SubstrateCli;
 
 use sp_runtime::print;
 
-fn init_chain() -> Result<(), &'static str> {
-	let _res = reqwest::blocking::get("http://localhost:8082/abci/v1/InitChain").map_err(|_| "Failed to send request")?
-	.text().map_err(|_| "Failed to send request")?;
+fn get_server_url() -> String {
+    match std::env::var("ABCI_SERVER_URL") {
+        Ok(val) => val,
+        Err(_) => abci::DEFAULT_ABCI_URL.to_owned(),
+    }
+}
 
+fn get_abci_app_state() -> sc_cli::Result<String> {
+    std::env::var("ABCI_APP_STATE")
+        .map_err(|_| sc_cli::Error::Other("Failed to get abci app state".into()))
+}
+
+fn init_chain() -> sc_cli::Result<()> {
+    let app_state = get_abci_app_state()?;
+    abci::connect_or_get_connection(&get_server_url())
+        .map_err(|err| sc_cli::Error::Other(err.to_string()))?
+        .init_chain("test-chain-id".to_owned(), app_state.as_bytes().to_vec())
+        .map_err(|err| sc_cli::Error::Other(err.to_string()))?;
     Ok(())
 }
 
 impl SubstrateCli for Cli {
-	fn impl_name() -> &'static str {
-		"Substrate Node"
-	}
+    fn impl_name() -> &'static str {
+        "Substrate Node"
+    }
 
-	fn impl_version() -> &'static str {
-		env!("SUBSTRATE_CLI_IMPL_VERSION")
-	}
+    fn impl_version() -> &'static str {
+        env!("SUBSTRATE_CLI_IMPL_VERSION")
+    }
 
-	fn description() -> &'static str {
-		env!("CARGO_PKG_DESCRIPTION")
-	}
+    fn description() -> &'static str {
+        env!("CARGO_PKG_DESCRIPTION")
+    }
 
-	fn author() -> &'static str {
-		env!("CARGO_PKG_AUTHORS")
-	}
+    fn author() -> &'static str {
+        env!("CARGO_PKG_AUTHORS")
+    }
 
-	fn support_url() -> &'static str {
-		"support.anonymous.an"
-	}
+    fn support_url() -> &'static str {
+        "support.anonymous.an"
+    }
 
-	fn copyright_start_year() -> i32 {
-		2017
-	}
+    fn copyright_start_year() -> i32 {
+        2017
+    }
 
-	fn executable_name() -> &'static str {
-		env!("CARGO_PKG_NAME")
-	}
+    fn executable_name() -> &'static str {
+        env!("CARGO_PKG_NAME")
+    }
 
-	fn load_spec(&self, id: &str) -> Result<Box<dyn sc_service::ChainSpec>, String> {
-		print("Load initial state");
-		if let Err(e) = init_chain() {
-			println!("Failed to run init chain: {}", e);
-		}
-		Ok(match id {
-			"dev" => Box::new(chain_spec::development_config()),
-			"" | "local" => Box::new(chain_spec::local_testnet_config()),
-			path => Box::new(chain_spec::ChainSpec::from_json_file(
-				std::path::PathBuf::from(path),
-			)?),
-		})
-	}
+    fn load_spec(&self, id: &str) -> Result<Box<dyn sc_service::ChainSpec>, String> {
+        print("Load initial state");
+        Ok(match id {
+            "dev" => Box::new(chain_spec::development_config()),
+            "" | "local" => Box::new(chain_spec::local_testnet_config()),
+            path => Box::new(chain_spec::ChainSpec::from_json_file(
+                std::path::PathBuf::from(path),
+            )?),
+        })
+    }
 }
 
 /// Parse and run command line arguments
 pub fn run() -> sc_cli::Result<()> {
-	let cli = Cli::from_args();
+    let cli = Cli::from_args();
 
-	match &cli.subcommand {
-		Some(subcommand) => {
-			let runner = cli.create_runner(subcommand)?;
-			runner.run_subcommand(subcommand, |config| Ok(new_full_start!(config).0))
-		}
-		None => {
+    match &cli.subcommand {
+        Some(subcommand) => {
+            let runner = cli.create_runner(subcommand)?;
+            runner.run_subcommand(subcommand, |config| Ok(new_full_start!(config).0))
+        }
+        None => {
 			let runner = cli.create_runner(&cli.run)?;
-			runner.run_node(
-				service::new_light,
-				service::new_full,
-				node_template_runtime::VERSION
-			)
-		}
-	}
+			// Todo: Move to service.rs and add chain id param
+            init_chain()?;
+            runner.run_node(
+                service::new_light,
+                service::new_full,
+                node_template_runtime::VERSION,
+            )
+        }
+    }
 }
