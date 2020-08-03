@@ -3,8 +3,12 @@ pub mod protos;
 use lazy_static::lazy_static;
 use owning_ref::MutexGuardRefMut;
 use protos::abci_application_client;
-use std::{sync::Mutex, time::{Duration, SystemTime}};
-use tokio::runtime::Runtime;
+use std::{
+    future::Future,
+    sync::Mutex,
+    time::{Duration, SystemTime},
+};
+use tokio::{runtime::Runtime, task::block_in_place};
 
 lazy_static! {
     static ref ABCI_CLIENT: Mutex<Option<Client>> = Mutex::new(None);
@@ -36,63 +40,40 @@ pub fn connect_or_get_connection<'ret>(
 impl Client {
     pub fn connect(abci_endpoint: &str) -> AbciResult<Self> {
         let mut rt = Runtime::new()?;
-        let future = connect(abci_endpoint);
-        let client = rt.block_on(async move {
-            tokio::time::timeout(Duration::from_secs(1), future)
-                .await
-                .expect("failed to set timeout for future")
-        })?;
+        let future = async {
+            // Translates str into static str
+            let endpoint: &'static str = Box::leak(abci_endpoint.into());
+            AbciClient::connect(endpoint).await
+        };
+        let client = rt.block_on(future)?;
         Ok(Client { rt, client })
     }
 
-    pub fn echo(&mut self, message: String) -> AbciResult<()> {
+    pub fn echo(&mut self, message: String) -> AbciResult<protos::ResponseEcho> {
         let request = tonic::Request::new(protos::RequestEcho { message });
-
         let future = self.client.echo(request);
-        let response = self.rt.block_on(async move {
-            tokio::time::timeout(Duration::from_secs(1), future)
-                .await
-                .expect("failed to set timeout for future")
-        })?;
-
-        println!("RESPONSE={:?}", response);
-        Ok(())
+        let response = wait(&self.rt, future)?;
+        Ok(response.into_inner())
     }
 
     /// Type: 0 - New, 1 - Recheck
-    pub fn check_tx(&mut self, tx: Vec<u8>, r#type: i32) -> AbciResult<()> {
+    pub fn check_tx(&mut self, tx: Vec<u8>, r#type: i32) -> AbciResult<protos::ResponseCheckTx> {
         let request = tonic::Request::new(protos::RequestCheckTx { tx, r#type });
-
         let future = self.client.check_tx(request);
-        let response = self.rt.block_on(async move {
-            tokio::time::timeout(Duration::from_secs(1), future)
-                .await
-                .expect("failed to set timeout for future")
-        })?;
-
-        println!("RESPONSE={:?}", response);
-        Ok(())
+        let response = wait(&self.rt, future)?;
+        Ok(response.into_inner())
     }
 
-    pub fn deliver_tx(&mut self, tx: Vec<u8>) -> AbciResult<()> {
+    pub fn deliver_tx(&mut self, tx: Vec<u8>) -> AbciResult<protos::ResponseDeliverTx> {
         let request = tonic::Request::new(protos::RequestDeliverTx { tx });
-
         let future = self.client.deliver_tx(request);
-        let response = self.rt.block_on(async move {
-            tokio::time::timeout(Duration::from_secs(1), future)
-                .await
-                .expect("failed to set timeout for future")
-        })?;
-
-        println!("RESPONSE={:?}", response);
-        Ok(())
+        let response = wait(&self.rt, future)?;
+        Ok(response.into_inner())
     }
 
-    pub fn init_chain(&mut self, chain_id: String, app_state_bytes: Vec<u8>) -> AbciResult<()> {
-        let now = SystemTime::now();
-
+    pub fn init_chain(&mut self, chain_id: String, app_state_bytes: Vec<u8>) -> AbciResult<protos::ResponseInitChain> {
         let request = tonic::Request::new(protos::RequestInitChain {
-            time: Some(now.into()),
+            time: Some(SystemTime::now().into()),
             chain_id: chain_id,
             consensus_params: Some(protos::ConsensusParams {
                 block: Some(protos::BlockParams {
@@ -111,28 +92,25 @@ impl Client {
             // protos::ValidatorUpdate { pub_key: Some(protos::PubKey { r#type: "ed25519".to_owned(), data: "".as_bytes().to_vec() }), power: 1 }
             app_state_bytes: app_state_bytes,
         });
-
         let future = self.client.init_chain(request);
-        let response = self.rt.block_on(async move {
-            tokio::time::timeout(Duration::from_secs(1), future)
-                .await
-                .expect("failed to set timeout for future")
-        })?;
-
-        println!("RESPONSE={:?}", response);
-        Ok(())
+        let response = wait(&self.rt, future)?;
+        Ok(response.into_inner())
     }
 
-    pub fn begin_block(&mut self, chain_id: String, hash: Vec<u8>, proposer_address: Vec<u8>) -> AbciResult<()> {
-        let now = SystemTime::now();
-
+    pub fn begin_block(
+        &mut self,
+        chain_id: String,
+        height: i64,
+        hash: Vec<u8>,
+        proposer_address: Vec<u8>,
+    ) -> AbciResult<protos::ResponseBeginBlock> {
         let request = tonic::Request::new(protos::RequestBeginBlock {
             hash,
             header: Some(protos::Header {
                 version: None,
                 chain_id,
-                height: 1,
-                time: Some(now.into()),
+                height,
+                time: Some(SystemTime::now().into()),
                 last_block_id: None,
                 last_commit_hash: vec![],
                 data_hash: vec![],
@@ -147,52 +125,29 @@ impl Client {
             last_commit_info: None,
             byzantine_validators: vec![],
         });
-
         let future = self.client.begin_block(request);
-        let response = self.rt.block_on(async move {
-            tokio::time::timeout(Duration::from_secs(1), future)
-                .await
-                .expect("failed to set timeout for future")
-        })?;
-
-        println!("RESPONSE={:?}", response);
-        Ok(())
+        let response = wait(&self.rt, future)?;
+        Ok(response.into_inner())
     }
 
-    pub fn end_block(&mut self, height: i64) -> AbciResult<()> {
-        let request = tonic::Request::new(protos::RequestEndBlock { height: height });
-
+    pub fn end_block(&mut self, height: i64) -> AbciResult<protos::ResponseEndBlock> {
+        let request = tonic::Request::new(protos::RequestEndBlock { height });
         let future = self.client.end_block(request);
-        let response = self.rt.block_on(async move {
-            tokio::time::timeout(Duration::from_secs(1), future)
-                .await
-                .expect("failed to set timeout for future")
-        })?;
-
-        println!("RESPONSE={:?}", response);
-        Ok(())
+        let response = wait(&self.rt, future)?;
+        Ok(response.into_inner())
     }
 
-    pub fn commit(&mut self) -> AbciResult<()> {
+    pub fn commit(&mut self) -> AbciResult<protos::ResponseCommit> {
         let request = tonic::Request::new(protos::RequestCommit {});
-
         let future = self.client.commit(request);
-        let response = self.rt.block_on(async move {
-            tokio::time::timeout(Duration::from_secs(1), future)
-                .await
-                .expect("failed to set timeout for future")
-        })?;
-
-        println!("RESPONSE={:?}", response);
-        Ok(())
+        let response = wait(&self.rt, future)?;
+        Ok(response.into_inner())
     }
 }
 
-async fn connect(abci_endpoint: &str) -> AbciResult<AbciClient> {
-    // Get server URL from ENV variable and translate it into static str
-    let endpoint: &'static str = Box::leak(abci_endpoint.into());
-    let client = AbciClient::connect(endpoint).await?;
-    Ok(client)
+fn wait<F: Future>(rt: &Runtime, future: F) -> F::Output {
+    let handle = rt.handle().clone();
+    block_in_place(move || handle.block_on(future))
 }
 
 #[cfg(test)]
@@ -230,7 +185,9 @@ mod test {
     fn test_abci_begin_block() {
         let result = connect_or_get_connection(DEFAULT_ABCI_URL)
             .unwrap()
-            .init_chain("test-chain-id".to_owned(), r#"{
+            .init_chain(
+                "test-chain-id".to_owned(),
+                r#"{
                 "bank": {
                     "params": {
                         "default_send_enabled": true
@@ -398,17 +355,27 @@ mod test {
                     "redelegations": null,
                     "exported": false
                 }
-            }"#.as_bytes().to_vec());
+            }"#
+                .as_bytes()
+                .to_vec(),
+            );
         println!("init_chain result: {:?}", result);
         assert_eq!(result.is_ok(), true);
         let result = connect_or_get_connection(DEFAULT_ABCI_URL)
             .unwrap()
-            .begin_block("test-chain-id".to_owned(), vec![], "cosmos106vrzv5xkheqhjm023pxcxlqmcjvuhtfyachz4".as_bytes().to_vec());
+            .begin_block(
+                "test-chain-id".to_owned(),
+                2,
+                vec![],
+                "cosmos106vrzv5xkheqhjm023pxcxlqmcjvuhtfyachz4"
+                    .as_bytes()
+                    .to_vec(),
+            );
         println!("begin_block result: {:?}", result);
         assert_eq!(result.is_ok(), true);
         let result = connect_or_get_connection(DEFAULT_ABCI_URL)
             .unwrap()
-            .end_block(10);
+            .end_block(2);
         println!("end_block result: {:?}", result);
         assert_eq!(result.is_ok(), true);
         let result = connect_or_get_connection(DEFAULT_ABCI_URL)
