@@ -8,7 +8,7 @@ services:
       - "9944:9944"
     environment:
       - CARGO_HOME=/var/www/node-template/.cargo
-      - ABCI_APP_STATE=${ABCI_APP_STATE}
+      - ABCI_APP_STATE_PATH=/var/www/node-template/scripts/test_genesis.json
     volumes:
       - .:/var/www/node-template
       - type: bind

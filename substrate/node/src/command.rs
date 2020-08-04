@@ -21,6 +21,7 @@ use crate::service;
 use sc_cli::SubstrateCli;
 
 use sp_runtime::print;
+use std::{fs, path::PathBuf};
 
 fn get_server_url() -> String {
     match std::env::var("ABCI_SERVER_URL") {
@@ -34,8 +35,20 @@ fn get_abci_app_state() -> sc_cli::Result<String> {
         .map_err(|_| sc_cli::Error::Other("Failed to get abci app state".into()))
 }
 
+fn from_json_file() -> sc_cli::Result<String> {
+    let path: PathBuf = std::env::var("ABCI_APP_STATE_PATH")
+        .map_err(|_| sc_cli::Error::Other("Failed to get app state file path".into()))?
+        .into();
+    let app_state = fs::read_to_string(&path)
+        .map_err(|_| sc_cli::Error::Other("Error opening app state file".into()))?;
+    Ok(app_state)
+}
+
 fn init_chain() -> sc_cli::Result<()> {
-    let app_state = get_abci_app_state()?;
+    let app_state = match from_json_file() {
+        Ok(v) => v,
+        _ => get_abci_app_state()?,
+    };
     abci::connect_or_get_connection(&get_server_url())
         .map_err(|err| sc_cli::Error::Other(err.to_string()))?
         .init_chain("test-chain-id".to_owned(), app_state.as_bytes().to_vec())
@@ -94,8 +107,8 @@ pub fn run() -> sc_cli::Result<()> {
             runner.run_subcommand(subcommand, |config| Ok(new_full_start!(config).0))
         }
         None => {
-			let runner = cli.create_runner(&cli.run)?;
-			// Todo: Move to service.rs and add chain id param
+            let runner = cli.create_runner(&cli.run)?;
+            // Todo: Move to service.rs and add chain id param
             init_chain()?;
             runner.run_node(
                 service::new_light,
