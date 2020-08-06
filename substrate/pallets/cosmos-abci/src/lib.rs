@@ -77,7 +77,7 @@ decl_module! {
 }
 
 impl<T: Trait> Module<T> {
-    pub fn check_tx(tx: Vec<u8>) -> DispatchResult {
+    pub fn check_tx(tx: Vec<u8>) -> Result<u64, sp_runtime::DispatchError> {
         abci_interface::check_tx(tx)
     }
 }
@@ -97,17 +97,20 @@ pub trait AbciInterface {
             .map_err(|_| "failed to setup connection")?
             .echo("Hello from runtime interface".to_owned())
             .map_err(|_| "echo failed")?;
-        debug::debug!("Result: {:?}", result);
+        debug::info!("Result: {:?}", result);
         Ok(())
     }
 
-    fn check_tx(tx: Vec<u8>) -> DispatchResult {
+    fn check_tx(tx: Vec<u8>) -> Result<u64, sp_runtime::DispatchError> {
         let result = abci::connect_or_get_connection(&get_server_url())
             .map_err(|_| "failed to setup connection")?
             .check_tx(tx, 0)
             .map_err(|_| "check_tx failed")?;
-        debug::debug!("Result: {:?}", result);
-        Ok(())
+        debug::info!("Result: {:?}", result);
+        // If GasWanted is greater than GasUsed, we will increase the priority by 10
+        // Todo: Make it more logical :/
+        let dif = result.gas_wanted - result.gas_used;
+        Ok(if dif > 0 { 10 } else { 0 })
     }
 
     fn deliver_tx(tx: Vec<u8>) -> DispatchResult {
@@ -115,7 +118,7 @@ pub trait AbciInterface {
             .map_err(|_| "failed to setup connection")?
             .deliver_tx(tx)
             .map_err(|_| "deliver_tx failed")?;
-        debug::debug!("Result: {:?}", result);
+        debug::info!("Result: {:?}", result);
         Ok(())
     }
 
@@ -124,7 +127,7 @@ pub trait AbciInterface {
             .map_err(|_| "failed to setup connection")?
             .init_chain(chain_id.to_owned(), app_state_bytes)
             .map_err(|_| "init_chain failed")?;
-        debug::debug!("Result: {:?}", result);
+        debug::info!("Result: {:?}", result);
         Ok(())
     }
 
@@ -138,7 +141,7 @@ pub trait AbciInterface {
             .map_err(|_| "failed to setup connection")?
             .begin_block(chain_id.to_owned(), height, hash, proposer_address)
             .map_err(|_| "begin_block failed")?;
-        debug::debug!("Result: {:?}", result);
+        debug::info!("Result: {:?}", result);
         Ok(())
     }
 
@@ -147,7 +150,7 @@ pub trait AbciInterface {
             .map_err(|_| "failed to setup connection")?
             .end_block(height)
             .map_err(|_| "end_block failed")?;
-        debug::debug!("Result: {:?}", result);
+        debug::info!("Result: {:?}", result);
         Ok(())
     }
 
@@ -156,7 +159,7 @@ pub trait AbciInterface {
             .map_err(|_| "failed to setup connection")?
             .commit()
             .map_err(|_| "commit failed")?;
-        debug::debug!("Result: {:?}", result);
+        debug::info!("Result: {:?}", result);
         Ok(())
     }
 }

@@ -19,8 +19,6 @@ use crate::chain_spec;
 use crate::cli::Cli;
 use crate::service;
 use sc_cli::SubstrateCli;
-
-use sp_runtime::print;
 use std::{fs, path::PathBuf};
 
 fn get_server_url() -> String {
@@ -28,11 +26,6 @@ fn get_server_url() -> String {
         Ok(val) => val,
         Err(_) => abci::DEFAULT_ABCI_URL.to_owned(),
     }
-}
-
-fn get_abci_app_state() -> sc_cli::Result<String> {
-    std::env::var("ABCI_APP_STATE")
-        .map_err(|_| sc_cli::Error::Other("Failed to get abci app state".into()))
 }
 
 fn from_json_file() -> sc_cli::Result<String> {
@@ -44,11 +37,22 @@ fn from_json_file() -> sc_cli::Result<String> {
     Ok(app_state)
 }
 
-fn init_chain() -> sc_cli::Result<()> {
+fn get_abci_app_state() -> String {
     let app_state = match from_json_file() {
         Ok(v) => v,
-        _ => get_abci_app_state()?,
+        _ => std::env::var("ABCI_APP_STATE")
+            // Maybe we need to return error if app_state not provided
+            // .map_err(|_| sc_cli::Error::Other("Failed to get abci app state".into()))
+            .unwrap_or(abci::DEFAULT_ABCI_APP_STATE.to_owned()),
     };
+    if &app_state == abci::DEFAULT_ABCI_APP_STATE {
+        log::info!("Using default ABCI app state as neither ABCI_APP_STATE_PATH nor ABCI_SERVER_URL env vars provided");
+    }
+    app_state
+}
+
+fn init_chain() -> sc_cli::Result<()> {
+    let app_state = get_abci_app_state();
     abci::connect_or_get_connection(&get_server_url())
         .map_err(|err| sc_cli::Error::Other(err.to_string()))?
         .init_chain("test-chain-id".to_owned(), app_state.as_bytes().to_vec())
@@ -86,7 +90,6 @@ impl SubstrateCli for Cli {
     }
 
     fn load_spec(&self, id: &str) -> Result<Box<dyn sc_service::ChainSpec>, String> {
-        print("Load initial state");
         Ok(match id {
             "dev" => Box::new(chain_spec::development_config()),
             "" | "local" => Box::new(chain_spec::local_testnet_config()),
