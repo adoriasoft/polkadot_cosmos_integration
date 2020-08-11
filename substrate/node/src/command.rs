@@ -21,13 +21,6 @@ use crate::service;
 use sc_cli::SubstrateCli;
 use std::{fs, path::PathBuf};
 
-fn get_server_url() -> String {
-    match std::env::var("ABCI_SERVER_URL") {
-        Ok(val) => val,
-        Err(_) => abci::DEFAULT_ABCI_URL.to_owned(),
-    }
-}
-
 fn from_json_file() -> sc_cli::Result<String> {
     let path: PathBuf = std::env::var("ABCI_APP_STATE_PATH")
         .map_err(|_| sc_cli::Error::Other("Failed to get app state file path".into()))?
@@ -53,7 +46,7 @@ fn get_abci_app_state() -> String {
 
 fn init_chain() -> sc_cli::Result<()> {
     let app_state = get_abci_app_state();
-    abci::connect_or_get_connection(&get_server_url())
+    abci::connect_or_get_connection(&abci::get_server_url())
         .map_err(|err| sc_cli::Error::Other(err.to_string()))?
         .init_chain("test-chain-id".to_owned(), app_state.as_bytes().to_vec())
         .map_err(|err| sc_cli::Error::Other(err.to_string()))?;

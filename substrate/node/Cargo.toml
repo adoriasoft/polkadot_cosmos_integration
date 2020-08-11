@@ -19,7 +19,7 @@ parking_lot = '0.10.0'
 structopt = '0.3.8'
 serde_json = '1.0.41'
 
-abci = { path = '../pallets/abci' }
+abci = { path = '../pallets/cosmos-abci/abci' }
 node-template-runtime = { path = '../runtime' }
 
 sc-basic-authorship = { git = 'https://github.com/paritytech/substrate.git', tag = 'v2.0.0-rc3' }

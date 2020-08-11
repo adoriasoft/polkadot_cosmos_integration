@@ -199,9 +199,10 @@ mod test {
                 "test-chain-id".to_owned(),
                 height,
                 vec![],
-                "cosmos106vrzv5xkheqhjm023pxcxlqmcjvuhtfyachz4"
-                    .as_bytes()
-                    .to_vec(),
+                vec![],
+                // "QmRpheLN4JWdAnY7HGJfWFNbfkQCb6tFf4vvA6hgjMZKrR"
+                //     .as_bytes()
+                //     .to_vec(),
             );
         println!("begin_block result: {:?}", result);
         assert_eq!(result.is_ok(), true);
