@@ -145,5 +145,4 @@ pub const DEFAULT_ABCI_APP_STATE: &str = r#"{
         "port_id": "transfer"
     },
     "upgrade": {}
-}
-"#;
+}"#;

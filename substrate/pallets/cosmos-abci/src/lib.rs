@@ -5,25 +5,21 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-use frame_support::{
-    debug, decl_error, decl_module, dispatch::DispatchResult, dispatch::Vec, weights::Weight,
-};
+use frame_support::{debug, decl_module, dispatch::DispatchResult, dispatch::Vec, weights::Weight};
 use frame_system::ensure_signed;
-use sp_runtime::traits::SaturatedConversion;
+use sp_runtime::{traits::SaturatedConversion, DispatchError};
 use sp_runtime_interface::runtime_interface;
 use sp_std::prelude::*;
+
+pub trait CosmosAbci {
+    fn check_tx(tx: Vec<u8>) -> Result<u64, DispatchError>;
+    fn deliver_tx(tx: Vec<u8>) -> DispatchResult;
+}
 
 /// The pallet's configuration trait.
 pub trait Trait: frame_system::Trait {
     /// The overarching dispatch call type.
     type Call: From<Call<Self>>;
-}
-
-decl_error! {
-    pub enum Error for Module<T: Trait> {
-        /// Cosmos returned an error
-        CosmosError,
-    }
 }
 
 // The pallet's dispatchable functions.
@@ -70,39 +66,43 @@ decl_module! {
         pub fn deliver_tx(origin, tx: Vec<u8>) -> DispatchResult {
             ensure_signed(origin)?;
             debug::info!("Received deliver tx request");
-            abci_interface::deliver_tx(tx)?;
+            <Self as CosmosAbci>::deliver_tx(tx)?;
             Ok(())
         }
     }
 }
 
-impl<T: Trait> Module<T> {
-    pub fn check_tx(tx: Vec<u8>) -> Result<u64, sp_runtime::DispatchError> {
+impl<T: Trait> CosmosAbci for Module<T> {
+    fn check_tx(tx: Vec<u8>) -> Result<u64, DispatchError> {
         abci_interface::check_tx(tx)
+    }
+
+    fn deliver_tx(tx: Vec<u8>) -> DispatchResult {
+        abci_interface::deliver_tx(tx)
     }
 }
 
 #[runtime_interface]
 pub trait AbciInterface {
-    fn echo() -> DispatchResult {
+    fn echo(msg: &str) -> DispatchResult {
         let result = abci::connect_or_get_connection(&abci::get_server_url())
             .map_err(|_| "failed to setup connection")?
-            .echo("Hello from runtime interface".to_owned())
+            .echo(msg.to_owned())
             .map_err(|_| "echo failed")?;
         debug::info!("Result: {:?}", result);
         Ok(())
     }
 
-    fn check_tx(tx: Vec<u8>) -> Result<u64, sp_runtime::DispatchError> {
+    fn check_tx(tx: Vec<u8>) -> Result<u64, DispatchError> {
         let result = abci::connect_or_get_connection(&abci::get_server_url())
             .map_err(|_| "failed to setup connection")?
             .check_tx(tx, 0)
             .map_err(|_| "check_tx failed")?;
         debug::info!("Result: {:?}", result);
-        // If GasWanted is greater than GasUsed, we will increase the priority by 10
+        // If GasWanted is greater than GasUsed, we will increase the priority
         // Todo: Make it more logical
         let dif = result.gas_wanted - result.gas_used;
-        Ok(if dif > 0 { 10 } else { 0 })
+        Ok(dif as u64)
     }
 
     fn deliver_tx(tx: Vec<u8>) -> DispatchResult {
