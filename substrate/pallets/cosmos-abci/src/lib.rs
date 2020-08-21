@@ -1,10 +1,5 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-#[cfg(test)]
-mod mock;
-#[cfg(test)]
-mod tests;
-
 use frame_support::{debug, decl_module, dispatch::DispatchResult, dispatch::Vec, weights::Weight};
 use frame_system::ensure_signed;
 use sp_runtime::{traits::SaturatedConversion, DispatchError};
@@ -14,6 +9,7 @@ use sp_std::prelude::*;
 pub trait CosmosAbci {
     fn check_tx(tx: Vec<u8>) -> Result<u64, DispatchError>;
     fn deliver_tx(tx: Vec<u8>) -> DispatchResult;
+    fn query(path: &str, data: Vec<u8>, height: i64, prove: bool) -> DispatchResult;
 }
 
 /// The pallet's configuration trait.
@@ -79,6 +75,10 @@ impl<T: Trait> CosmosAbci for Module<T> {
 
     fn deliver_tx(tx: Vec<u8>) -> DispatchResult {
         abci_interface::deliver_tx(tx)
+    }
+
+    fn query(path: &str, data: Vec<u8>, height: i64, prove: bool) -> DispatchResult {
+        abci_interface::query(path, data, height, prove)
     }
 }
 
@@ -151,6 +151,15 @@ pub trait AbciInterface {
             .map_err(|_| "failed to setup connection")?
             .commit()
             .map_err(|_| "commit failed")?;
+        debug::info!("Result: {:?}", result);
+        Ok(())
+    }
+
+    fn query(path: &str, data: Vec<u8>, height: i64, prove: bool) -> DispatchResult {
+        let result = abci::connect_or_get_connection(&abci::get_server_url())
+            .map_err(|_| "failed to setup connection")?
+            .query(path.to_owned(), data, height, prove)
+            .map_err(|_| "query failed")?;
         debug::info!("Result: {:?}", result);
         Ok(())
     }

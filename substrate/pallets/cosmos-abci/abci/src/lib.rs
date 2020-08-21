@@ -93,7 +93,6 @@ impl Client {
                 }),
             }),
             validators: vec![],
-            // protos::ValidatorUpdate { pub_key: Some(protos::PubKey { r#type: "ed25519".to_owned(), data: "".as_bytes().to_vec() }), power: 1 }
             app_state_bytes: app_state_bytes,
         });
         let future = self.client.init_chain(request);
@@ -147,6 +146,24 @@ impl Client {
         let response = wait(&self.rt, future)?;
         Ok(response.into_inner())
     }
+
+    pub fn query(
+        &mut self,
+        path: String,
+        data: Vec<u8>,
+        height: i64,
+        prove: bool,
+    ) -> AbciResult<protos::ResponseQuery> {
+        let request = tonic::Request::new(protos::RequestQuery {
+            path,
+            data,
+            height,
+            prove,
+        });
+        let future = self.client.query(request);
+        let response = wait(&self.rt, future)?;
+        Ok(response.into_inner())
+    }
 }
 
 fn wait<F: Future>(rt: &Runtime, future: F) -> F::Output {
@@ -186,11 +203,26 @@ mod test {
     }
 
     #[test]
+    fn test_abci_query() {
+        let result = connect_or_get_connection(DEFAULT_ABCI_URL).unwrap().query(
+            "/a/b/c".to_owned(),
+            "IHAVENOIDEA".as_bytes().to_vec(),
+            0,
+            false,
+        );
+        println!("query result: {:?}", result);
+        assert_eq!(result.is_ok(), true);
+    }
+
+    #[test]
     fn test_abci_begin_block() {
         let height = 1;
         let result = connect_or_get_connection(DEFAULT_ABCI_URL)
             .unwrap()
-            .init_chain("test-chain-id".to_owned(), DEFAULT_ABCI_APP_STATE.as_bytes().to_vec());
+            .init_chain(
+                "test-chain-id".to_owned(),
+                DEFAULT_ABCI_APP_STATE.as_bytes().to_vec(),
+            );
         println!("init_chain result: {:?}", result);
         assert_eq!(result.is_ok(), true);
         let result = connect_or_get_connection(DEFAULT_ABCI_URL)
@@ -200,9 +232,6 @@ mod test {
                 height,
                 vec![],
                 vec![],
-                // "QmRpheLN4JWdAnY7HGJfWFNbfkQCb6tFf4vvA6hgjMZKrR"
-                //     .as_bytes()
-                //     .to_vec(),
             );
         println!("begin_block result: {:?}", result);
         assert_eq!(result.is_ok(), true);
