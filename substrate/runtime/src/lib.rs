@@ -15,8 +15,11 @@ use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
     create_runtime_str, generic, impl_opaque_keys,
-    transaction_validity::{TransactionSource, TransactionValidity, InvalidTransaction},
-    traits::{BlakeTwo256, Block as BlockT, IdentifyAccount, IdentityLookup, NumberFor, Saturating, Verify},
+    traits::{
+        BlakeTwo256, Block as BlockT, IdentifyAccount, IdentityLookup, NumberFor, Saturating,
+        Verify,
+    },
+    transaction_validity::{InvalidTransaction, TransactionSource, TransactionValidity},
     ApplyExtrinsicResult, MultiSignature,
 };
 use sp_std::prelude::*;
@@ -356,9 +359,11 @@ impl_runtime_apis! {
             source: TransactionSource,
             tx: <Block as BlockT>::Extrinsic,
         ) -> TransactionValidity {
-            let res = Executive::validate_transaction(source, tx.clone())?;
+            let mut res = Executive::validate_transaction(source, tx.clone())?;
             if let Some(&cosmos_abci::Call::deliver_tx(ref val)) = IsSubType::<CosmosAbci, Runtime>::is_sub_type(&tx.function) {
-                CosmosAbci::check_tx(val.clone()).map_err(|_| InvalidTransaction::Custom(50u8))?;
+                let increase = <CosmosAbci as cosmos_abci::CosmosAbci>::check_tx(val.clone()).map_err(|_| InvalidTransaction::Custom(50u8))?;
+                // Will increase or keep same priority depending on GasUsed and GasWanted
+                res.priority += increase;
             }
             Ok(res)
         }

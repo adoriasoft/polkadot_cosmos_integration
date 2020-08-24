@@ -1,29 +1,21 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-#[cfg(test)]
-mod mock;
-#[cfg(test)]
-mod tests;
-
-use frame_support::{
-    debug, decl_error, decl_module, dispatch::DispatchResult, dispatch::Vec, weights::Weight,
-};
+use frame_support::{debug, decl_module, dispatch::DispatchResult, dispatch::Vec, weights::Weight};
 use frame_system::ensure_signed;
-use sp_runtime::traits::SaturatedConversion;
+use sp_runtime::{traits::SaturatedConversion, DispatchError};
 use sp_runtime_interface::runtime_interface;
 use sp_std::prelude::*;
+
+pub trait CosmosAbci {
+    fn check_tx(tx: Vec<u8>) -> Result<u64, DispatchError>;
+    fn deliver_tx(tx: Vec<u8>) -> DispatchResult;
+    fn query(path: &str, data: Vec<u8>, height: i64, prove: bool) -> DispatchResult;
+}
 
 /// The pallet's configuration trait.
 pub trait Trait: frame_system::Trait {
     /// The overarching dispatch call type.
     type Call: From<Call<Self>>;
-}
-
-decl_error! {
-    pub enum Error for Module<T: Trait> {
-        /// Cosmos returned an error
-        CosmosError,
-    }
 }
 
 // The pallet's dispatchable functions.
@@ -36,7 +28,7 @@ decl_module! {
                 "test-chain-id",
                 now.saturated_into() as i64,
                 vec![],
-                "cosmos106vrzv5xkheqhjm023pxcxlqmcjvuhtfyachz4".as_bytes().to_vec(),
+                vec![],
             ) {
                 Err(err) => {
                     // We have to panic, as if cosmos will not have some blocks - it will fail.
@@ -70,61 +62,64 @@ decl_module! {
         pub fn deliver_tx(origin, tx: Vec<u8>) -> DispatchResult {
             ensure_signed(origin)?;
             debug::info!("Received deliver tx request");
-            abci_interface::deliver_tx(tx)?;
+            <Self as CosmosAbci>::deliver_tx(tx)?;
             Ok(())
         }
     }
 }
 
-impl<T: Trait> Module<T> {
-    pub fn check_tx(tx: Vec<u8>) -> DispatchResult {
+impl<T: Trait> CosmosAbci for Module<T> {
+    fn check_tx(tx: Vec<u8>) -> Result<u64, DispatchError> {
         abci_interface::check_tx(tx)
     }
-}
 
-#[cfg(feature = "std")]
-pub fn get_server_url() -> String {
-    match std::env::var("ABCI_SERVER_URL") {
-        Ok(val) => val,
-        Err(_) => abci::DEFAULT_ABCI_URL.to_owned(),
+    fn deliver_tx(tx: Vec<u8>) -> DispatchResult {
+        abci_interface::deliver_tx(tx)
+    }
+
+    fn query(path: &str, data: Vec<u8>, height: i64, prove: bool) -> DispatchResult {
+        abci_interface::query(path, data, height, prove)
     }
 }
 
 #[runtime_interface]
 pub trait AbciInterface {
-    fn echo() -> DispatchResult {
-        let result = abci::connect_or_get_connection(&get_server_url())
+    fn echo(msg: &str) -> DispatchResult {
+        let result = abci::connect_or_get_connection(&abci::get_server_url())
             .map_err(|_| "failed to setup connection")?
-            .echo("Hello from runtime interface".to_owned())
+            .echo(msg.to_owned())
             .map_err(|_| "echo failed")?;
-        debug::debug!("Result: {:?}", result);
+        debug::info!("Result: {:?}", result);
         Ok(())
     }
 
-    fn check_tx(tx: Vec<u8>) -> DispatchResult {
-        let result = abci::connect_or_get_connection(&get_server_url())
+    fn check_tx(tx: Vec<u8>) -> Result<u64, DispatchError> {
+        let result = abci::connect_or_get_connection(&abci::get_server_url())
             .map_err(|_| "failed to setup connection")?
             .check_tx(tx, 0)
             .map_err(|_| "check_tx failed")?;
-        debug::debug!("Result: {:?}", result);
-        Ok(())
+        debug::info!("Result: {:?}", result);
+        // If GasWanted is greater than GasUsed, we will increase the priority
+        // Todo: Make it more logical
+        let dif = result.gas_wanted - result.gas_used;
+        Ok(dif as u64)
     }
 
     fn deliver_tx(tx: Vec<u8>) -> DispatchResult {
-        let result = abci::connect_or_get_connection(&get_server_url())
+        let result = abci::connect_or_get_connection(&abci::get_server_url())
             .map_err(|_| "failed to setup connection")?
             .deliver_tx(tx)
             .map_err(|_| "deliver_tx failed")?;
-        debug::debug!("Result: {:?}", result);
+        debug::info!("Result: {:?}", result);
         Ok(())
     }
 
     fn init_chain(chain_id: &str, app_state_bytes: Vec<u8>) -> DispatchResult {
-        let result = abci::connect_or_get_connection(&get_server_url())
+        let result = abci::connect_or_get_connection(&abci::get_server_url())
             .map_err(|_| "failed to setup connection")?
             .init_chain(chain_id.to_owned(), app_state_bytes)
             .map_err(|_| "init_chain failed")?;
-        debug::debug!("Result: {:?}", result);
+        debug::info!("Result: {:?}", result);
         Ok(())
     }
 
@@ -134,29 +129,38 @@ pub trait AbciInterface {
         hash: Vec<u8>,
         proposer_address: Vec<u8>,
     ) -> DispatchResult {
-        let result = abci::connect_or_get_connection(&get_server_url())
+        let result = abci::connect_or_get_connection(&abci::get_server_url())
             .map_err(|_| "failed to setup connection")?
             .begin_block(chain_id.to_owned(), height, hash, proposer_address)
             .map_err(|_| "begin_block failed")?;
-        debug::debug!("Result: {:?}", result);
+        debug::info!("Result: {:?}", result);
         Ok(())
     }
 
     fn end_block(height: i64) -> DispatchResult {
-        let result = abci::connect_or_get_connection(&get_server_url())
+        let result = abci::connect_or_get_connection(&abci::get_server_url())
             .map_err(|_| "failed to setup connection")?
             .end_block(height)
             .map_err(|_| "end_block failed")?;
-        debug::debug!("Result: {:?}", result);
+        debug::info!("Result: {:?}", result);
         Ok(())
     }
 
     fn commit() -> DispatchResult {
-        let result = abci::connect_or_get_connection(&get_server_url())
+        let result = abci::connect_or_get_connection(&abci::get_server_url())
             .map_err(|_| "failed to setup connection")?
             .commit()
             .map_err(|_| "commit failed")?;
-        debug::debug!("Result: {:?}", result);
+        debug::info!("Result: {:?}", result);
+        Ok(())
+    }
+
+    fn query(path: &str, data: Vec<u8>, height: i64, prove: bool) -> DispatchResult {
+        let result = abci::connect_or_get_connection(&abci::get_server_url())
+            .map_err(|_| "failed to setup connection")?
+            .query(path.to_owned(), data, height, prove)
+            .map_err(|_| "query failed")?;
+        debug::info!("Result: {:?}", result);
         Ok(())
     }
 }
