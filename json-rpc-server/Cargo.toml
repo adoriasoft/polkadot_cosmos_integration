@@ -1,0 +1,8 @@
+[package]
+name = "json-rpc-server"
+version = "0.1.0"
+authors = ["Mr-Leshiy <leshiy12345678@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+jsonrpc-http-server = "14.2.0"
