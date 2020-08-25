@@ -6,3 +6,5 @@ edition = "2018"
 
 [dependencies]
 jsonrpc-http-server = "14.2.0"
+jsonrpc-tcp-server = "14.2.0"
+jsonrpc-pubsub = "14.2.0"
