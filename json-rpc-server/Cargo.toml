@@ -5,6 +5,4 @@ authors = ["Mr-Leshiy <leshiy12345678@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-jsonrpc-http-server = "14.2.0"
-jsonrpc-tcp-server = "14.2.0"
-jsonrpc-pubsub = "14.2.0"
+jsonrpc-http-server = { git = "https://github.com/enfipy/jsonrpc", rev = "4bca2c5186a873488d5fb989b28cb9c7225ec9c6" }
