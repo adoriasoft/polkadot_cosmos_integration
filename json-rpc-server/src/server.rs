@@ -21,7 +21,7 @@ pub fn start_server() {
                 .unwrap()
                 .query(
                     query_params.path,
-                    query_params.data.as_bytes().to_vec(),
+                    hex::decode(query_params.data).expect("Decoding failed"),
                     query_params.height.parse::<i64>().unwrap(),
                     query_params.prove,
                 )
@@ -31,20 +31,15 @@ pub fn start_server() {
         println!("abci query result: {:?}", result);
 
         let res = json!({
-            "error" : "",
-            "result": json!({
-                "response" : json!({
-                    "log" : format!("{}", result.log),
-                    "height" : format!("{}", result.height),
-                    "proof" : format!("{:?}", result.proof),
-                    "value" : format!("{:?}", result.value),
-                    "key" : format!("{:?}", result.key),
-                    "index" : format!("{}", result.index),
-                    "code" : format!("{}", result.code),
-                }),
-            }),
-            "id" : 0,
-            "jsonrpc" : "2.0",
+            "response": {
+                "log" : format!("{}", result.log),
+                "height" : format!("{}", result.height),
+                "proof" : null,
+                "value" : format!("{}", base64::encode(result.value)),
+                "key" : null,
+                "index" : format!("{}", result.index),
+                "code" : format!("{}", result.code),
+            }
         });
         Ok(res)
     });
