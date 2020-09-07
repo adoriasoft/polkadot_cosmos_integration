@@ -53,6 +53,12 @@ fn init_chain() -> sc_cli::Result<()> {
     Ok(())
 }
 
+fn setup_cosmos() -> sc_cli::Result<()> {
+    init_chain()?;
+    pallet_cosmos_rpc::start_server("127.0.0.1:26657");
+    Ok(())
+}
+
 impl SubstrateCli for Cli {
     fn impl_name() -> &'static str {
         "Substrate Node"
@@ -104,8 +110,7 @@ pub fn run() -> sc_cli::Result<()> {
         }
         None => {
             let runner = cli.create_runner(&cli.run)?;
-            // Todo: Move to service.rs and add chain id param
-            init_chain()?;
+            setup_cosmos()?;
             runner.run_node(
                 service::new_light,
                 service::new_full,
