@@ -5,4 +5,15 @@ authors = ["Mr-Leshiy <leshiy12345678@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-jsonrpc-http-server = "14.2.0"
+base64 = "0.12.3"
+serde = "1.0"
+hex = "0.4.2"
+serde_derive = "1.0"
+jsonrpc-http-server = { git = "https://github.com/enfipy/jsonrpc", rev = "4bca2c5186a873488d5fb989b28cb9c7225ec9c6" }
+abci = { path = './abci', optional = true }
+
+[features]
+default = ['std']
+std = [
+	'abci',
+]
