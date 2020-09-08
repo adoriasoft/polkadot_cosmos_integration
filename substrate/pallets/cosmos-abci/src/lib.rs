@@ -114,15 +114,6 @@ pub trait AbciInterface {
         Ok(())
     }
 
-    fn init_chain(chain_id: &str, app_state_bytes: Vec<u8>) -> DispatchResult {
-        let result = abci::connect_or_get_connection(&abci::get_server_url())
-            .map_err(|_| "failed to setup connection")?
-            .init_chain(chain_id.to_owned(), app_state_bytes)
-            .map_err(|_| "init_chain failed")?;
-        debug::info!("Result: {:?}", result);
-        Ok(())
-    }
-
     fn begin_block(
         chain_id: &str,
         height: i64,

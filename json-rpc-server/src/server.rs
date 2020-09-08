@@ -36,7 +36,7 @@ pub fn start_server() {
                 "height" : format!("{}", result.height),
                 "proof" : null,
                 "value" : format!("{}", base64::encode(result.value)),
-                "key" : null,
+                "key" : null ,
                 "index" : format!("{}", result.index),
                 "code" : format!("{}", result.code),
             }
