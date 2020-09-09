@@ -4,7 +4,7 @@ description = 'Cosmos RPC module'
 edition = '2018'
 homepage = 'https://substrate.io'
 license = 'Unlicense'
-version = '2.0.0-rc3'
+version = '2.0.0-rc6'
 
 [dependencies]
 base64 = '0.12.3'
