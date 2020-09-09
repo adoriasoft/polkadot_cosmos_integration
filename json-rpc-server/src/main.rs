@@ -1,7 +1,6 @@
-pub mod server;
-
-pub use crate::server::*;
+mod server;
+mod types;
 
 fn main() {
-    start_server();
+    server::start_server();
 }
