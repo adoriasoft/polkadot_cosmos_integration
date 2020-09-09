@@ -44,6 +44,7 @@ fn get_abci_genesis() -> String {
 fn init_chain() -> sc_cli::Result<()> {
     let genesis: Value = serde_json::from_str(&get_abci_genesis()).unwrap();
 
+    // TODO: use this variable as an argument for InitChain
     let time = genesis["genesis_time"].as_str().unwrap();
 
     let mut pub_key_types: Vec<String> = Vec::new();
