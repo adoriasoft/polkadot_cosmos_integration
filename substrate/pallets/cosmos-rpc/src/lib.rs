@@ -1,8 +1,8 @@
 mod types;
 
+use crate::types::*;
 use jsonrpc_http_server::jsonrpc_core::{serde_json::json, Error, IoHandler, Params, Value};
 use jsonrpc_http_server::ServerBuilder;
-use crate::types::*;
 
 pub const DEFAULT_ABCI_RPC_URL: &str = "127.0.0.1:26657";
 
@@ -38,6 +38,8 @@ async fn handle_abci_query(params: Params) -> Result<Value, Error> {
             .map_err(|_| "query failed")
             .unwrap();
     println!("abci query result: {:?}", result);
+    // TODO: parse result.proof and if it is qual to None in the json proof field put null
+    // TODO: if key len == 0 put null in the json key field
     Ok(json!({
         "response": {
             "log" : format!("{}", result.log),

@@ -18,6 +18,7 @@ dependencies = [
  "owning_ref",
  "prost",
  "prost-types",
+ "serde",
  "tokio 0.2.21",
  "tonic",
  "tonic-build",

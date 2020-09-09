@@ -27,7 +27,9 @@ pub fn start_server() {
                 .unwrap();
 
         println!("abci query result: {:?}", result);
-
+        
+        // TODO: parse result.proof and if it is qual to None in the json proof field put null
+        // TODO: if key len == 0 put null in the json key field
         let res = json!({
             "response": {
                 "log" : format!("{}", result.log),

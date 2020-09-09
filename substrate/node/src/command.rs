@@ -19,6 +19,7 @@ use crate::chain_spec;
 use crate::cli::Cli;
 use crate::service;
 use sc_cli::SubstrateCli;
+use serde_json::Value;
 use std::{fs, path::PathBuf};
 
 fn from_json_file() -> sc_cli::Result<String> {
@@ -30,25 +31,58 @@ fn from_json_file() -> sc_cli::Result<String> {
     Ok(app_state)
 }
 
-fn get_abci_app_state() -> String {
+fn get_abci_genesis() -> String {
     let app_state = match from_json_file() {
         Ok(v) => v,
-        _ => std::env::var("ABCI_APP_STATE")
-            // Maybe we need to return error if app_state not provided
-            // .map_err(|_| sc_cli::Error::Other("Failed to get abci app state".into()))
-            .unwrap_or(abci::DEFAULT_ABCI_APP_STATE.to_owned()),
+        _ => std::env::var("ABCI_GENESIS_STATE")
+            .map_err(|_| sc_cli::Error::Other("Failed to get abci genesis state file".into()))
+            .unwrap(),
     };
-    if &app_state == abci::DEFAULT_ABCI_APP_STATE {
-        log::info!("Using default ABCI app state as neither ABCI_APP_STATE_PATH nor ABCI_SERVER_URL env vars provided");
-    }
     app_state
 }
 
 fn init_chain() -> sc_cli::Result<()> {
-    let app_state = get_abci_app_state();
+    let genesis: Value = serde_json::from_str(&get_abci_genesis()).unwrap();
+
+    // TODO: use this variable as an argument for InitChain
+    let time = genesis["genesis_time"].as_str().unwrap();
+
+    let mut pub_key_types: Vec<String> = Vec::new();
+
+    for key_type in genesis["consensus_params"]["validator"]["pub_key_types"]
+        .as_array()
+        .unwrap()
+    {
+        pub_key_types.push(key_type.as_str().unwrap().to_string());
+    }
+
     abci::connect_or_get_connection(&abci::get_server_url())
         .map_err(|err| sc_cli::Error::Other(err.to_string()))?
-        .init_chain("test-chain-id".to_owned(), app_state.as_bytes().to_vec())
+        .init_chain(
+            genesis["chain_id"].as_str().unwrap().to_string(),
+            genesis["app_state"].to_string().as_bytes().to_vec(),
+            genesis["consensus_params"]["block"]["max_bytes"]
+                .as_str()
+                .unwrap()
+                .parse::<i64>()
+                .unwrap(),
+            genesis["consensus_params"]["block"]["max_gas"]
+                .as_str()
+                .unwrap()
+                .parse::<i64>()
+                .unwrap(),
+            genesis["consensus_params"]["evidence"]["max_age_num_blocks"]
+                .as_str()
+                .unwrap()
+                .parse::<i64>()
+                .unwrap(),
+            genesis["consensus_params"]["evidence"]["max_age_duration"]
+                .as_str()
+                .unwrap()
+                .parse::<u64>()
+                .unwrap(),
+            pub_key_types,
+        )
         .map_err(|err| sc_cli::Error::Other(err.to_string()))?;
     Ok(())
 }
