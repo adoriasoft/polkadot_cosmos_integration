@@ -4,6 +4,8 @@ use jsonrpc_http_server::jsonrpc_core::{serde_json::json, Error, IoHandler, Para
 use jsonrpc_http_server::ServerBuilder;
 use crate::types::*;
 
+pub const DEFAULT_ABCI_RPC_URL: &str = "127.0.0.1:26657";
+
 pub fn start_server(uri: &str) {
     let mut io = IoHandler::new();
 
@@ -58,7 +60,7 @@ async fn handle_broadcast_tx_commit(params: Params) -> Result<Value, Error> {
         .check_tx(params.tx.as_bytes().to_vec(), 0)
         .map_err(|_| "query failed")
         .unwrap();
-    println!("abci query result: {:?}", result);
+    println!("abci check_tx result: {:?}", result);
     Ok(json!({
         "height": "26682",
         "hash": "75CA0F856A4DA078FC4911580360E70CEFB2EBEE",

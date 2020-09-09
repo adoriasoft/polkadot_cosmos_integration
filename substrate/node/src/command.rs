@@ -55,7 +55,7 @@ fn init_chain() -> sc_cli::Result<()> {
 
 fn setup_cosmos() -> sc_cli::Result<()> {
     init_chain()?;
-    pallet_cosmos_rpc::start_server("127.0.0.1:26657");
+    pallet_cosmos_rpc::start_server(pallet_cosmos_rpc::DEFAULT_ABCI_RPC_URL);
     Ok(())
 }
 
