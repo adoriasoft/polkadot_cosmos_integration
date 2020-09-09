@@ -114,6 +114,15 @@ pub fn new_full(config: Configuration) -> Result<impl AbstractService, ServiceEr
 		})?
 		.build()?;
 
+	let client = client.clone();
+	let pool = transaction_pool.clone();
+	let deps = crate::rpc::FullDeps {
+		client: client.clone(),
+		pool: pool.clone(),
+		command_sink: command_sink.clone(),
+	};
+	crate::cosmos_rpc::create_full(deps);
+
 	if role.is_authority() {
 		let proposer = sc_basic_authorship::ProposerFactory::new(
 			service.client(),

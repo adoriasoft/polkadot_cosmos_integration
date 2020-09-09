@@ -7,3 +7,8 @@ pub struct ABCIQueryParams {
     pub height: String,
     pub prove: bool,
 }
+
+#[derive(Deserialize)]
+pub struct ABCITxCommitParams {
+    pub tx: String,
+}

@@ -1,6 +1,4 @@
-pub mod types;
-
-use types::*;
+use crate::types::*;
 
 use jsonrpc_http_server::jsonrpc_core::{serde_json::json, IoHandler, Params};
 use jsonrpc_http_server::ServerBuilder;
@@ -36,9 +34,39 @@ pub fn start_server() {
                 "height" : format!("{}", result.height),
                 "proof" : null,
                 "value" : format!("{}", base64::encode(result.value)),
-                "key" : null,
+                "key" : format!("{}", std::str::from_utf8(&result.key).unwrap()),
                 "index" : format!("{}", result.index),
                 "code" : format!("{}", result.code),
+            }
+        });
+        Ok(res)
+    });
+    io.add_method("broadcast_tx_commit", |params: Params| async {
+        let params: ABCITxCommitParams = params.parse().unwrap();
+        println!("params tx: {}", params.tx);
+
+        let result =
+            abci::connect_or_get_connection(&abci::get_server_url())
+                .map_err(|_| "failed to setup connection")
+                .unwrap()
+                .check_tx(params.tx.as_bytes().to_vec(), 0)
+                .map_err(|_| "query failed")
+                .unwrap();
+
+        println!("abci query result: {:?}", result);
+
+        let res = json!({
+            "height": "26682",
+            "hash": "75CA0F856A4DA078FC4911580360E70CEFB2EBEE",
+            "deliver_tx": {
+                "log": "",
+                "data": "",
+                "code": "0"
+            },
+            "check_tx": {
+                "log": format!("{}", result.log),
+                "data": format!("{}", base64::encode(result.data)),
+                "code": format!("{}", result.code)
             }
         });
         Ok(res)
