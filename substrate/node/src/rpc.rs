@@ -26,17 +26,6 @@ pub struct FullDeps<C, P> {
 pub fn create_full<P: TransactionPool + 'static>(
     deps: FullDeps<crate::service::FullClient, P>,
 ) -> jsonrpc_core::IoHandler<sc_rpc::Metadata> {
-    let clone_client = deps.client.clone();
-    let clone_pool = deps.pool.clone();
-    // Todo: Start it from service.rs file with node itself
-    std::thread::spawn(move || {
-        crate::cosmos_rpc::start_server(
-            crate::cosmos_rpc::DEFAULT_ABCI_RPC_URL,
-            clone_client,
-            clone_pool,
-        );
-    });
-
     let mut io = jsonrpc_core::IoHandler::default();
     io.extend_with(SystemApi::to_delegate(FullSystem::new(
         deps.client.clone(),

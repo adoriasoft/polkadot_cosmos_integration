@@ -61,8 +61,6 @@ pub async fn deliver_tx<P: TransactionPool + 'static>(
 
     let bytes: Vec<u8> = tx.encode();
     let xt = Decode::decode(&mut &bytes[..]).unwrap();
-    let hash = pool.submit_one(&best_block_num, TransactionSource::External, xt)
-        .await
-        .unwrap();
+    let hash = pool.submit_one(&best_block_num, TransactionSource::External, xt).await;
     println!("{:?}", hash);
 }

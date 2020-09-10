@@ -147,7 +147,7 @@ pub fn new_full(config: Configuration) -> Result<TaskManager, ServiceError> {
 	if role.is_authority() {
 		let proposer = sc_basic_authorship::ProposerFactory::new(
 			client.clone(),
-			transaction_pool,
+			transaction_pool.clone(),
 			prometheus_registry.as_ref(),
 		);
 
@@ -216,12 +216,13 @@ pub fn new_full(config: Configuration) -> Result<TaskManager, ServiceError> {
 		);
 	} else {
 		sc_finality_grandpa::setup_disabled_grandpa(
-			client,
+			client.clone(),
 			&inherent_data_providers,
 			network,
 		)?;
 	}
 
+	crate::cosmos_rpc::start_server(client, transaction_pool);
 	network_starter.start_network();
 	Ok(task_manager)
 }
