@@ -42,19 +42,7 @@ pub async fn deliver_tx<P: TransactionPool + 'static>(
         frame_system::CheckWeight::new(),
         pallet_transaction_payment::ChargeTransactionPayment::from(1),
     );
-    let raw_payload = SignedPayload::<Vec<u8>, SignedExtra>::from_raw(
-        call.into(),
-        extra,
-        (
-            spec_version,
-            tx_version,
-            genesis_hash,
-            genesis_hash,
-            (),
-            (),
-            (),
-        ),
-    );
+    let raw_payload = SignedPayload::<Vec<u8>, SignedExtra>::new(call.clone().into(), extra.clone()).unwrap();
     let signature = raw_payload.using_encoded(|payload| alice.pair().sign(payload));
     let (call, extra, _) = raw_payload.deconstruct();
     let tx = UncheckedExtrinsic::new_signed(call, alice.to_account_id(), signature, extra);

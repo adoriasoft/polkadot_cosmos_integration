@@ -25,6 +25,23 @@ decl_module! {
         /// Block initialization
         fn on_initialize(now: T::BlockNumber) -> Weight {
             // TODO: use chain id from the genesis file
+            // match abci_interface::begin_block(
+            //     "namechain",
+            //     now.saturated_into() as i64,
+            //     vec![],
+            //     vec![],
+            // ) {
+            //     Err(err) => {
+            //         // We have to panic, as if cosmos will not have some blocks - it will fail.
+            //         panic!("Begin block failed: {:?}", err);
+            //     },
+            //     _ => {},
+            // }
+            return 0;
+        }
+
+        /// Block finalization
+        fn on_finalize(now: T::BlockNumber) {
             match abci_interface::begin_block(
                 "namechain",
                 now.saturated_into() as i64,
@@ -37,11 +54,8 @@ decl_module! {
                 },
                 _ => {},
             }
-            return 0;
-        }
 
-        /// Block finalization
-        fn on_finalize(now: T::BlockNumber) {
+
             match abci_interface::end_block(now.saturated_into() as i64) {
                 Ok(_) => {
                     match abci_interface::commit() {
@@ -84,9 +98,9 @@ impl<T: Trait> CosmosAbci for Module<T> {
 }
 
 sp_api::decl_runtime_apis! {
-	pub trait ExtrinsicConstructionApi {
-		fn deliver_tx_encoded(tx: Vec<u8>) -> Vec<u8>;
-	}
+    pub trait ExtrinsicConstructionApi {
+        fn deliver_tx_encoded(tx: Vec<u8>) -> Vec<u8>;
+    }
 }
 
 #[runtime_interface]
