@@ -19,6 +19,11 @@ name = 'node-template'
 path = '../runtime'
 version = '2.0.0-rc6'
 
+[dependencies.pallet-transaction-payment]
+git = 'https://github.com/paritytech/substrate.git'
+tag = 'v2.0.0-rc6'
+version = '2.0.0-rc6'
+
 [dependencies.pallet-transaction-payment-rpc]
 git = 'https://github.com/paritytech/substrate.git'
 tag = 'v2.0.0-rc6'
@@ -137,12 +142,29 @@ git = 'https://github.com/paritytech/substrate.git'
 tag = 'v2.0.0-rc6'
 version = '2.0.0-rc6'
 
+[dependencies.sp-keyring]
+git = 'https://github.com/paritytech/substrate.git'
+tag = 'v2.0.0-rc6'
+version = '2.0.0-rc6'
+
+[dependencies.frame-system]
+git = 'https://github.com/paritytech/substrate.git'
+tag = 'v2.0.0-rc6'
+version = '2.0.0-rc6'
+
 [dependencies]
 jsonrpc-core = '14.0.3'
 structopt = '0.3.8'
+serde = '1.0.41'
+serde_derive = '1.0.41'
 serde_json = '1.0.41'
+codec = { package = 'parity-scale-codec', version = '1.3.1' }
+futures = { version = "0.3.1", features = ["compat"] }
+base64 = '0.12.3'
+hex = '0.4.2'
 
-pallet-cosmos-rpc = { path = '../pallets/cosmos-rpc' }
+jsonrpc-http-server = { git = 'https://github.com/enfipy/jsonrpc', rev = '4bca2c5186a873488d5fb989b28cb9c7225ec9c6' }
+cosmos-abci = { path = '../pallets/cosmos-abci', package = 'pallet-cosmos-abci' }
 abci = { path = '../pallets/cosmos-abci/abci' }
 
 [build-dependencies.substrate-build-script-utils]

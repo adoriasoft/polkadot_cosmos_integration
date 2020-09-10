@@ -6,6 +6,5 @@ members = [
     'node',
     'pallets/cosmos-abci',
     'pallets/cosmos-abci/abci',
-    'pallets/cosmos-rpc',
     'runtime',
 ]

@@ -19,7 +19,7 @@ native_executor_instance!(
     node_template_runtime::cosmos_abci::abci_interface::HostFunctions,
 );
 
-type FullClient = sc_service::TFullClient<Block, RuntimeApi, Executor>;
+pub type FullClient = sc_service::TFullClient<Block, RuntimeApi, Executor>;
 type FullBackend = sc_service::TFullBackend<Block>;
 type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
 

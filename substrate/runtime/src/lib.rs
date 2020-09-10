@@ -6,6 +6,7 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
+use codec::Encode;
 use pallet_grandpa::fg_primitives;
 use pallet_grandpa::{AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
 use sp_api::impl_runtime_apis;
@@ -445,4 +446,11 @@ impl_runtime_apis! {
             TransactionPayment::query_info(uxt, len)
         }
     }
+
+	impl cosmos_abci::ExtrinsicConstructionApi<Block> for Runtime {
+		fn deliver_tx_encoded(tx: Vec<u8>) -> Vec<u8> {
+            let call: CallableCallFor<CosmosAbci, Runtime> = cosmos_abci::Call::deliver_tx(tx);
+            call.encode()
+        }
+	}
 }
