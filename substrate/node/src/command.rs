@@ -61,7 +61,9 @@ fn init_chain() -> sc_cli::Result<()> {
     abci::connect_or_get_connection(&abci::get_server_url())
         .map_err(|err| sc_cli::Error::Other(err.to_string()))?
         .init_chain(
-            genesis["chain_id"].as_str().unwrap().to_string(),
+            // TODO: use chain id from the genesis file
+            //genesis["chain_id"].as_str().unwrap().to_string(),
+            "namechain".to_owned(),
             genesis["app_state"].to_string().as_bytes().to_vec(),
             genesis["consensus_params"]["block"]["max_bytes"]
                 .as_str()

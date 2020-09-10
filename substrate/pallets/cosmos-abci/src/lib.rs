@@ -24,8 +24,9 @@ decl_module! {
     pub struct Module<T: Trait> for enum Call where origin: T::Origin {
         /// Block initialization
         fn on_initialize(now: T::BlockNumber) -> Weight {
+            // TODO: use chain id from the genesis file
             match abci_interface::begin_block(
-                "test-chain-id",
+                "namechain",
                 now.saturated_into() as i64,
                 vec![],
                 vec![],

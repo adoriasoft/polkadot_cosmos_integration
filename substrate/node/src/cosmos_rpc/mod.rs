@@ -22,15 +22,15 @@ pub fn start_server<P: TransactionPool + 'static>(
         async move {
             let params: types::ABCITxCommitParams = params.parse().unwrap();
             println!("params tx: {}", params.tx);
-            let tx_value = params.tx.as_bytes().to_vec();
+            let tx_value = base64::decode(params.tx).unwrap();
             let result = abci::connect_or_get_connection(&abci::get_server_url())
                 .map_err(|_| "failed to setup connection")
                 .unwrap()
-                .check_tx(tx_value.clone(), 0)
+                .check_tx(tx_value, 0)
                 .map_err(|_| "query failed")
                 .unwrap();
             println!("abci check_tx result: {:?}", result);
-            let _deliver_tx_result = tx::deliver_tx(client.clone(), pool.clone(), tx_value.clone()).await;
+            //let _deliver_tx_result = tx::deliver_tx(client.clone(), pool.clone(), tx_value.clone()).await;
             Ok(json!({
                 "height": "26682",
                 "hash": "75CA0F856A4DA078FC4911580360E70CEFB2EBEE",
