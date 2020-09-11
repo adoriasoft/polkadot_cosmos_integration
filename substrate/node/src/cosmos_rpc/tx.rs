@@ -1,11 +1,11 @@
-use std::sync::Arc;
+use core::marker::PhantomData;
+use std::{sync::Arc, convert::TryInto};
 
-use codec::Encode;
-use cosmos_abci::ExtrinsicConstructionApi;
+use codec::{Encode, Decode};
 use node_template_runtime::{opaque::Block, SignedExtra};
 use sc_client_api::BlockBackend;
 pub use sc_rpc_api::DenyUnsafe;
-use sp_api::ProvideRuntimeApi;
+use sp_api::{ProvideRuntimeApi, Metadata as MetadataApi};
 use sp_blockchain::HeaderBackend;
 use sp_core::Pair;
 use sp_keyring::AccountKeyring;
@@ -15,11 +15,31 @@ use sp_runtime::{
 };
 use sp_transaction_pool::{TransactionPool, TransactionSource, error::IntoPoolError};
 use substrate_frame_rpc_system::AccountNonceApi;
+use substrate_subxt::{DefaultNodeRuntime, Metadata, Call as CallType, system::{System, SystemEventsDecoder}};
+use substrate_subxt_proc_macro::{module, Call};
+use frame_metadata::RuntimeMetadataPrefixed;
+
+#[module]
+pub trait CosmosAbci: System {}
+
+impl CosmosAbci for DefaultNodeRuntime {}
+
+#[derive(Clone, Debug, PartialEq, Call, Encode)]
+pub struct DeliverTxCall<T: CosmosAbci> {
+    pub _runtime: PhantomData<T>,
+    pub data: Vec<u8>,
+}
+
+fn encode<C: CallType<DefaultNodeRuntime>>(metadata: &Metadata, call: C) -> Vec<u8> {
+    metadata
+        .module_with_calls(C::MODULE)
+        .and_then(|module| module.call(C::FUNCTION, call)).unwrap().encode()
+}
 
 pub async fn deliver_tx<P: TransactionPool<Block = Block> + 'static>(
     client: Arc<crate::service::FullClient>,
     pool: Arc<P>,
-    tx_value: Vec<u8>,
+    data: Vec<u8>,
 ) {
     let api = client.runtime_api();
     let alice = AccountKeyring::Alice;
@@ -28,10 +48,16 @@ pub async fn deliver_tx<P: TransactionPool<Block = Block> + 'static>(
     let at = BlockId::<Block>::hash(best);
     let best_block_num = BlockId::number(client.chain_info().best_number.into());
 
+    let metadata_bytes = api.metadata(&at).unwrap();
+    let meta: RuntimeMetadataPrefixed = Decode::decode(&mut &metadata_bytes[..]).unwrap();
+    let metadata: Metadata = meta.try_into().unwrap();
+
+    let call_fn = DeliverTxCall::<DefaultNodeRuntime> { _runtime: PhantomData, data };
+    let call: Vec<u8> = encode(&metadata, call_fn);
+
     let genesis_hash = client.block_hash(0).unwrap().unwrap();
     let runtime_version = client.runtime_version_at(&at).unwrap();
     let nonce = api.account_nonce(&at, alice.to_account_id()).unwrap();
-    let call: Vec<u8> = api.deliver_tx_encoded(&at, tx_value).unwrap();
 
     let spec_version = runtime_version.spec_version;
     let tx_version = runtime_version.transaction_version;
@@ -40,7 +66,7 @@ pub async fn deliver_tx<P: TransactionPool<Block = Block> + 'static>(
         frame_system::CheckSpecVersion::new(),
         frame_system::CheckTxVersion::new(),
         frame_system::CheckGenesis::new(),
-        frame_system::CheckEra::from(Era::mortal(256, best_block_num)),
+        frame_system::CheckEra::from(Era::mortal(256, 0)),
         frame_system::CheckNonce::from(nonce),
         frame_system::CheckWeight::new(),
         pallet_transaction_payment::ChargeTransactionPayment::from(0),

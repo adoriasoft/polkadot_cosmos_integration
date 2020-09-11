@@ -370,9 +370,9 @@ impl_runtime_apis! {
         ) -> TransactionValidity {
             let mut res = Executive::validate_transaction(source, tx.clone())?;
             if let Some(&cosmos_abci::Call::deliver_tx(ref val)) = IsSubType::<CallableCallFor<CosmosAbci, Runtime>>::is_sub_type(&tx.function) {
-                let increase = <CosmosAbci as cosmos_abci::CosmosAbci>::check_tx(val.clone()).map_err(|_| InvalidTransaction::Custom(50u8))?;
+                let diff = <CosmosAbci as cosmos_abci::CosmosAbci>::check_tx(val.clone()).map_err(|_| InvalidTransaction::Custom(50u8))?;
                 // Will increase or keep same priority depending on GasUsed and GasWanted
-                res.priority += increase;
+                res.priority += diff;
             }
             Ok(res)
         }

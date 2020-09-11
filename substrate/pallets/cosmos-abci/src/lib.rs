@@ -7,8 +7,8 @@ use sp_runtime_interface::runtime_interface;
 use sp_std::prelude::*;
 
 pub trait CosmosAbci {
-    fn check_tx(tx: Vec<u8>) -> Result<u64, DispatchError>;
-    fn deliver_tx(tx: Vec<u8>) -> DispatchResult;
+    fn check_tx(data: Vec<u8>) -> Result<u64, DispatchError>;
+    fn deliver_tx(data: Vec<u8>) -> DispatchResult;
     fn query(path: &str, data: Vec<u8>, height: i64, prove: bool) -> DispatchResult;
 }
 
@@ -83,12 +83,12 @@ decl_module! {
 }
 
 impl<T: Trait> CosmosAbci for Module<T> {
-    fn check_tx(tx: Vec<u8>) -> Result<u64, DispatchError> {
-        abci_interface::check_tx(tx)
+    fn check_tx(data: Vec<u8>) -> Result<u64, DispatchError> {
+        abci_interface::check_tx(data)
     }
 
-    fn deliver_tx(tx: Vec<u8>) -> DispatchResult {
-        abci_interface::deliver_tx(tx)
+    fn deliver_tx(data: Vec<u8>) -> DispatchResult {
+        abci_interface::deliver_tx(data)
     }
 
     fn query(path: &str, data: Vec<u8>, height: i64, prove: bool) -> DispatchResult {
@@ -113,10 +113,10 @@ pub trait AbciInterface {
         Ok(())
     }
 
-    fn check_tx(tx: Vec<u8>) -> Result<u64, DispatchError> {
+    fn check_tx(data: Vec<u8>) -> Result<u64, DispatchError> {
         let result = abci::connect_or_get_connection(&abci::get_server_url())
             .map_err(|_| "failed to setup connection")?
-            .check_tx(tx, 0)
+            .check_tx(data, 0)
             .map_err(|_| "check_tx failed")?;
         // debug::info!("Result: {:?}", result);
         // If GasWanted is greater than GasUsed, we will increase the priority
@@ -125,10 +125,10 @@ pub trait AbciInterface {
         Ok(dif as u64)
     }
 
-    fn deliver_tx(tx: Vec<u8>) -> DispatchResult {
+    fn deliver_tx(data: Vec<u8>) -> DispatchResult {
         let _result = abci::connect_or_get_connection(&abci::get_server_url())
             .map_err(|_| "failed to setup connection")?
-            .deliver_tx(tx)
+            .deliver_tx(data)
             .map_err(|_| "deliver_tx failed")?;
         // debug::info!("Result: {:?}", result);
         Ok(())
