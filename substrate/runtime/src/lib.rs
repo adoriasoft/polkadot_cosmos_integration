@@ -245,7 +245,7 @@ impl pallet_balances::Trait for Runtime {
 }
 
 parameter_types! {
-    pub const TransactionByteFee: Balance = 1;
+    pub const TransactionByteFee: Balance = 0;
 }
 
 impl pallet_transaction_payment::Trait for Runtime {
@@ -448,8 +448,8 @@ impl_runtime_apis! {
     }
 
 	impl cosmos_abci::ExtrinsicConstructionApi<Block> for Runtime {
-		fn deliver_tx_encoded(tx: Vec<u8>) -> Vec<u8> {
-            let call: CallableCallFor<CosmosAbci, Runtime> = cosmos_abci::Call::deliver_tx(tx);
+		fn deliver_tx_encoded(data: Vec<u8>) -> Vec<u8> {
+            let call: CallableCallFor<CosmosAbci, Runtime> = cosmos_abci::Call::deliver_tx(data);
             call.encode()
         }
 	}

@@ -55,7 +55,6 @@ decl_module! {
                 _ => {},
             }
 
-
             match abci_interface::end_block(now.saturated_into() as i64) {
                 Ok(_) => {
                     match abci_interface::commit() {
@@ -74,10 +73,10 @@ decl_module! {
         }
 
         #[weight = 0]
-        pub fn deliver_tx(origin, tx: Vec<u8>) -> DispatchResult {
+        pub fn deliver_tx(origin, data: Vec<u8>) -> DispatchResult {
             ensure_signed(origin)?;
             debug::info!("Received deliver tx request");
-            <Self as CosmosAbci>::deliver_tx(tx)?;
+            <Self as CosmosAbci>::deliver_tx(data)?;
             Ok(())
         }
     }
@@ -99,7 +98,7 @@ impl<T: Trait> CosmosAbci for Module<T> {
 
 sp_api::decl_runtime_apis! {
     pub trait ExtrinsicConstructionApi {
-        fn deliver_tx_encoded(tx: Vec<u8>) -> Vec<u8>;
+        fn deliver_tx_encoded(data: Vec<u8>) -> Vec<u8>;
     }
 }
 

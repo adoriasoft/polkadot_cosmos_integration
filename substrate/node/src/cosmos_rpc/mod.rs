@@ -2,13 +2,14 @@ mod tx;
 mod types;
 
 use std::sync::Arc;
+use node_template_runtime::opaque::Block;
 use sp_transaction_pool::TransactionPool;
 use jsonrpc_http_server::jsonrpc_core::{serde_json::json, IoHandler, Params};
 use jsonrpc_http_server::ServerBuilder;
 
 pub const DEFAULT_ABCI_RPC_URL: &str = "127.0.0.1:26657";
 
-pub fn start_server<P: TransactionPool + 'static>(
+pub fn start_server<P: TransactionPool<Block = Block> + 'static>(
     client: Arc<crate::service::FullClient>,
     pool: Arc<P>,
 ) {
@@ -38,7 +39,6 @@ pub fn start_server<P: TransactionPool + 'static>(
                     .map_err(|_| "query failed")
                     .unwrap();
             println!("abci query result: {:?}", result);
-            //let _deliver_tx_result = tx::deliver_tx(client.clone(), pool.clone(), vec![]).await;
             // TODO: parse result.proof and if it is qual to None in the json proof field put null
             // TODO: if key len == 0 put null in the json key field
             Ok(json!({
@@ -86,10 +86,9 @@ pub fn start_server<P: TransactionPool + 'static>(
         }
     });
 
-    println!("##################################");
     std::thread::spawn(move || {
         let server = ServerBuilder::new(io)
-            .threads(1)
+            .threads(3)
             .start_http(&DEFAULT_ABCI_RPC_URL.parse().unwrap())
             .unwrap();
         server.wait();
