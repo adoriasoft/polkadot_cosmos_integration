@@ -28,7 +28,6 @@ To run node locally you will need to specify the environment variables for cosmo
 
 ```bash
 export ABCI_SERVER_URL=tcp://localhost:26658
-export ABCI_GENESIS_STATE=$(cat ./scripts/test_genesis.json)
 export ABCI_GENESIS_STATE=$(cat $HOME/.nsd/config/genesis.json)
 ```
 

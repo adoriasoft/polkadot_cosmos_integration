@@ -15,7 +15,9 @@ use tokio::{runtime::Runtime, task::block_in_place};
 
 lazy_static! {
     static ref ABCI_CLIENT: Mutex<Option<Client>> = Mutex::new(None);
+    static ref ABCI_CHAIN_ID: Mutex<Option<String>> = Mutex::new(None);
 }
+
 
 type AbciResult<T> = Result<T, Box<dyn std::error::Error>>;
 type AbciClient = abci_application_client::AbciApplicationClient<tonic::transport::Channel>;
@@ -35,6 +37,22 @@ pub fn connect_or_get_connection<'ret>(
     // Here we create a ref to the inner value of the mutex guard.
     // Unwrap should never panic as we set it previously.
     let res = MutexGuardRefMut::new(client).map_mut(|mg| mg.as_mut().unwrap());
+    Ok(res)
+}
+
+pub fn defines_chain_id(chain_id: String) {
+    let mut stored_chain_id = ABCI_CHAIN_ID.lock().unwrap();
+    *stored_chain_id = Some(chain_id);
+}
+
+pub fn get_chain_id<'ret>() -> AbciResult<MutexGuardRefMut<'ret, Option<String>, String>> {
+    let mut chain_id = ABCI_CHAIN_ID.lock()?;
+    if chain_id.is_none() {
+        *chain_id = Some("default-chain-id".to_string());
+    }
+    // Here we create a ref to the inner value of the mutex guard.
+    // Unwrap should never panic as we set it previously.
+    let res = MutexGuardRefMut::new(chain_id).map_mut(|mg| mg.as_mut().unwrap());
     Ok(res)
 }
 
@@ -72,9 +90,9 @@ impl Client {
         Ok(response.into_inner())
     }
 
+    // You should define ABCI_CHAIN_ID (defines_chain_id() function) variable before execute this function
     pub fn init_chain(
         &mut self,
-        chain_id: String,
         app_state_bytes: Vec<u8>,
         max_bytes: i64,
         max_gas: i64,
@@ -84,7 +102,7 @@ impl Client {
     ) -> AbciResult<protos::ResponseInitChain> {
         let request = tonic::Request::new(protos::RequestInitChain {
             time: Some(SystemTime::now().into()),
-            chain_id: chain_id,
+            chain_id: get_chain_id().unwrap().to_string(),
             consensus_params: Some(protos::ConsensusParams {
                 block: Some(protos::BlockParams {
                     max_bytes: max_bytes,
@@ -108,16 +126,16 @@ impl Client {
 
     pub fn begin_block(
         &mut self,
-        chain_id: String,
         height: i64,
         hash: Vec<u8>,
         proposer_address: Vec<u8>,
     ) -> AbciResult<protos::ResponseBeginBlock> {
+        let chain_id: String = get_chain_id().unwrap().to_string();
         let request = tonic::Request::new(protos::RequestBeginBlock {
             hash,
             header: Some(protos::Header {
                 version: None,
-                chain_id,
+                chain_id: chain_id,
                 height,
                 time: Some(SystemTime::now().into()),
                 last_block_id: None,
