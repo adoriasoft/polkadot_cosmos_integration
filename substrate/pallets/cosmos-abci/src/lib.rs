@@ -1,10 +1,48 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use frame_support::{debug, decl_module, dispatch::DispatchResult, dispatch::Vec, weights::Weight};
-use frame_system::ensure_signed;
+use frame_system::{
+    ensure_signed,
+    offchain::{AppCrypto, CreateSignedTransaction},
+};
+use sp_core::crypto::KeyTypeId;
 use sp_runtime::{traits::SaturatedConversion, DispatchError};
 use sp_runtime_interface::runtime_interface;
 use sp_std::prelude::*;
+
+
+pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"abci");
+/// Based on the above `KeyTypeId` we need to generate a pallet-specific crypto type wrapper.
+/// We can utilize the supported crypto kinds (`sr25519`, `ed25519` and `ecdsa`) and augment
+/// them with the pallet-specific identifier.
+pub mod crypto {
+	use crate::KEY_TYPE;
+	use sp_core::sr25519::Signature as Sr25519Signature;
+	use sp_runtime::app_crypto::{app_crypto, sr25519};
+	use sp_runtime::{
+		traits::Verify,
+		MultiSignature, MultiSigner,
+	};
+
+	app_crypto!(sr25519, KEY_TYPE);
+
+	pub struct ABCIAuthId;
+	// implemented for ocw-runtime
+	impl frame_system::offchain::AppCrypto<MultiSigner, MultiSignature> for ABCIAuthId {
+		type RuntimeAppPublic = Public;
+		type GenericSignature = sp_core::sr25519::Signature;
+		type GenericPublic = sp_core::sr25519::Public;
+	}
+
+	// implemented for mock runtime in test
+	impl frame_system::offchain::AppCrypto<<Sr25519Signature as Verify>::Signer, Sr25519Signature>
+		for ABCIAuthId
+	{
+		type RuntimeAppPublic = Public;
+		type GenericSignature = sp_core::sr25519::Signature;
+		type GenericPublic = sp_core::sr25519::Public;
+	}
+}
 
 pub trait CosmosAbci {
     fn check_tx(data: Vec<u8>) -> Result<u64, DispatchError>;
@@ -13,7 +51,9 @@ pub trait CosmosAbci {
 }
 
 /// The pallet's configuration trait.
-pub trait Trait: frame_system::Trait {
+pub trait Trait: CreateSignedTransaction<Call<Self>> {
+    /// The identifier type for an offchain worker.
+    type AuthorityId: AppCrypto<Self::Public, Self::Signature>;
     /// The overarching dispatch call type.
     type Call: From<Call<Self>>;
 }
@@ -83,7 +123,7 @@ impl<T: Trait> CosmosAbci for Module<T> {
 
 sp_api::decl_runtime_apis! {
     pub trait ExtrinsicConstructionApi {
-        fn deliver_tx_encoded(data: Vec<u8>) -> Vec<u8>;
+        fn send_deliver_tx(data: &Vec<u8>);
     }
 }
 
@@ -119,11 +159,7 @@ pub trait AbciInterface {
         Ok(())
     }
 
-    fn begin_block(
-        height: i64,
-        hash: Vec<u8>,
-        proposer_address: Vec<u8>,
-    ) -> DispatchResult {
+    fn begin_block(height: i64, hash: Vec<u8>, proposer_address: Vec<u8>) -> DispatchResult {
         let _result = abci::connect_or_get_connection(&abci::get_server_url())
             .map_err(|_| "failed to setup connection")?
             .begin_block(height, hash, proposer_address)

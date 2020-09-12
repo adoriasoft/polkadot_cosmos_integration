@@ -12,6 +12,7 @@ use pallet_grandpa::{AuthorityId as GrandpaId, AuthorityList as GrandpaAuthority
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
+use sp_runtime::generic::Era;
 use sp_runtime::traits::{
     BlakeTwo256, Block as BlockT, IdentifyAccount, IdentityLookup, NumberFor, Saturating, Verify,
 };
@@ -25,9 +26,10 @@ use sp_std::prelude::*;
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 
+use frame_system::offchain::SendSignedTransaction;
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
-    construct_runtime,
+    construct_runtime, debug,
     dispatch::{CallableCallFor, IsSubType},
     parameter_types,
     traits::{KeyOwnerProofSystem, Randomness},
@@ -262,7 +264,67 @@ impl pallet_sudo::Trait for Runtime {
 }
 
 impl cosmos_abci::Trait for Runtime {
+    type AuthorityId = cosmos_abci::crypto::ABCIAuthId;
     type Call = Call;
+}
+
+/// The payload being signed in transactions.
+pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
+
+impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for Runtime
+where
+    Call: From<LocalCall>,
+{
+    fn create_transaction<C: frame_system::offchain::AppCrypto<Self::Public, Self::Signature>>(
+        call: Call,
+        public: <Signature as sp_runtime::traits::Verify>::Signer,
+        account: AccountId,
+        nonce: Index,
+    ) -> Option<(
+        Call,
+        <UncheckedExtrinsic as sp_runtime::traits::Extrinsic>::SignaturePayload,
+    )> {
+        let tip = 0;
+        // take the biggest period possible.
+        let period = BlockHashCount::get()
+            .checked_next_power_of_two()
+            .map(|c| c / 2)
+            .unwrap_or(2) as u64;
+        // The `System::block_number` is initialized with `n+1`,
+        // so the actual block number is `n`.
+        let current_block = System::block_number() as u64 - 1;
+        let era = Era::mortal(period, current_block);
+        let extra = (
+            frame_system::CheckSpecVersion::<Runtime>::new(),
+            frame_system::CheckTxVersion::<Runtime>::new(),
+            frame_system::CheckGenesis::<Runtime>::new(),
+            frame_system::CheckEra::<Runtime>::from(era),
+            frame_system::CheckNonce::<Runtime>::from(nonce),
+            frame_system::CheckWeight::<Runtime>::new(),
+            pallet_transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
+        );
+        let raw_payload = SignedPayload::new(call, extra)
+            .map_err(|e| {
+                debug::warn!("Unable to create signed payload: {:?}", e);
+            })
+            .ok()?;
+        let signature = raw_payload.using_encoded(|payload| C::sign(payload, public))?;
+        let (call, extra, _) = raw_payload.deconstruct();
+        Some((call, (account, signature.into(), extra)))
+    }
+}
+
+impl frame_system::offchain::SigningTypes for Runtime {
+    type Public = <Signature as sp_runtime::traits::Verify>::Signer;
+    type Signature = Signature;
+}
+
+impl<C> frame_system::offchain::SendTransactionTypes<C> for Runtime
+where
+    Call: From<C>,
+{
+    type Extrinsic = UncheckedExtrinsic;
+    type OverarchingCall = Call;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -447,10 +509,12 @@ impl_runtime_apis! {
         }
     }
 
-	impl cosmos_abci::ExtrinsicConstructionApi<Block> for Runtime {
-		fn deliver_tx_encoded(data: Vec<u8>) -> Vec<u8> {
-            let call: CallableCallFor<CosmosAbci, Runtime> = cosmos_abci::Call::deliver_tx(data);
-            call.encode()
+    impl cosmos_abci::ExtrinsicConstructionApi<Block> for Runtime {
+        fn send_deliver_tx(data: &Vec<u8>) {
+            let signer = frame_system::offchain::Signer::<Runtime, <Runtime as cosmos_abci::Trait>::AuthorityId>::any_account();
+            signer.send_signed_transaction(|_acct|
+                cosmos_abci::Call::deliver_tx(data.to_vec())
+            );
         }
-	}
+    }
 }

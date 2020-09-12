@@ -39,7 +39,6 @@ pub fn start_server<P: TransactionPool<Block = Block> + 'static>(
                     .map_err(|_| "query failed")
                     .unwrap();
             println!("abci query result: {:?}", result);
-            let _deliver_tx_result = tx::deliver_tx(client.clone(), pool.clone(), vec![]).await;
             // TODO: parse result.proof and if it is qual to None in the json proof field put null
             // TODO: if key len == 0 put null in the json key field
             Ok(json!({
@@ -69,7 +68,11 @@ pub fn start_server<P: TransactionPool<Block = Block> + 'static>(
                 .map_err(|_| "query failed")
                 .unwrap();
             println!("abci check_tx result: {:?}", result);
-            let _deliver_tx_result = tx::deliver_tx(client.clone(), pool.clone(), tx_value).await;
+
+            // TODO: David fix it pls
+            client.clone().runtime_api().send_deliver_tx(tx_value);
+            // let _deliver_tx_result = tx::deliver_tx(client.clone(), pool.clone(), tx_value).await;
+
             Ok(json!({
                 "height": "26682",
                 "hash": "75CA0F856A4DA078FC4911580360E70CEFB2EBEE",
