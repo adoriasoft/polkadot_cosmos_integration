@@ -123,7 +123,7 @@ impl<T: Trait> CosmosAbci for Module<T> {
 
 sp_api::decl_runtime_apis! {
     pub trait ExtrinsicConstructionApi {
-        fn send_deliver_tx(data: &Vec<u8>);
+        fn signed_and_send_deliver_tx(data: &Vec<u8>);
     }
 }
 

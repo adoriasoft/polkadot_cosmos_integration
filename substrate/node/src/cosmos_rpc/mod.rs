@@ -1,11 +1,15 @@
 mod tx;
 mod types;
 
-use std::sync::Arc;
-use node_template_runtime::opaque::Block;
-use sp_transaction_pool::TransactionPool;
 use jsonrpc_http_server::jsonrpc_core::{serde_json::json, IoHandler, Params};
 use jsonrpc_http_server::ServerBuilder;
+use node_template_runtime::cosmos_abci::ExtrinsicConstructionApi;
+use node_template_runtime::opaque::Block;
+use sp_api::ProvideRuntimeApi;
+use sp_runtime::generic::BlockId;
+use sp_blockchain::HeaderBackend;
+use sp_transaction_pool::TransactionPool;
+use std::sync::Arc;
 
 pub const DEFAULT_ABCI_RPC_URL: &str = "127.0.0.1:26657";
 
@@ -70,7 +74,12 @@ pub fn start_server<P: TransactionPool<Block = Block> + 'static>(
             println!("abci check_tx result: {:?}", result);
 
             // TODO: David fix it pls
-            client.clone().runtime_api().send_deliver_tx(tx_value);
+
+            let best = client.info().best_hash;
+            let at = BlockId::<Block>::hash(best);
+            client
+                .runtime_api()
+                .signed_and_send_deliver_tx(&at, &tx_value);
             // let _deliver_tx_result = tx::deliver_tx(client.clone(), pool.clone(), tx_value).await;
 
             Ok(json!({
