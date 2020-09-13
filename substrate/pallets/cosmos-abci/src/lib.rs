@@ -10,7 +10,6 @@ use sp_runtime::{traits::SaturatedConversion, DispatchError};
 use sp_runtime_interface::runtime_interface;
 use sp_std::prelude::*;
 
-
 pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"abci");
 /// Based on the above `KeyTypeId` we need to generate a pallet-specific crypto type wrapper.
 /// We can utilize the supported crypto kinds (`sr25519`, `ed25519` and `ecdsa`) and augment
@@ -123,7 +122,7 @@ impl<T: Trait> CosmosAbci for Module<T> {
 
 sp_api::decl_runtime_apis! {
     pub trait ExtrinsicConstructionApi {
-        fn signed_and_send_deliver_tx(data: &Vec<u8>);
+        fn sign_and_send_deliver_tx(data: &Vec<u8>);
     }
 }
 

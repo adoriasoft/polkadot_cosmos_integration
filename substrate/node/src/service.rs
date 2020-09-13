@@ -222,7 +222,7 @@ pub fn new_full(config: Configuration) -> Result<TaskManager, ServiceError> {
 		)?;
 	}
 
-	crate::cosmos_rpc::start_server(client, transaction_pool);
+	crate::cosmos_rpc::start_server(client);
 	network_starter.start_network();
 	Ok(task_manager)
 }

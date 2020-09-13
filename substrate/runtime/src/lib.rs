@@ -510,17 +510,15 @@ impl_runtime_apis! {
     }
 
     impl cosmos_abci::ExtrinsicConstructionApi<Block> for Runtime {
-        fn signed_and_send_deliver_tx(data: &Vec<u8>) {
+        fn sign_and_send_deliver_tx(data: &Vec<u8>) {
             let signer = frame_system::offchain::Signer::<Runtime, <Runtime as cosmos_abci::Trait>::AuthorityId>::all_accounts();
-
             if !signer.can_sign() {
-                debug::error!("No local accounts available. Consider adding one via `author_insertKey` RPC.");
+                debug::native::error!("No local accounts available. Consider adding one via `author_insertKey` RPC.");
+                return;
             }
-
             let result = signer.send_signed_transaction(|_acct|
                 cosmos_abci::Call::deliver_tx(data.to_vec())
             );
-
             debug::native::info!("Results: {:?}", result.len());
             for (acc, res) in &result {
                 match res {
