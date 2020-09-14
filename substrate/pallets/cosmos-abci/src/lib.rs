@@ -15,32 +15,29 @@ pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"abci");
 /// We can utilize the supported crypto kinds (`sr25519`, `ed25519` and `ecdsa`) and augment
 /// them with the pallet-specific identifier.
 pub mod crypto {
-	use crate::KEY_TYPE;
-	use sp_core::sr25519::Signature as Sr25519Signature;
-	use sp_runtime::app_crypto::{app_crypto, sr25519};
-	use sp_runtime::{
-		traits::Verify,
-		MultiSignature, MultiSigner,
-	};
+    use crate::KEY_TYPE;
+    use sp_core::sr25519::Signature as Sr25519Signature;
+    use sp_runtime::app_crypto::{app_crypto, sr25519};
+    use sp_runtime::{traits::Verify, MultiSignature, MultiSigner};
 
-	app_crypto!(sr25519, KEY_TYPE);
+    app_crypto!(sr25519, KEY_TYPE);
 
-	pub struct ABCIAuthId;
-	// implemented for ocw-runtime
-	impl frame_system::offchain::AppCrypto<MultiSigner, MultiSignature> for ABCIAuthId {
-		type RuntimeAppPublic = Public;
-		type GenericSignature = sp_core::sr25519::Signature;
-		type GenericPublic = sp_core::sr25519::Public;
-	}
+    pub struct ABCIAuthId;
+    // implemented for ocw-runtime
+    impl frame_system::offchain::AppCrypto<MultiSigner, MultiSignature> for ABCIAuthId {
+        type RuntimeAppPublic = Public;
+        type GenericSignature = sp_core::sr25519::Signature;
+        type GenericPublic = sp_core::sr25519::Public;
+    }
 
-	// implemented for mock runtime in test
-	impl frame_system::offchain::AppCrypto<<Sr25519Signature as Verify>::Signer, Sr25519Signature>
-		for ABCIAuthId
-	{
-		type RuntimeAppPublic = Public;
-		type GenericSignature = sp_core::sr25519::Signature;
-		type GenericPublic = sp_core::sr25519::Public;
-	}
+    // implemented for mock runtime in test
+    impl frame_system::offchain::AppCrypto<<Sr25519Signature as Verify>::Signer, Sr25519Signature>
+        for ABCIAuthId
+    {
+        type RuntimeAppPublic = Public;
+        type GenericSignature = sp_core::sr25519::Signature;
+        type GenericPublic = sp_core::sr25519::Public;
+    }
 }
 
 pub trait CosmosAbci {
@@ -63,6 +60,14 @@ decl_module! {
     pub struct Module<T: Trait> for enum Call where origin: T::Origin {
         /// Block initialization
         fn on_initialize(now: T::BlockNumber) -> Weight {
+            let value :i64 = abci_interface::get_on_initialize_variable();
+            debug::info!("on_initialize() processing, block number: {:?}", now);
+            debug::info!("on_initialize() value: {:?}", value);
+
+            if value > now.saturated_into() as i64{
+                return 0;
+            }
+
             match abci_interface::begin_block(
                 now.saturated_into() as i64,
                 vec![],
@@ -74,11 +79,14 @@ decl_module! {
                 },
                 _ => {},
             }
+
+            abci_interface::increment_on_initialize_variable();
             return 0;
         }
 
         /// Block finalization
         fn on_finalize(now: T::BlockNumber) {
+            debug::info!("on_finalize() processing, block number: {:?}", now);
             match abci_interface::end_block(now.saturated_into() as i64) {
                 Ok(_) => {
                     match abci_interface::commit() {
@@ -128,6 +136,14 @@ sp_api::decl_runtime_apis! {
 
 #[runtime_interface]
 pub trait AbciInterface {
+    fn get_on_initialize_variable() -> i64 {
+        abci::get_on_initialize_variable()
+    }
+
+    fn increment_on_initialize_variable() {
+        abci::increment_on_initialize_variable();
+    }
+
     fn echo(msg: &str) -> DispatchResult {
         let _result = abci::connect_or_get_connection(&abci::get_server_url())
             .map_err(|_| "failed to setup connection")?

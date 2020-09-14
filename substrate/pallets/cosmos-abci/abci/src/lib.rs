@@ -18,6 +18,31 @@ lazy_static! {
     static ref ABCI_CHAIN_ID: Mutex<Option<String>> = Mutex::new(None);
 }
 
+// TODO: find better solution for the assync problem https://adoriasoft.atlassian.net/browse/PCI-108
+// ----
+lazy_static! {
+    static ref ON_INITIALIZE_VARIABLE: Mutex<Option<i64>> = Mutex::new(None);
+}
+
+pub fn get_on_initialize_variable() -> i64 {
+    let mut value = ON_INITIALIZE_VARIABLE.lock().unwrap();
+    if value.is_none() {
+        *value = Some(0);
+    }
+    let res = *value;
+    return res.unwrap();
+}
+
+pub fn increment_on_initialize_variable() {
+    let mut value = ON_INITIALIZE_VARIABLE.lock().unwrap();
+    if value.is_none() {
+        *value = Some(0);
+    }
+    let temp = value.unwrap();
+    *value = Some(temp + 1)
+}
+
+// ----
 
 type AbciResult<T> = Result<T, Box<dyn std::error::Error>>;
 type AbciClient = abci_application_client::AbciApplicationClient<tonic::transport::Channel>;
