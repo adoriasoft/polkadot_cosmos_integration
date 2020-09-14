@@ -1,4 +1,0 @@
-**/target/**
-res/
-.dockerignore
-Dockerfile

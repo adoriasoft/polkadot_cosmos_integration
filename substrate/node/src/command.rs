@@ -18,7 +18,9 @@
 use crate::chain_spec;
 use crate::cli::Cli;
 use crate::service;
-use sc_cli::SubstrateCli;
+use crate::service::new_partial;
+use sc_cli::{ChainSpec, Role, RuntimeVersion, SubstrateCli};
+use sc_service::PartialComponents;
 use serde_json::Value;
 use std::{fs, path::PathBuf};
 
@@ -45,7 +47,7 @@ fn init_chain() -> sc_cli::Result<()> {
     let genesis: Value = serde_json::from_str(&get_abci_genesis()).unwrap();
 
     // TODO: use this variable as an argument for InitChain
-    let time = genesis["genesis_time"].as_str().unwrap();
+    let _time = genesis["genesis_time"].as_str().unwrap();
 
     let mut pub_key_types: Vec<String> = Vec::new();
 
@@ -56,10 +58,12 @@ fn init_chain() -> sc_cli::Result<()> {
         pub_key_types.push(key_type.as_str().unwrap().to_string());
     }
 
+    // defines ABCI_CHAIN_ID variable
+    abci::defines_chain_id(genesis["chain_id"].as_str().unwrap().to_string());
+
     abci::connect_or_get_connection(&abci::get_server_url())
         .map_err(|err| sc_cli::Error::Other(err.to_string()))?
         .init_chain(
-            genesis["chain_id"].as_str().unwrap().to_string(),
             genesis["app_state"].to_string().as_bytes().to_vec(),
             genesis["consensus_params"]["block"]["max_bytes"]
                 .as_str()
@@ -89,47 +93,47 @@ fn init_chain() -> sc_cli::Result<()> {
 
 fn setup_cosmos() -> sc_cli::Result<()> {
     init_chain()?;
-    pallet_cosmos_rpc::start_server(pallet_cosmos_rpc::DEFAULT_ABCI_RPC_URL);
+    // pallet_cosmos_rpc::start_server(pallet_cosmos_rpc::DEFAULT_ABCI_RPC_URL);
     Ok(())
 }
 
 impl SubstrateCli for Cli {
-    fn impl_name() -> &'static str {
-        "Substrate Node"
+    fn impl_name() -> String {
+        "Substrate Node".into()
     }
 
-    fn impl_version() -> &'static str {
-        env!("SUBSTRATE_CLI_IMPL_VERSION")
+    fn impl_version() -> String {
+        env!("SUBSTRATE_CLI_IMPL_VERSION").into()
     }
 
-    fn description() -> &'static str {
-        env!("CARGO_PKG_DESCRIPTION")
+    fn description() -> String {
+        env!("CARGO_PKG_DESCRIPTION").into()
     }
 
-    fn author() -> &'static str {
-        env!("CARGO_PKG_AUTHORS")
+    fn author() -> String {
+        env!("CARGO_PKG_AUTHORS").into()
     }
 
-    fn support_url() -> &'static str {
-        "support.anonymous.an"
+    fn support_url() -> String {
+        "support.anonymous.an".into()
     }
 
     fn copyright_start_year() -> i32 {
         2017
     }
 
-    fn executable_name() -> &'static str {
-        env!("CARGO_PKG_NAME")
-    }
-
     fn load_spec(&self, id: &str) -> Result<Box<dyn sc_service::ChainSpec>, String> {
         Ok(match id {
-            "dev" => Box::new(chain_spec::development_config()),
-            "" | "local" => Box::new(chain_spec::local_testnet_config()),
+            "dev" => Box::new(chain_spec::development_config()?),
+            "" | "local" => Box::new(chain_spec::local_testnet_config()?),
             path => Box::new(chain_spec::ChainSpec::from_json_file(
                 std::path::PathBuf::from(path),
             )?),
         })
+    }
+
+    fn native_runtime_version(_: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
+        &node_template_runtime::VERSION
     }
 }
 
@@ -137,19 +141,27 @@ impl SubstrateCli for Cli {
 pub fn run() -> sc_cli::Result<()> {
     let cli = Cli::from_args();
 
-    match &cli.subcommand {
-        Some(subcommand) => {
+    match cli.subcommand {
+        Some(ref subcommand) => {
             let runner = cli.create_runner(subcommand)?;
-            runner.run_subcommand(subcommand, |config| Ok(new_full_start!(config).0))
+            runner.run_subcommand(subcommand, |config| {
+                let PartialComponents {
+                    client,
+                    backend,
+                    task_manager,
+                    import_queue,
+                    ..
+                } = new_partial(&config)?;
+                Ok((client, backend, import_queue, task_manager))
+            })
         }
         None => {
             let runner = cli.create_runner(&cli.run)?;
             setup_cosmos()?;
-            runner.run_node(
-                service::new_light,
-                service::new_full,
-                node_template_runtime::VERSION,
-            )
+            runner.run_node_until_exit(|config| match config.role {
+                Role::Light => service::new_light(config),
+                _ => service::new_full(config),
+            })
         }
     }
 }

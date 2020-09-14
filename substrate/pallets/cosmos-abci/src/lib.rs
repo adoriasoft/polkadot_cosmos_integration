@@ -1,19 +1,58 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use frame_support::{debug, decl_module, dispatch::DispatchResult, dispatch::Vec, weights::Weight};
-use frame_system::ensure_signed;
+use frame_system::{
+    ensure_signed,
+    offchain::{AppCrypto, CreateSignedTransaction},
+};
+use sp_core::crypto::KeyTypeId;
 use sp_runtime::{traits::SaturatedConversion, DispatchError};
 use sp_runtime_interface::runtime_interface;
 use sp_std::prelude::*;
 
+pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"abci");
+/// Based on the above `KeyTypeId` we need to generate a pallet-specific crypto type wrapper.
+/// We can utilize the supported crypto kinds (`sr25519`, `ed25519` and `ecdsa`) and augment
+/// them with the pallet-specific identifier.
+pub mod crypto {
+	use crate::KEY_TYPE;
+	use sp_core::sr25519::Signature as Sr25519Signature;
+	use sp_runtime::app_crypto::{app_crypto, sr25519};
+	use sp_runtime::{
+		traits::Verify,
+		MultiSignature, MultiSigner,
+	};
+
+	app_crypto!(sr25519, KEY_TYPE);
+
+	pub struct ABCIAuthId;
+	// implemented for ocw-runtime
+	impl frame_system::offchain::AppCrypto<MultiSigner, MultiSignature> for ABCIAuthId {
+		type RuntimeAppPublic = Public;
+		type GenericSignature = sp_core::sr25519::Signature;
+		type GenericPublic = sp_core::sr25519::Public;
+	}
+
+	// implemented for mock runtime in test
+	impl frame_system::offchain::AppCrypto<<Sr25519Signature as Verify>::Signer, Sr25519Signature>
+		for ABCIAuthId
+	{
+		type RuntimeAppPublic = Public;
+		type GenericSignature = sp_core::sr25519::Signature;
+		type GenericPublic = sp_core::sr25519::Public;
+	}
+}
+
 pub trait CosmosAbci {
-    fn check_tx(tx: Vec<u8>) -> Result<u64, DispatchError>;
-    fn deliver_tx(tx: Vec<u8>) -> DispatchResult;
+    fn check_tx(data: Vec<u8>) -> Result<u64, DispatchError>;
+    fn deliver_tx(data: Vec<u8>) -> DispatchResult;
     fn query(path: &str, data: Vec<u8>, height: i64, prove: bool) -> DispatchResult;
 }
 
 /// The pallet's configuration trait.
-pub trait Trait: frame_system::Trait {
+pub trait Trait: CreateSignedTransaction<Call<Self>> {
+    /// The identifier type for an offchain worker.
+    type AuthorityId: AppCrypto<Self::Public, Self::Signature>;
     /// The overarching dispatch call type.
     type Call: From<Call<Self>>;
 }
@@ -25,7 +64,6 @@ decl_module! {
         /// Block initialization
         fn on_initialize(now: T::BlockNumber) -> Weight {
             match abci_interface::begin_block(
-                "test-chain-id",
                 now.saturated_into() as i64,
                 vec![],
                 vec![],
@@ -59,22 +97,22 @@ decl_module! {
         }
 
         #[weight = 0]
-        pub fn deliver_tx(origin, tx: Vec<u8>) -> DispatchResult {
+        pub fn deliver_tx(origin, data: Vec<u8>) -> DispatchResult {
             ensure_signed(origin)?;
             debug::info!("Received deliver tx request");
-            <Self as CosmosAbci>::deliver_tx(tx)?;
+            <Self as CosmosAbci>::deliver_tx(data)?;
             Ok(())
         }
     }
 }
 
 impl<T: Trait> CosmosAbci for Module<T> {
-    fn check_tx(tx: Vec<u8>) -> Result<u64, DispatchError> {
-        abci_interface::check_tx(tx)
+    fn check_tx(data: Vec<u8>) -> Result<u64, DispatchError> {
+        abci_interface::check_tx(data)
     }
 
-    fn deliver_tx(tx: Vec<u8>) -> DispatchResult {
-        abci_interface::deliver_tx(tx)
+    fn deliver_tx(data: Vec<u8>) -> DispatchResult {
+        abci_interface::deliver_tx(data)
     }
 
     fn query(path: &str, data: Vec<u8>, height: i64, prove: bool) -> DispatchResult {
@@ -82,76 +120,77 @@ impl<T: Trait> CosmosAbci for Module<T> {
     }
 }
 
+sp_api::decl_runtime_apis! {
+    pub trait ExtrinsicConstructionApi {
+        fn sign_and_send_deliver_tx(data: &Vec<u8>);
+    }
+}
+
 #[runtime_interface]
 pub trait AbciInterface {
     fn echo(msg: &str) -> DispatchResult {
-        let result = abci::connect_or_get_connection(&abci::get_server_url())
+        let _result = abci::connect_or_get_connection(&abci::get_server_url())
             .map_err(|_| "failed to setup connection")?
             .echo(msg.to_owned())
             .map_err(|_| "echo failed")?;
-        debug::info!("Result: {:?}", result);
+        // debug::info!("Result: {:?}", result);
         Ok(())
     }
 
-    fn check_tx(tx: Vec<u8>) -> Result<u64, DispatchError> {
+    fn check_tx(data: Vec<u8>) -> Result<u64, DispatchError> {
         let result = abci::connect_or_get_connection(&abci::get_server_url())
             .map_err(|_| "failed to setup connection")?
-            .check_tx(tx, 0)
+            .check_tx(data, 0)
             .map_err(|_| "check_tx failed")?;
-        debug::info!("Result: {:?}", result);
+        // debug::info!("Result: {:?}", result);
         // If GasWanted is greater than GasUsed, we will increase the priority
         // Todo: Make it more logical
         let dif = result.gas_wanted - result.gas_used;
         Ok(dif as u64)
     }
 
-    fn deliver_tx(tx: Vec<u8>) -> DispatchResult {
-        let result = abci::connect_or_get_connection(&abci::get_server_url())
+    fn deliver_tx(data: Vec<u8>) -> DispatchResult {
+        let _result = abci::connect_or_get_connection(&abci::get_server_url())
             .map_err(|_| "failed to setup connection")?
-            .deliver_tx(tx)
+            .deliver_tx(data)
             .map_err(|_| "deliver_tx failed")?;
-        debug::info!("Result: {:?}", result);
+        // debug::info!("Result: {:?}", result);
         Ok(())
     }
 
-    fn begin_block(
-        chain_id: &str,
-        height: i64,
-        hash: Vec<u8>,
-        proposer_address: Vec<u8>,
-    ) -> DispatchResult {
-        let result = abci::connect_or_get_connection(&abci::get_server_url())
+    fn begin_block(height: i64, hash: Vec<u8>, proposer_address: Vec<u8>) -> DispatchResult {
+        let _result = abci::connect_or_get_connection(&abci::get_server_url())
             .map_err(|_| "failed to setup connection")?
-            .begin_block(chain_id.to_owned(), height, hash, proposer_address)
+            .begin_block(height, hash, proposer_address)
             .map_err(|_| "begin_block failed")?;
-        debug::info!("Result: {:?}", result);
+        // debug::info!("Result: {:?}", result);
         Ok(())
     }
 
     fn end_block(height: i64) -> DispatchResult {
-        let result = abci::connect_or_get_connection(&abci::get_server_url())
+        let _result = abci::connect_or_get_connection(&abci::get_server_url())
             .map_err(|_| "failed to setup connection")?
             .end_block(height)
             .map_err(|_| "end_block failed")?;
-        debug::info!("Result: {:?}", result);
+        // debug::info!("Result: {:?}", result);
         Ok(())
     }
 
     fn commit() -> DispatchResult {
-        let result = abci::connect_or_get_connection(&abci::get_server_url())
+        let _result = abci::connect_or_get_connection(&abci::get_server_url())
             .map_err(|_| "failed to setup connection")?
             .commit()
             .map_err(|_| "commit failed")?;
-        debug::info!("Result: {:?}", result);
+        // debug::info!("Result: {:?}", result);
         Ok(())
     }
 
     fn query(path: &str, data: Vec<u8>, height: i64, prove: bool) -> DispatchResult {
-        let result = abci::connect_or_get_connection(&abci::get_server_url())
+        let _result = abci::connect_or_get_connection(&abci::get_server_url())
             .map_err(|_| "failed to setup connection")?
             .query(path.to_owned(), data, height, prove)
             .map_err(|_| "query failed")?;
-        debug::info!("Result: {:?}", result);
+        // debug::info!("Result: {:?}", result);
         Ok(())
     }
 }
