@@ -68,7 +68,7 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
                 .sign_and_send_deliver_tx(&at, &tx_value)
                 .ok();
             Ok(json!({
-                "height": best_height.to_string(),
+                "height": (best_height + 1).to_string(),
                 "hash": "",
                 "deliver_tx": {
                     "log": format!("{}", result.log),
