@@ -25,7 +25,7 @@ use serde_json::Value;
 use std::{fs, path::PathBuf};
 
 fn from_json_file() -> sc_cli::Result<String> {
-    let path: PathBuf = std::env::var("ABCI_APP_STATE_PATH")
+    let path: PathBuf = std::env::var("ABCI_GENESIS_STATE_PATH")
         .map_err(|_| sc_cli::Error::Other("Failed to get app state file path".into()))?
         .into();
     let app_state = fs::read_to_string(&path)
@@ -34,13 +34,12 @@ fn from_json_file() -> sc_cli::Result<String> {
 }
 
 fn get_abci_genesis() -> String {
-    let app_state = match from_json_file() {
+    match from_json_file() {
         Ok(v) => v,
         _ => std::env::var("ABCI_GENESIS_STATE")
             .map_err(|_| sc_cli::Error::Other("Failed to get abci genesis state file".into()))
             .unwrap(),
-    };
-    app_state
+    }
 }
 
 fn init_chain() -> sc_cli::Result<()> {
@@ -88,12 +87,6 @@ fn init_chain() -> sc_cli::Result<()> {
             pub_key_types,
         )
         .map_err(|err| sc_cli::Error::Other(err.to_string()))?;
-    Ok(())
-}
-
-fn setup_cosmos() -> sc_cli::Result<()> {
-    init_chain()?;
-    // pallet_cosmos_rpc::start_server(pallet_cosmos_rpc::DEFAULT_ABCI_RPC_URL);
     Ok(())
 }
 
@@ -157,7 +150,7 @@ pub fn run() -> sc_cli::Result<()> {
         }
         None => {
             let runner = cli.create_runner(&cli.run)?;
-            setup_cosmos()?;
+            init_chain()?;
             runner.run_node_until_exit(|config| match config.role {
                 Role::Light => service::new_light(config),
                 _ => service::new_full(config),

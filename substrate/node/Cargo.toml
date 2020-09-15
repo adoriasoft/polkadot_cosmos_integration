@@ -166,9 +166,6 @@ hex = '0.4.2'
 jsonrpc-http-server = { git = 'https://github.com/enfipy/jsonrpc', rev = '4bca2c5186a873488d5fb989b28cb9c7225ec9c6' }
 cosmos-abci = { path = '../pallets/cosmos-abci', package = 'pallet-cosmos-abci' }
 abci = { path = '../pallets/cosmos-abci/abci' }
-substrate-subxt = { git = 'https://github.com/enfipy/substrate-subxt', rev = '1ef3fde6b3065456debf25d6d5776ac4043c36f5' }
-substrate-subxt-proc-macro = { git = 'https://github.com/enfipy/substrate-subxt', rev = '1ef3fde6b3065456debf25d6d5776ac4043c36f5' }
-frame-metadata = { version = '11.0.0-rc6', package = 'frame-metadata' }
 
 [build-dependencies.substrate-build-script-utils]
 git = 'https://github.com/paritytech/substrate.git'
