@@ -61,7 +61,7 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
             println!("abci check_tx result: {:?}", result);
             let info = client.info();
             let best_hash = info.best_hash;
-            let best_height: u32 = info.best_number.into() + 1;
+            let best_height: u32 = info.best_number.into();
             let at = BlockId::<Block>::hash(best_hash);
             client
                 .runtime_api()
