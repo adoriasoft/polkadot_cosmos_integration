@@ -2,6 +2,22 @@ version: "3.2"
 
 services:
 
+  nginx:
+    image: nginx:1.17.9
+    volumes:
+    - ./nginx.conf:/etc/nginx/nginx.conf
+    - ./site:/usr/share/nginx/html
+    - ./letsencrypt:/etc/letsencrypt/
+    restart: on-failure
+    ports:
+    - 80:80
+    - 443:443
+    depends_on:
+    - first
+    - first_cosmos
+    - second
+    - second_cosmos
+
   first:
     image: andoriasoft/node:latest
     # Local node id: QmRpheLN4JWdAnY7HGJfWFNbfkQCb6tFf4vvA6hgjMZKrR
@@ -24,7 +40,8 @@ services:
       ABCI_SERVER_URL: tcp://first_cosmos:26658
       ABCI_GENESIS_STATE_PATH: /genesis.json
     volumes:
-      - ./genesis.json:/genesis.json
+      - ./res:/res
+      - ~/.nsd/config/genesis.json:/genesis.json
     ports:
       - "9933:9933"
       - "9944:9944"
@@ -62,7 +79,8 @@ services:
       ABCI_SERVER_URL: tcp://second_cosmos:26658
       ABCI_GENESIS_STATE_PATH: /genesis.json
     volumes:
-      - ./genesis.json:/genesis.json
+      - ./res:/res
+      - ~/.nsd/config/genesis.json:/genesis.json
     ports:
       - "19933:9933"
       - "19944:9944"
