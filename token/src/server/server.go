@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	grpc_port      = ":8081"
+	grpc_port      = ":26658"
 	grpc_http_port = ":8082"
 )
 

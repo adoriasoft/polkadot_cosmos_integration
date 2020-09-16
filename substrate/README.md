@@ -1,4 +1,4 @@
-# Substrate Node with Cosmos ABCI
+# Substrate Node with Cosmos ABCI pallet
 
 A new FRAME-based Substrate node with Cosmos ABCI.
 
@@ -19,10 +19,18 @@ Initialize your Wasm Build environment:
 Build Wasm and native code:
 
 ```bash
-cargo build --release
+cargo build
 ```
 
 ## Run
+
+To run node locally you will need to specify the environment variables for cosmos-abci pallet.
+
+```bash
+export ABCI_SERVER_URL=tcp://localhost:26658
+export ABCI_RPC_SERVER_URL=127.0.0.1:26657
+export ABCI_GENESIS_STATE_PATH=$HOME/.nsd/config/genesis.json
+```
 
 ### Single Node Development Chain
 
@@ -50,4 +58,15 @@ Then run the following command to start a single node development chain.
 ./scripts/docker_run.sh
 ```
 
-This command will firstly compile your code, and then start a local development network.
+This command will firstly compile your code, and then start a local development network. You can also replace the default command (`cargo build --release && ./target/release/node-template --dev --ws-external`) by appending your own. A few useful ones are as follow.
+
+```bash
+# Run Substrate node without re-compiling
+./scripts/docker_run.sh ./target/release/node-template --dev --ws-external
+
+# Purge the local dev chain
+./scripts/docker_run.sh ./target/release/node-template purge-chain --dev
+
+# Check whether the code is compilable
+./scripts/docker_run.sh cargo check
+```

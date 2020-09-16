@@ -18,77 +18,143 @@
 use crate::chain_spec;
 use crate::cli::Cli;
 use crate::service;
-use sc_cli::SubstrateCli;
+use crate::service::new_partial;
+use sc_cli::{ChainSpec, Role, RuntimeVersion, SubstrateCli};
+use sc_service::PartialComponents;
+use serde_json::Value;
+use std::{fs, path::PathBuf};
 
-use sp_runtime::print;
+fn from_json_file() -> sc_cli::Result<String> {
+    let path: PathBuf = std::env::var("ABCI_GENESIS_STATE_PATH")
+        .map_err(|_| sc_cli::Error::Other("Failed to get app state file path".into()))?
+        .into();
+    let app_state = fs::read_to_string(&path)
+        .map_err(|_| sc_cli::Error::Other("Error opening app state file".into()))?;
+    Ok(app_state)
+}
 
-fn init_chain() -> Result<(), &'static str> {
-	let _res = reqwest::blocking::get("http://localhost:8082/abci/v1/InitChain").map_err(|_| "Failed to send request")?
-	.text().map_err(|_| "Failed to send request")?;
+fn get_abci_genesis() -> String {
+    match from_json_file() {
+        Ok(v) => v,
+        _ => std::env::var("ABCI_GENESIS_STATE")
+            .map_err(|_| sc_cli::Error::Other("Failed to get abci genesis state file".into()))
+            .unwrap(),
+    }
+}
 
+fn init_chain() -> sc_cli::Result<()> {
+    let genesis: Value = serde_json::from_str(&get_abci_genesis()).unwrap();
+
+    // TODO: use this variable as an argument for InitChain
+    let _time = genesis["genesis_time"].as_str().unwrap();
+
+    let mut pub_key_types: Vec<String> = Vec::new();
+
+    for key_type in genesis["consensus_params"]["validator"]["pub_key_types"]
+        .as_array()
+        .unwrap()
+    {
+        pub_key_types.push(key_type.as_str().unwrap().to_string());
+    }
+
+    // defines ABCI_CHAIN_ID variable
+    abci::defines_chain_id(genesis["chain_id"].as_str().unwrap().to_string());
+
+    abci::connect_or_get_connection(&abci::get_server_url())
+        .map_err(|err| sc_cli::Error::Other(err.to_string()))?
+        .init_chain(
+            genesis["app_state"].to_string().as_bytes().to_vec(),
+            genesis["consensus_params"]["block"]["max_bytes"]
+                .as_str()
+                .unwrap()
+                .parse::<i64>()
+                .unwrap(),
+            genesis["consensus_params"]["block"]["max_gas"]
+                .as_str()
+                .unwrap()
+                .parse::<i64>()
+                .unwrap(),
+            genesis["consensus_params"]["evidence"]["max_age_num_blocks"]
+                .as_str()
+                .unwrap()
+                .parse::<i64>()
+                .unwrap(),
+            genesis["consensus_params"]["evidence"]["max_age_duration"]
+                .as_str()
+                .unwrap()
+                .parse::<u64>()
+                .unwrap(),
+            pub_key_types,
+        )
+        .map_err(|err| sc_cli::Error::Other(err.to_string()))?;
     Ok(())
 }
 
 impl SubstrateCli for Cli {
-	fn impl_name() -> &'static str {
-		"Substrate Node"
-	}
+    fn impl_name() -> String {
+        "Substrate Node".into()
+    }
 
-	fn impl_version() -> &'static str {
-		env!("SUBSTRATE_CLI_IMPL_VERSION")
-	}
+    fn impl_version() -> String {
+        env!("SUBSTRATE_CLI_IMPL_VERSION").into()
+    }
 
-	fn description() -> &'static str {
-		env!("CARGO_PKG_DESCRIPTION")
-	}
+    fn description() -> String {
+        env!("CARGO_PKG_DESCRIPTION").into()
+    }
 
-	fn author() -> &'static str {
-		env!("CARGO_PKG_AUTHORS")
-	}
+    fn author() -> String {
+        env!("CARGO_PKG_AUTHORS").into()
+    }
 
-	fn support_url() -> &'static str {
-		"support.anonymous.an"
-	}
+    fn support_url() -> String {
+        "support.anonymous.an".into()
+    }
 
-	fn copyright_start_year() -> i32 {
-		2017
-	}
+    fn copyright_start_year() -> i32 {
+        2017
+    }
 
-	fn executable_name() -> &'static str {
-		env!("CARGO_PKG_NAME")
-	}
+    fn load_spec(&self, id: &str) -> Result<Box<dyn sc_service::ChainSpec>, String> {
+        Ok(match id {
+            "dev" => Box::new(chain_spec::development_config()?),
+            "" | "local" => Box::new(chain_spec::local_testnet_config()?),
+            path => Box::new(chain_spec::ChainSpec::from_json_file(
+                std::path::PathBuf::from(path),
+            )?),
+        })
+    }
 
-	fn load_spec(&self, id: &str) -> Result<Box<dyn sc_service::ChainSpec>, String> {
-		print("Load initial state");
-		if let Err(e) = init_chain() {
-			println!("Failed to run init chain: {}", e);
-		}
-		Ok(match id {
-			"dev" => Box::new(chain_spec::development_config()),
-			"" | "local" => Box::new(chain_spec::local_testnet_config()),
-			path => Box::new(chain_spec::ChainSpec::from_json_file(
-				std::path::PathBuf::from(path),
-			)?),
-		})
-	}
+    fn native_runtime_version(_: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
+        &node_template_runtime::VERSION
+    }
 }
 
 /// Parse and run command line arguments
 pub fn run() -> sc_cli::Result<()> {
-	let cli = Cli::from_args();
+    let cli = Cli::from_args();
 
-	match &cli.subcommand {
-		Some(subcommand) => {
-			let runner = cli.create_runner(subcommand)?;
-			runner.run_subcommand(subcommand, |config| Ok(new_full_start!(config).0))
-		}
-		None => {
-			let runner = cli.create_runner(&cli.run)?;
-			runner.run_node(
-				service::new_light,
-				service::new_full,
-				node_template_runtime::VERSION
-			)
-		}
-	}
+    match cli.subcommand {
+        Some(ref subcommand) => {
+            let runner = cli.create_runner(subcommand)?;
+            runner.run_subcommand(subcommand, |config| {
+                let PartialComponents {
+                    client,
+                    backend,
+                    task_manager,
+                    import_queue,
+                    ..
+                } = new_partial(&config)?;
+                Ok((client, backend, import_queue, task_manager))
+            })
+        }
+        None => {
+            let runner = cli.create_runner(&cli.run)?;
+            init_chain()?;
+            runner.run_node_until_exit(|config| match config.role {
+                Role::Light => service::new_light(config),
+                _ => service::new_full(config),
+            })
+        }
+    }
 }
