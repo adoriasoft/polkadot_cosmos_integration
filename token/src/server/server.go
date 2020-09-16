@@ -10,8 +10,6 @@ import (
 	"net/http"
 	"sync"
 
-	proto "github.com/tendermint/tendermint/abci/types"
-
 	"github.com/golang/glog"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"google.golang.org/grpc"
@@ -37,13 +35,14 @@ func Grpc_http_run() {
 	// Note: Make sure the gRPC server is running properly and accessible
 	mux := runtime.NewServeMux()
 	opts := []grpc.DialOption{grpc.WithInsecure()}
-
-	err := token.RegisterTokenHandlerFromEndpoint(ctx, mux, *grpcServerEndpoint, opts)
+	err := abci.RegisterAbciHandlerFromEndpoint(ctx, mux, *grpcServerEndpoint, opts)
 
 	if err != nil {
 		glog.Fatal(err)
 		return
 	}
+
+	err = token.RegisterTokenHandlerFromEndpoint(ctx, mux, *grpcServerEndpoint, opts)
 
 	log.Print("Grpc http server started")
 
@@ -65,7 +64,7 @@ func Grpc_run() {
 	defer tk.StopToken()
 
 	s := grpc.NewServer()
-	proto.RegisterABCIApplicationServer(s, &abci.ServerABCI{Token: tk})
+	abci.RegisterAbciServer(s, &abci.ServerABCI{Token: tk})
 	token.RegisterTokenServer(s, &token.ServerToken{Token: tk})
 
 	log.Print("Grpc server started")
