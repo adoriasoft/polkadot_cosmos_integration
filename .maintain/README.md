@@ -29,11 +29,19 @@ Demo server IP: `164.90.208.88`.
 To run docker-compose file in this folder you need to init nginx with ssl certs, and execute next command:
 
 ```sh
-docker-compose up -d
+docker-compose up
 ```
 
 After launching docker containers you can see logs with next command:
 
 ```sh
 docker-compose logs --tail 100 -f
+```
+
+### Run docker compose testnet with nginx
+
+To run docker-compose file in this folder you need to init nginx with ssl certs, and execute next command:
+
+```sh
+docker-compose -f docker-testnet.yml up -d
 ```
