@@ -31,6 +31,12 @@ export ABCI_SERVER_URL=tcp://localhost:26658
 export ABCI_GENESIS_STATE=$(cat $HOME/.nsd/config/genesis.json)
 ```
 
+After any updating of the genesis.json file should specify following encironment variable
+
+```bash
+export ABCI_GENESIS_STATE=$(cat $HOME/.nsd/config/genesis.json)
+```
+
 ### Single Node Development Chain
 
 Purge any existing developer chain state:
