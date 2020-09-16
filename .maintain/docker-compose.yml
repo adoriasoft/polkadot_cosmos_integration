@@ -15,8 +15,8 @@ services:
     depends_on:
     - first
     - first_cosmos
-    - second
-    - second_cosmos
+    # - second
+    # - second_cosmos
 
   first:
     image: andoriasoft/node:latest
@@ -28,18 +28,18 @@ services:
       --unsafe-ws-external
       --unsafe-rpc-external
       --rpc-cors "*"
-      --chain=./res/customSpecRaw.json
       --port 30333
       --ws-port 9944
       --rpc-port 9933
-      --telemetry-url 'ws://telemetry.polkadot.io:1024 0'
-      --validator
-      --alice
+      --dev
       --rpc-methods=Unsafe
+    restart: on-failure
     environment:
-      ABCI_SERVER_URL: http://first_cosmos:8082/abci/v1/
+      ABCI_SERVER_URL: tcp://first_cosmos:26658
+      ABCI_GENESIS_STATE_PATH: /genesis.json
     volumes:
       - ./res:/res
+      - ~/.nsd/config/genesis.json:/genesis.json
     ports:
       - "9933:9933"
       - "9944:9944"
@@ -49,35 +49,44 @@ services:
 
   first_cosmos:
     image: andoriasoft/cosmos-node:latest
-
-  second:
-    image: andoriasoft/node:latest
-    # Local node id: QmSVnNf9HwVMT1Y4cK1P6aoJcEZjmoTXpjKBmAABLMnZEk
-    command: |
-      --name "Second node"
-      --node-key 0000000000000000000000000000000000000000000000000000000000000002
-      --base-path /res/second
-      --unsafe-ws-external
-      --unsafe-rpc-external
-      --rpc-cors "*"
-      --chain=./res/customSpecRaw.json
-      --port 30333
-      --ws-port 9944
-      --rpc-port 9933
-      --telemetry-url 'ws://telemetry.polkadot.io:1024 0'
-      --validator
-      --bob
-      --rpc-methods=Unsafe
-    environment:
-      ABCI_SERVER_URL: http://second_cosmos:8082/abci/v1/
-    volumes:
-      - ./res:/res
+    command: start --with-tendermint=false --transport=grpc
+    restart: on-failure
     ports:
-      - "19933:9933"
-      - "19944:9944"
-      - "30334:30333"
-    links:
-      - second_cosmos
+      - "26658:26658"
 
-  second_cosmos:
-    image: andoriasoft/cosmos-node:latest
+  # second:
+  #   image: andoriasoft/node:latest
+  #   # Local node id: QmSVnNf9HwVMT1Y4cK1P6aoJcEZjmoTXpjKBmAABLMnZEk
+  #   command: |
+  #     --name "Second node"
+  #     --node-key 0000000000000000000000000000000000000000000000000000000000000002
+  #     --base-path /res/second
+  #     --unsafe-ws-external
+  #     --unsafe-rpc-external
+  #     --rpc-cors "*"
+  #     --chain=./res/customSpecRaw.json
+  #     --port 30333
+  #     --ws-port 9944
+  #     --rpc-port 9933
+  #     --telemetry-url 'ws://telemetry.polkadot.io:1024 0'
+  #     --validator
+  #     --bob
+  #     --rpc-methods=Unsafe
+  #   restart: on-failure
+  #   environment:
+  #     ABCI_SERVER_URL: tcp://second_cosmos:26658
+  #     ABCI_GENESIS_STATE_PATH: /genesis.json
+  #   volumes:
+  #     - ./res:/res
+  #     - ~/.nsd/config/genesis.json:/genesis.json
+  #   ports:
+  #     - "19933:9933"
+  #     - "19944:9944"
+  #     - "30334:30333"
+  #   links:
+  #     - second_cosmos
+
+  # second_cosmos:
+  #   image: andoriasoft/cosmos-node:latest
+  #   command: start --with-tendermint=false --transport=grpc
+  #   restart: on-failure
