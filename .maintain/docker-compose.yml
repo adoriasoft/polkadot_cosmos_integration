@@ -2,21 +2,21 @@ version: "3.2"
 
 services:
 
-  nginx:
-    image: nginx:1.17.9
-    volumes:
-    - ./nginx.conf:/etc/nginx/nginx.conf
-    - ./site:/usr/share/nginx/html
-    - ./letsencrypt:/etc/letsencrypt/
-    restart: on-failure
-    ports:
-    - 80:80
-    - 443:443
-    depends_on:
-    - first
-    - first_cosmos
-    # - second
-    # - second_cosmos
+  # nginx:
+  #   image: nginx:1.17.9
+  #   volumes:
+  #   - ./nginx.conf:/etc/nginx/nginx.conf
+  #   - ./site:/usr/share/nginx/html
+  #   - ./letsencrypt:/etc/letsencrypt/
+  #   restart: on-failure
+  #   ports:
+  #   - 80:80
+  #   - 443:443
+  #   depends_on:
+  #   - first
+  #   - first_cosmos
+  #   # - second
+  #   # - second_cosmos
 
   first:
     image: andoriasoft/node:latest
@@ -31,7 +31,9 @@ services:
       --port 30333
       --ws-port 9944
       --rpc-port 9933
-      --dev
+      --chain=local
+      --validator
+      --alice
       --rpc-methods=Unsafe
     restart: on-failure
     environment:
@@ -54,39 +56,38 @@ services:
     ports:
       - "26658:26658"
 
-  # second:
-  #   image: andoriasoft/node:latest
-  #   # Local node id: QmSVnNf9HwVMT1Y4cK1P6aoJcEZjmoTXpjKBmAABLMnZEk
-  #   command: |
-  #     --name "Second node"
-  #     --node-key 0000000000000000000000000000000000000000000000000000000000000002
-  #     --base-path /res/second
-  #     --unsafe-ws-external
-  #     --unsafe-rpc-external
-  #     --rpc-cors "*"
-  #     --chain=./res/customSpecRaw.json
-  #     --port 30333
-  #     --ws-port 9944
-  #     --rpc-port 9933
-  #     --telemetry-url 'ws://telemetry.polkadot.io:1024 0'
-  #     --validator
-  #     --bob
-  #     --rpc-methods=Unsafe
-  #   restart: on-failure
-  #   environment:
-  #     ABCI_SERVER_URL: tcp://second_cosmos:26658
-  #     ABCI_GENESIS_STATE_PATH: /genesis.json
-  #   volumes:
-  #     - ./res:/res
-  #     - ~/.nsd/config/genesis.json:/genesis.json
-  #   ports:
-  #     - "19933:9933"
-  #     - "19944:9944"
-  #     - "30334:30333"
-  #   links:
-  #     - second_cosmos
+  second:
+    image: andoriasoft/node:latest
+    # Local node id: QmSVnNf9HwVMT1Y4cK1P6aoJcEZjmoTXpjKBmAABLMnZEk
+    command: |
+      --name "Second node"
+      --node-key 0000000000000000000000000000000000000000000000000000000000000002
+      --base-path /res/second
+      --unsafe-ws-external
+      --unsafe-rpc-external
+      --rpc-cors "*"
+      --chain=local
+      --port 30333
+      --ws-port 9944
+      --rpc-port 9933
+      --validator
+      --bob
+      --rpc-methods=Unsafe
+    restart: on-failure
+    environment:
+      ABCI_SERVER_URL: tcp://second_cosmos:26658
+      ABCI_GENESIS_STATE_PATH: /genesis.json
+    volumes:
+      - ./res:/res
+      - ~/.nsd/config/genesis.json:/genesis.json
+    ports:
+      - "19933:9933"
+      - "19944:9944"
+      - "30334:30333"
+    links:
+      - second_cosmos
 
-  # second_cosmos:
-  #   image: andoriasoft/cosmos-node:latest
-  #   command: start --with-tendermint=false --transport=grpc
-  #   restart: on-failure
+  second_cosmos:
+    image: andoriasoft/cosmos-node:latest
+    command: start --with-tendermint=false --transport=grpc
+    restart: on-failure
