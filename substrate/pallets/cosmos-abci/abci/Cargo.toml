@@ -5,6 +5,7 @@ edition = '2018'
 version = '0.1.0'
 
 [dependencies]
+frame-support = { git = 'https://github.com/paritytech/substrate.git', tag = 'v2.0.0-rc6', default-features = false }
 serde = { version = "1.0", features = ["derive"] }
 tokio = { version = '0.2', features = ['rt-threaded', 'time', 'blocking'] }
 tonic = { version = '0.3.0', features = ['tls'] }
@@ -12,6 +13,12 @@ prost = { version = '0.6' }
 prost-types = '0.6'
 lazy_static = '1.2.0'
 owning_ref = '0.4.1'
+
+[features]
+default = ['std']
+std = [
+    'frame-support/std'
+]
 
 [build-dependencies]
 tonic-build = { version = '0.3.0', features = ['prost'] }

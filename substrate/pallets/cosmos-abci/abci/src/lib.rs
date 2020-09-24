@@ -3,6 +3,7 @@ pub mod protos;
 
 pub use defaults::*;
 
+use frame_support::{dispatch::DispatchResult};
 use lazy_static::lazy_static;
 use owning_ref::MutexGuardRefMut;
 use protos::abci_application_client;
@@ -33,13 +34,14 @@ pub fn get_on_initialize_variable() -> i64 {
     return res.unwrap();
 }
 
-pub fn increment_on_initialize_variable() {
+pub fn increment_on_initialize_variable() -> i64 {
     let mut value = ON_INITIALIZE_VARIABLE.lock().unwrap();
     if value.is_none() {
         *value = Some(0);
     }
     let temp = value.unwrap();
-    *value = Some(temp + 1)
+    *value = Some(temp + 1);
+    value.unwrap()
 }
 
 // ----
@@ -65,9 +67,10 @@ pub fn connect_or_get_connection<'ret>(
     Ok(res)
 }
 
-pub fn defines_chain_id(chain_id: String) {
+pub fn defines_chain_id(chain_id: String) -> DispatchResult {
     let mut stored_chain_id = ABCI_CHAIN_ID.lock().unwrap();
     *stored_chain_id = Some(chain_id);
+    Ok(())
 }
 
 pub fn get_chain_id<'ret>() -> AbciResult<MutexGuardRefMut<'ret, Option<String>, String>> {
@@ -218,82 +221,4 @@ impl Client {
 fn wait<F: Future>(rt: &Runtime, future: F) -> F::Output {
     let handle = rt.handle().clone();
     block_in_place(move || handle.block_on(future))
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn test_abci_echo() {
-        let result = connect_or_get_connection(DEFAULT_ABCI_URL)
-            .unwrap()
-            .echo("Hello there".to_owned());
-        println!("echo result: {:?}", result);
-        assert_eq!(result.is_ok(), true);
-    }
-
-    #[test]
-    fn test_abci_deliver_tx() {
-        let result = connect_or_get_connection(DEFAULT_ABCI_URL)
-            .unwrap()
-            .deliver_tx(vec![]);
-        println!("deliver_tx result: {:?}", result);
-        assert_eq!(result.is_ok(), true);
-    }
-
-    #[test]
-    fn test_abci_check_tx() {
-        let result = connect_or_get_connection(DEFAULT_ABCI_URL)
-            .unwrap()
-            .check_tx(vec![], 0);
-        println!("check_tx result: {:?}", result);
-        assert_eq!(result.is_ok(), true);
-    }
-
-    #[test]
-    fn test_abci_query() {
-        let result = connect_or_get_connection(DEFAULT_ABCI_URL).unwrap().query(
-            "/a/b/c".to_owned(),
-            "IHAVENOIDEA".as_bytes().to_vec(),
-            0,
-            false,
-        );
-        println!("query result: {:?}", result);
-        assert_eq!(result.is_ok(), true);
-    }
-
-    // TODO: fix test
-    // #[test]
-    // fn test_abci_begin_block() {
-    //     let height = 1;
-    //     let result = connect_or_get_connection(DEFAULT_ABCI_URL)
-    //         .unwrap()
-    //         .init_chain(
-    //             "test-chain-id".to_owned(),
-    //             DEFAULT_ABCI_APP_STATE.as_bytes().to_vec(),
-    //         );
-    //     println!("init_chain result: {:?}", result);
-    //     assert_eq!(result.is_ok(), true);
-    //     let result = connect_or_get_connection(DEFAULT_ABCI_URL)
-    //         .unwrap()
-    //         .begin_block(
-    //             "test-chain-id".to_owned(),
-    //             height,
-    //             vec![],
-    //             vec![],
-    //         );
-    //     println!("begin_block result: {:?}", result);
-    //     assert_eq!(result.is_ok(), true);
-    //     let result = connect_or_get_connection(DEFAULT_ABCI_URL)
-    //         .unwrap()
-    //         .end_block(height);
-    //     println!("end_block result: {:?}", result);
-    //     assert_eq!(result.is_ok(), true);
-    //     let result = connect_or_get_connection(DEFAULT_ABCI_URL)
-    //         .unwrap()
-    //         .commit();
-    //     println!("commit result: {:?}", result);
-    //     assert_eq!(result.is_ok(), true);
-    // }
 }

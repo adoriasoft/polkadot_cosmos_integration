@@ -24,7 +24,6 @@ target
 node_modules
 
 # *pb.*
-token_data
-test*
+token_datas
 
 .maintain/res

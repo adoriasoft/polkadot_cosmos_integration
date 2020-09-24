@@ -14,6 +14,7 @@ dependencies = [
 name = "abci"
 version = "0.1.0"
 dependencies = [
+ "frame-support",
  "lazy_static",
  "owning_ref",
  "prost",
@@ -425,9 +426,9 @@ dependencies = [
 
 [[package]]
 name = "bindgen"
-version = "0.53.3"
+version = "0.54.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c72a978d268b1d70b0e963217e60fdabd9523a941457a6c42a7315d15c7e89e5"
+checksum = "66c0bb6167449588ff70803f4127f0684f9063097eca5016f37eb52b92c2cf36"
 dependencies = [
  "bitflags",
  "cexpr",
@@ -1191,9 +1192,9 @@ dependencies = [
 
 [[package]]
 name = "either"
-version = "1.5.3"
+version = "1.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bb1f6b1ce1c140482ea30ddd3335fc0024ac7ee112895426e0a629a6c20adfe3"
+checksum = "e78d4f1cc4ae33bbfc157ed5d5a5ef3bc29227303d595861deb238fcec4e9457"
 
 [[package]]
 name = "encoding_rs"
@@ -2529,9 +2530,9 @@ dependencies = [
 
 [[package]]
 name = "kvdb-rocksdb"
-version = "0.9.0"
+version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7c341ef15cfb1f923fa3b5138bfbd2d4813a2c1640b473727a53351c7f0b0fa2"
+checksum = "44947dd392f09475af614d740fe0320b66d01cb5b977f664bbbb5e45a70ea4c1"
 dependencies = [
  "fs-swap",
  "kvdb",
@@ -2702,9 +2703,9 @@ dependencies = [
 
 [[package]]
 name = "libp2p-core-derive"
-version = "0.20.1"
+version = "0.20.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "515c4a7cba5d321bb88ed3ed803997bdd5634ce35c9c5e8e9ace9c512e57eceb"
+checksum = "f753d9324cd3ec14bf04b8a8cd0d269c87f294153d6bf2a84497a63a5ad22213"
 dependencies = [
  "quote",
  "syn",
@@ -3082,9 +3083,9 @@ dependencies = [
 
 [[package]]
 name = "librocksdb-sys"
-version = "6.7.4"
+version = "6.11.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "883213ae3d09bfc3d104aefe94b25ebb183b6f4d3a515b23b14817e1f4854005"
+checksum = "eb5b56f651c204634b936be2f92dbb42c36867e00ff7fe2405591f3b9fa66f09"
 dependencies = [
  "bindgen",
  "cc",
@@ -3931,9 +3932,9 @@ dependencies = [
 
 [[package]]
 name = "parity-multiaddr"
-version = "0.9.1"
+version = "0.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cc20af3143a62c16e7c9e92ea5c6ae49f7d271d97d4d8fe73afc28f0514a3d0f"
+checksum = "2165a93382a93de55868dcbfa11e4a8f99676a9164eee6a2b4a9479ad319c257"
 dependencies = [
  "arrayref",
  "bs58",
@@ -4794,9 +4795,9 @@ dependencies = [
 
 [[package]]
 name = "rocksdb"
-version = "0.14.0"
+version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "61aa17a99a2413cd71c1106691bf59dad7de0cd5099127f90e9d99c429c40d4a"
+checksum = "23d83c02c429044d58474eaf5ae31e062d0de894e21125b47437ec0edc1397e6"
 dependencies = [
  "libc",
  "librocksdb-sys",
@@ -6737,14 +6738,15 @@ dependencies = [
 
 [[package]]
 name = "substrate-bip39"
-version = "0.4.1"
+version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c004e8166d6e0aa3a9d5fa673e5b7098ff25f930de1013a21341988151e681bb"
+checksum = "bed6646a0159b9935b5d045611560eeef842b78d7adc3ba36f5ca325a13a0236"
 dependencies = [
  "hmac",
  "pbkdf2",
  "schnorrkel",
  "sha2 0.8.2",
+ "zeroize",
 ]
 
 [[package]]

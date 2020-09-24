@@ -9,13 +9,6 @@ use sp_runtime::generic::BlockId;
 use sp_blockchain::HeaderBackend;
 use std::sync::Arc;
 
-pub fn get_rpc_server_url() -> String {
-    match std::env::var("ABCI_RPC_SERVER_URL") {
-        Ok(val) => val,
-        Err(_) => DEFAULT_ABCI_RPC_URL.to_owned(),
-    }
-}
-
 pub const DEFAULT_ABCI_RPC_URL: &str = "127.0.0.1:26657";
 
 pub fn start_server(client: Arc<crate::service::FullClient>) {
@@ -94,7 +87,7 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
     std::thread::spawn(move || {
         let server = ServerBuilder::new(io)
             .threads(3)
-            .start_http(&get_rpc_server_url().parse().unwrap())
+            .start_http(&DEFAULT_ABCI_RPC_URL.parse().unwrap())
             .unwrap();
         server.wait();
     });
