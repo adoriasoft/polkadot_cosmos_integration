@@ -56,17 +56,6 @@ pub trait Trait: CreateSignedTransaction<Call<Self>> {
 }
 
 impl <T: Trait> Module<T> {
-    pub fn echo_message() -> bool {
-        match abci_interface::echo("friendly echo") {
-            Err(err) => {
-                // We have to panic, as if cosmos will not have some blocks - it will fail.
-                panic!("Echo failed: {:?}", err);
-            },
-            _ => {
-                true
-            },
-        }
-    }
 
     pub fn call_on_initialize(block_number: T::BlockNumber) -> u64 {
         let value: i64 = abci_interface::get_on_initialize_variable();
@@ -94,7 +83,7 @@ impl <T: Trait> Module<T> {
         return 0;
     }
 
-    pub fn call_on_end(block_number: T::BlockNumber) -> bool {
+    pub fn call_on_finalize(block_number: T::BlockNumber) -> bool {
         debug::info!("on_finalize() processing, block number: {:?}", block_number);
         let block_number_current: i64 = block_number.saturated_into() as i64;
         match abci_interface::end_block(block_number_current) {
@@ -128,7 +117,7 @@ decl_module! {
 
         /// Block finalization
         fn on_finalize(now: T::BlockNumber) {
-           Self::call_on_end(now);
+           Self::call_on_finalize(now);
         }
 
         #[weight = 0]

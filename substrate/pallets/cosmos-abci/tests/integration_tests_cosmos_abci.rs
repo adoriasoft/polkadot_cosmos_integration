@@ -1,12 +1,13 @@
 #[cfg(test)]
-pub mod integration_tests {
+pub mod integration_tests_cosmos_abci {
     use frame_support::{impl_outer_origin, parameter_types, weights::Weight};
     use pallet_cosmos_abci::{crypto, Call, Module, Trait, KEY_TYPE};
     use sp_runtime::{
         generic,
         testing::TestXt,
         traits::{BlakeTwo256, Extrinsic as ExtrinsicT, IdentifyAccount, IdentityLookup, Verify},
-        MultiSignature, Perbill,
+        MultiSignature,
+        Perbill
     };
     use sp_core::{crypto::{KeyTypeId}, H256};
     use sp_std::boxed::*;
@@ -91,7 +92,6 @@ pub mod integration_tests {
 
     pub type AbciModule = Module<Test>;
 
-    #[warn(dead_code)]
     #[test]
     fn should_match_key_type() {
         println!("{:?}", KEY_TYPE);
@@ -101,20 +101,21 @@ pub mod integration_tests {
     #[test]
     fn should_begin_block_on_initialize() {
         let begin_block_result = AbciModule::call_on_initialize(0);
-        // println!("begin_block_result: {:?}", begin_block_result);
         assert_eq!(begin_block_result, 0);
     }
 
     #[test]
     fn should_end_block_on_finalize() {
-        let end_block_result = AbciModule::call_on_end(0);
-        // println!("end_block_result: {:?}", end_block_result);
+        let end_block_result = AbciModule::call_on_finalize(0);
         assert_eq!(end_block_result, true);
     }
 
     #[test]
     fn should_deliver_tx() {
-        // AbciModule::deliver_tx(Origin, 0);
+        // let data = [0u8, 24];
+		// let hash = Hasher::hash(&data);
+        // AbciModule::deliver_tx(Origin::signed(AccountId32::from(Into::<[u8; 32]>::into(hash))), vec![]);
+        // todo
         assert_eq!(true, true);
     }
 }

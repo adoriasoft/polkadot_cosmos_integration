@@ -37,6 +37,16 @@ After any updating of the genesis.json file should specify following encironment
 export ABCI_GENESIS_STATE=$(cat $HOME/.nsd/config/genesis.json)
 ```
 
+### Tests
+
+To run tests from local use commands:
+- pallet-cosmos-abci
+cargo test --test integration_tests_cosmos_abci
+- abci
+cargo test --test integration_tests_abci
+cargo test --test integration_tests_abci_2
+cargo test --test unit_tests_abci
+
 ### Single Node Development Chain
 
 Purge any existing developer chain state:
