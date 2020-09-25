@@ -14,12 +14,13 @@ dependencies = [
 name = "abci"
 version = "0.1.0"
 dependencies = [
- "frame-support",
  "lazy_static",
  "owning_ref",
  "prost",
  "prost-types",
  "serde",
+ "serde_json 1.0.44",
+ "testcontainers",
  "tokio 0.2.22",
  "tonic",
  "tonic-build",
@@ -456,7 +457,7 @@ checksum = "7059804e226b3ac116519a252d7f5fb985a5ccc0e93255e036a5f7e7283323f4"
 dependencies = [
  "failure",
  "hashbrown 0.1.8",
- "hmac",
+ "hmac 0.7.1",
  "once_cell 0.1.8",
  "pbkdf2",
  "rand 0.6.5",
@@ -1079,6 +1080,17 @@ name = "data-encoding"
 version = "2.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "72aa14c04dfae8dd7d8a2b1cb7ca2152618cd01336dbfe704b8dcbf8d41dbd69"
+
+[[package]]
+name = "derivative"
+version = "2.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cb582b60359da160a9477ee80f15c8d784c477e69c217ef2cdd4169c24ea380f"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
 
 [[package]]
 name = "derive_more"
@@ -2000,6 +2012,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "hmac"
+version = "0.8.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "126888268dcc288495a26bf004b38c5fdbb31682f992c84ceb046a1f0fe38840"
+dependencies = [
+ "crypto-mac 0.8.0",
+ "digest 0.9.0",
+]
+
+[[package]]
 name = "hmac-drbg"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2007,7 +2029,7 @@ checksum = "c6e570451493f10f6581b48cdd530413b63ea9e780f544bfd3bdcaa0d89d1a7b"
 dependencies = [
  "digest 0.8.1",
  "generic-array 0.12.3",
- "hmac",
+ "hmac 0.7.1",
 ]
 
 [[package]]
@@ -2970,7 +2992,7 @@ dependencies = [
  "aes-ctr",
  "ctr",
  "futures 0.3.5",
- "hmac",
+ "hmac 0.7.1",
  "js-sys",
  "lazy_static",
  "libp2p-core",
@@ -3757,13 +3779,13 @@ dependencies = [
  "lazy_static",
  "parity-scale-codec",
  "parking_lot 0.10.2",
- "serde_json 1.0.44",
  "sp-api",
  "sp-core",
  "sp-io",
  "sp-runtime",
  "sp-runtime-interface",
  "sp-std",
+ "testcontainers",
 ]
 
 [[package]]
@@ -6742,7 +6764,7 @@ version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bed6646a0159b9935b5d045611560eeef842b78d7adc3ba36f5ca325a13a0236"
 dependencies = [
- "hmac",
+ "hmac 0.7.1",
  "pbkdf2",
  "schnorrkel",
  "sha2 0.8.2",
@@ -6870,6 +6892,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "testcontainers"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5134c13096bec3ad5d4e468f2ab32788654110de751099b729997fb37e924b4a"
+dependencies = [
+ "derivative",
+ "hex",
+ "hmac 0.8.1",
+ "log",
+ "rand 0.7.3",
+ "serde",
+ "serde_json 1.0.57",
+ "sha2 0.9.1",
+]
+
+[[package]]
 name = "textwrap"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6933,7 +6971,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b0165e045cc2ae1660270ca65e1676dbaab60feb0f91b10f7d0665e9b47e31f2"
 dependencies = [
  "failure",
- "hmac",
+ "hmac 0.7.1",
  "once_cell 1.4.0",
  "pbkdf2",
  "rand 0.7.3",

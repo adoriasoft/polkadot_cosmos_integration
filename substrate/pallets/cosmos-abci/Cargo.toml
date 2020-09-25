@@ -15,17 +15,15 @@ sp-io = { git = 'https://github.com/paritytech/substrate.git', tag = 'v2.0.0-rc6
 sp-runtime = { git = 'https://github.com/paritytech/substrate.git', tag = 'v2.0.0-rc6', default-features = false }
 sp-std = { git = 'https://github.com/paritytech/substrate.git', tag = 'v2.0.0-rc6', default-features = false }
 sp-api = { git = 'https://github.com/paritytech/substrate.git', tag = 'v2.0.0-rc6', default-features = false }
-# sp-state-machine = { version = "0.8.0-rc6", path = "../../substrate/primitives/state-machine", optional = true }
-# node-runtime = { git = 'https://github.com/paritytech/substrate.git', tag = "v2.0.0-rc6", default-features = false }
-# node-testing = { git = 'https://github.com/paritytech/substrate.git', tag = "v2.0.0-rc6", default-features = false }
 sp-runtime-interface = { git = 'https://github.com/paritytech/substrate.git', tag = 'v2.0.0-rc6', default-features = false }
 alt_serde = { version = '1', default-features = false, features = ['derive'] }
-serde_json = { version = '1', default-features = false, git = 'https://github.com/Xanewok/json', branch = 'no-std', features = ['alloc'] }
 isahc = { version = '0.9', optional = true }
 parking_lot = { version = "0.10.0", optional = true }
 abci = { path = './abci', optional = true }
 lazy_static = '1.2.0'
 
+[dev-dependencies]
+testcontainers = '0.10'
 
 [features]
 default = ['std']

@@ -28,6 +28,8 @@ To run node locally you will need to specify the environment variables for cosmo
 
 ```bash
 export ABCI_SERVER_URL=tcp://localhost:26658
+export ABCI_GENESIS_STATE_PATH=$HOME/.nsd/config/genesis.json
+# or
 export ABCI_GENESIS_STATE=$(cat $HOME/.nsd/config/genesis.json)
 ```
 
@@ -40,12 +42,13 @@ export ABCI_GENESIS_STATE=$(cat $HOME/.nsd/config/genesis.json)
 ### Tests
 
 To run tests from local use commands:
-- pallet-cosmos-abci
-cargo test --test integration_tests_cosmos_abci
-- abci
-cargo test --test integration_tests_abci
-cargo test --test integration_tests_abci_2
-cargo test --test unit_tests_abci
+
+```sh
+# pallet-cosmos-abci
+cargo test --test pallet_abci_test
+# abci
+cargo test --test abci_test
+```
 
 ### Single Node Development Chain
 
