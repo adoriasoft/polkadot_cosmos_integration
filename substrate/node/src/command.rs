@@ -21,7 +21,6 @@ use crate::service;
 use crate::service::new_partial;
 use sc_cli::{ChainSpec, Role, RuntimeVersion, SubstrateCli};
 use sc_service::PartialComponents;
-use serde_json::Value;
 use std::{fs, path::PathBuf};
 
 fn from_json_file() -> sc_cli::Result<String> {
@@ -43,49 +42,9 @@ fn get_abci_genesis() -> String {
 }
 
 fn init_chain() -> sc_cli::Result<()> {
-    let genesis: Value = serde_json::from_str(&get_abci_genesis()).unwrap();
-
-    // TODO: use this variable as an argument for InitChain
-    let _time = genesis["genesis_time"].as_str().unwrap();
-
-    let mut pub_key_types: Vec<String> = Vec::new();
-
-    for key_type in genesis["consensus_params"]["validator"]["pub_key_types"]
-        .as_array()
-        .unwrap()
-    {
-        pub_key_types.push(key_type.as_str().unwrap().to_string());
-    }
-
-    // defines ABCI_CHAIN_ID variable
-    abci::defines_chain_id(genesis["chain_id"].as_str().unwrap().to_string());
-
     abci::connect_or_get_connection(&abci::get_server_url())
         .map_err(|err| sc_cli::Error::Other(err.to_string()))?
-        .init_chain(
-            genesis["app_state"].to_string().as_bytes().to_vec(),
-            genesis["consensus_params"]["block"]["max_bytes"]
-                .as_str()
-                .unwrap()
-                .parse::<i64>()
-                .unwrap(),
-            genesis["consensus_params"]["block"]["max_gas"]
-                .as_str()
-                .unwrap()
-                .parse::<i64>()
-                .unwrap(),
-            genesis["consensus_params"]["evidence"]["max_age_num_blocks"]
-                .as_str()
-                .unwrap()
-                .parse::<i64>()
-                .unwrap(),
-            genesis["consensus_params"]["evidence"]["max_age_duration"]
-                .as_str()
-                .unwrap()
-                .parse::<u64>()
-                .unwrap(),
-            pub_key_types,
-        )
+        .init_chain(&get_abci_genesis())
         .map_err(|err| sc_cli::Error::Other(err.to_string()))?;
     Ok(())
 }

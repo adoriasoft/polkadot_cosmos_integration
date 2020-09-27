@@ -37,10 +37,11 @@ services:
       --rpc-methods=Unsafe
     restart: on-failure
     environment:
+      ABCI_RPC_SERVER_URL: 0.0.0.0:26657
       ABCI_SERVER_URL: tcp://first_cosmos:26658
       ABCI_GENESIS_STATE_PATH: /genesis.json
     volumes:
-      - ./res:/res
+      # - ./res:/res
       - ~/.nsd/config/genesis.json:/genesis.json
     ports:
       - "9933:9933"
@@ -67,19 +68,20 @@ services:
       --unsafe-ws-external
       --unsafe-rpc-external
       --rpc-cors "*"
-      --chain=local
       --port 30333
       --ws-port 9944
       --rpc-port 9933
+      --chain=local
       --validator
       --bob
       --rpc-methods=Unsafe
     restart: on-failure
     environment:
+      ABCI_RPC_SERVER_URL: 0.0.0.0:26657
       ABCI_SERVER_URL: tcp://second_cosmos:26658
       ABCI_GENESIS_STATE_PATH: /genesis.json
     volumes:
-      - ./res:/res
+      # - ./res:/res
       - ~/.nsd/config/genesis.json:/genesis.json
     ports:
       - "19933:9933"
