@@ -4,15 +4,9 @@ on:
   push:
     branches:
       - master
-    paths:
-      - 'substrate/*'
-      - 'substrate/**/*'
   pull_request:
     branches:
       - master
-    paths:
-      - 'substrate/*'
-      - 'substrate/**/*'
 
 jobs:
   build_and_test_substrate:
@@ -29,12 +23,5 @@ jobs:
             rustup update stable
             rustup target add wasm32-unknown-unknown --toolchain nightly
             rustup update
-      - name: build
-        run: | 
-            cd substrate
-            cargo clean
-            cargo build --release
       - name: test
-        run: |
-            cd substrate
-            cargo test --all
+        run: cargo test --all
