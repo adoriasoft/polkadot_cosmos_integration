@@ -5,8 +5,8 @@ use jsonrpc_http_server::ServerBuilder;
 use node_template_runtime::cosmos_abci::ExtrinsicConstructionApi;
 use node_template_runtime::opaque::Block;
 use sp_api::ProvideRuntimeApi;
-use sp_runtime::generic::BlockId;
 use sp_blockchain::HeaderBackend;
+use sp_runtime::generic::BlockId;
 use std::sync::Arc;
 
 pub const DEFAULT_ABCI_RPC_URL: &str = "127.0.0.1:26657";
@@ -20,30 +20,29 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
             "params path: {}, data: {}, height: {}, prove: {}",
             query_params.path, query_params.data, query_params.height, query_params.prove
         );
-        let result: abci::protos::ResponseQuery =
-            abci::connect_or_get_connection(&abci::get_server_url())
-                .map_err(|_| "failed to setup connection")
-                .unwrap()
-                .query(
-                    query_params.path,
-                    hex::decode(query_params.data).expect("Decoding failed"),
-                    query_params.height.parse::<i64>().unwrap(),
-                    query_params.prove,
-                )
-                .map_err(|_| "query failed")
-                .unwrap();
+        let result = abci::get_abci_instance(&abci::get_server_url())
+            .map_err(|_| "failed to setup connection")
+            .unwrap()
+            .query(
+                query_params.path,
+                hex::decode(query_params.data).expect("Decoding failed"),
+                query_params.height.parse::<i64>().unwrap(),
+                query_params.prove,
+            )
+            .map_err(|_| "query failed")
+            .unwrap();
         println!("abci query result: {:?}", result);
         // TODO: parse result.proof and if it is qual to None in the json proof field put null
         // TODO: if key len == 0 put null in the json key field
         Ok(json!({
             "response": {
-                "log" : format!("{}", result.log),
-                "height" : format!("{}", result.height),
+                "log" : format!("{}", result.get_log()),
+                "height" : format!("{}", result.get_height()),
                 "proof" : null,
-                "value" : format!("{}", base64::encode(result.value)),
-                "key" : format!("{}", std::str::from_utf8(&result.key).unwrap()),
-                "index" : format!("{}", result.index),
-                "code" : format!("{}", result.code),
+                "value" : format!("{}", base64::encode(result.get_value())),
+                "key" : format!("{}", std::str::from_utf8(&result.get_key()).unwrap()),
+                "index" : format!("{}", result.get_index()),
+                "code" : format!("{}", result.get_code()),
             }
         }))
     });
@@ -52,7 +51,7 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
         async move {
             let params: types::ABCITxCommitParams = params.parse().unwrap();
             let tx_value = base64::decode(params.tx).unwrap();
-            let result = abci::connect_or_get_connection(&abci::get_server_url())
+            let result = abci::get_abci_instance(&abci::get_server_url())
                 .map_err(|_| "failed to setup connection")
                 .unwrap()
                 .check_tx(tx_value.clone(), 0)
@@ -71,14 +70,14 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
                 "height": (best_height + 1).to_string(),
                 "hash": "",
                 "deliver_tx": {
-                    "log": format!("{}", result.log),
-                    "data": format!("{}", base64::encode(result.data.clone())),
-                    "code": format!("{}", result.code)
+                    "log": format!("{}", result.get_log()),
+                    "data": format!("{}", base64::encode(result.get_data().clone())),
+                    "code": format!("{}", result.get_code())
                 },
                 "check_tx": {
-                    "log": format!("{}", result.log),
-                    "data": format!("{}", base64::encode(result.data)),
-                    "code": format!("{}", result.code)
+                    "log": format!("{}", result.get_log()),
+                    "data": format!("{}", base64::encode(result.get_data())),
+                    "code": format!("{}", result.get_code())
                 }
             }))
         }

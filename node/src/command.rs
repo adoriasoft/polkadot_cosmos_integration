@@ -42,7 +42,7 @@ fn get_abci_genesis() -> String {
 }
 
 fn init_chain() -> sc_cli::Result<()> {
-    abci::connect_or_get_connection(&abci::get_server_url())
+    abci::get_abci_instance(&abci::get_server_url())
         .map_err(|err| sc_cli::Error::Other(err.to_string()))?
         .init_chain(&get_abci_genesis())
         .map_err(|err| sc_cli::Error::Other(err.to_string()))?;
