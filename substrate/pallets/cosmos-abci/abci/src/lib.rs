@@ -170,7 +170,7 @@ impl Client {
         hash: Vec<u8>,
         proposer_address: Vec<u8>,
     ) -> AbciResult<protos::ResponseBeginBlock> {
-        let chain_id: String = get_chain_id().unwrap().to_string();
+        let chain_id: String = get_chain_id()?.to_string();
         let request = tonic::Request::new(protos::RequestBeginBlock {
             hash,
             header: Some(protos::Header {
@@ -194,6 +194,7 @@ impl Client {
         });
         let future = self.client.begin_block(request);
         let response = wait(&self.rt, future)?;
+        println!("{:?}", response);
         Ok(response.into_inner())
     }
 

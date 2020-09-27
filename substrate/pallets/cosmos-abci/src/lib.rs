@@ -1,6 +1,5 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #[warn(unused_must_use)]
-
 use frame_support::{debug, decl_module, dispatch::DispatchResult, dispatch::Vec, weights::Weight};
 use frame_system::{
     ensure_signed,
@@ -55,64 +54,14 @@ pub trait Trait: CreateSignedTransaction<Call<Self>> {
     type Call: From<Call<Self>>;
 }
 
-impl <T: Trait> Module<T> {
-
-    pub fn call_on_initialize(block_number: T::BlockNumber) -> u64 {
-        let value: i64 = abci_interface::get_on_initialize_variable();
-        let block_number_current: i64 = block_number.saturated_into() as i64;
-        debug::info!("on_initialize() processing, block number: {:?}", block_number_current);
-        debug::info!("on_initialize() value: {:?}", value);
-    
-        if value > block_number_current {
-            return 0;
-        }
-
-        match abci_interface::begin_block(
-            block_number_current,
-            vec![],
-            vec![],
-        ) {
-            Err(err) => {
-                // We have to panic, as if cosmos will not have some blocks - it will fail.
-                panic!("Begin block failed: {:?}", err);
-            },
-            _ => {},
-        }
-
-        abci_interface::increment_on_initialize_variable();
-        return 0;
-    }
-
-    pub fn call_on_finalize(block_number: T::BlockNumber) -> bool {
-        debug::info!("on_finalize() processing, block number: {:?}", block_number);
-        let block_number_current: i64 = block_number.saturated_into() as i64;
-        match abci_interface::end_block(block_number_current) {
-            Ok(_) => {
-                match abci_interface::commit() {
-                    Err(err) => {
-                        // We have to panic, as if cosmos will not have some blocks - it will fail.
-                        panic!("Commit failed: {:?}", err);
-                    },
-                    _ => {
-                        true
-                    },
-                }
-            },
-            Err(err) => {
-                // We have to panic, as if cosmos will not have some blocks - it will fail.
-                panic!("End block failed: {:?}", err);
-            },
-        }
-    }
-}
-
 // The pallet's dispatchable functions.
 decl_module! {
     /// The module declaration.
     pub struct Module<T: Trait> for enum Call where origin: T::Origin {
         /// Block initialization
         fn on_initialize(now: T::BlockNumber) -> Weight {
-            Self::call_on_initialize(now)
+            Self::call_on_initialize(now);
+            0
         }
 
         /// Block finalization
@@ -126,6 +75,47 @@ decl_module! {
             debug::info!("Received deliver tx request");
             <Self as CosmosAbci>::deliver_tx(data)?;
             Ok(())
+        }
+    }
+}
+
+impl<T: Trait> Module<T> {
+    pub fn call_on_initialize(block_number: T::BlockNumber) -> bool {
+        let value: i64 = abci_interface::get_on_initialize_variable();
+        let block_number_current: i64 = block_number.saturated_into() as i64;
+        debug::info!(
+            "on_initialize() processing, block number: {:?}, value: {:?}",
+            block_number_current,
+            value,
+        );
+        if value > block_number_current {
+            return false;
+        }
+        if let Err(err) = abci_interface::begin_block(block_number_current, vec![], vec![]) {
+            // We have to panic, as if cosmos will not have some blocks - it will fail.
+            panic!("Begin block failed: {:?}", err);
+        }
+        abci_interface::increment_on_initialize_variable();
+        return true;
+    }
+
+    pub fn call_on_finalize(block_number: T::BlockNumber) -> bool {
+        debug::info!("on_finalize() processing, block number: {:?}", block_number);
+        let block_number_current: i64 = block_number.saturated_into() as i64;
+        match abci_interface::end_block(block_number_current) {
+            Ok(_) => {
+                match abci_interface::commit() {
+                    Err(err) => {
+                        // We have to panic, as if cosmos will not have some blocks - it will fail.
+                        panic!("Commit failed: {:?}", err);
+                    }
+                    _ => true,
+                }
+            }
+            Err(err) => {
+                // We have to panic, as if cosmos will not have some blocks - it will fail.
+                panic!("End block failed: {:?}", err);
+            }
         }
     }
 }
