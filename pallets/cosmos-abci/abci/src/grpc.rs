@@ -1,7 +1,4 @@
-mod defaults;
 pub mod protos;
-
-pub use defaults::*;
 
 use lazy_static::lazy_static;
 use owning_ref::MutexGuardRefMut;
@@ -14,7 +11,6 @@ use std::{
 use tokio::{runtime::Runtime, task::block_in_place};
 
 lazy_static! {
-    static ref ABCI_CLIENT: Mutex<Option<Client>> = Mutex::new(None);
     static ref ABCI_CHAIN_ID: Mutex<Option<String>> = Mutex::new(None);
 }
 
@@ -44,34 +40,21 @@ pub fn increment_on_initialize_variable() -> i64 {
 }
 // ----
 
-type AbciResult<T> = Result<T, Box<dyn std::error::Error>>;
 type AbciClient = abci_application_client::AbciApplicationClient<tonic::transport::Channel>;
 
-pub struct Client {
+pub struct ABCIInterface_grpc {
     rt: Runtime,
     client: AbciClient,
 }
 
-pub fn connect_or_get_connection<'ret>(
-    abci_endpoint: &str,
-) -> AbciResult<MutexGuardRefMut<'ret, Option<Client>, Client>> {
-    let mut client = ABCI_CLIENT.lock()?;
-    if client.is_none() {
-        *client = Some(Client::connect(abci_endpoint)?);
-    }
-    // Here we create a ref to the inner value of the mutex guard.
-    // Unwrap should never panic as we set it previously.
-    let res = MutexGuardRefMut::new(client).map_mut(|mg| mg.as_mut().unwrap());
-    Ok(res)
-}
-
-pub fn set_chain_id(chain_id: &str) -> AbciResult<()> {
+pub fn set_chain_id(chain_id: &str) -> Result<(), Box<dyn std::error::Error>> {
     let mut stored_chain_id = ABCI_CHAIN_ID.lock()?;
     *stored_chain_id = Some(chain_id.to_owned());
     Ok(())
 }
 
-pub fn get_chain_id<'ret>() -> AbciResult<MutexGuardRefMut<'ret, Option<String>, String>> {
+pub fn get_chain_id<'ret>(
+) -> Result<MutexGuardRefMut<'ret, Option<String>, String>, Box<dyn std::error::Error>> {
     let mut chain_id = ABCI_CHAIN_ID.lock()?;
     if chain_id.is_none() {
         *chain_id = Some("default-chain-id".to_string());
@@ -82,8 +65,8 @@ pub fn get_chain_id<'ret>() -> AbciResult<MutexGuardRefMut<'ret, Option<String>,
     Ok(res)
 }
 
-impl Client {
-    pub fn connect(abci_endpoint: &str) -> AbciResult<Self> {
+impl ABCIInterface_grpc {
+    pub fn connect(abci_endpoint: &str) -> Result<Self, Box<dyn std::error::Error>> {
         let mut rt = Runtime::new()?;
         let future = async {
             // Translates str into static str
@@ -91,34 +74,43 @@ impl Client {
             AbciClient::connect(endpoint).await
         };
         let client = rt.block_on(future)?;
-        Ok(Client { rt, client })
+        Ok(ABCIInterface_grpc { rt, client })
     }
+}
 
-    pub fn echo(&mut self, message: String) -> AbciResult<protos::ResponseEcho> {
+impl crate::ABCIInterface for ABCIInterface_grpc {
+    fn echo(&mut self, message: String) -> crate::AbciResult<dyn crate::ResponseEcho> {
         let request = tonic::Request::new(protos::RequestEcho { message });
         let future = self.client.echo(request);
         let response = wait(&self.rt, future)?;
-        Ok(response.into_inner())
+        Ok(Box::new(response.into_inner()))
     }
 
     /// Type: 0 - New, 1 - Recheck
-    pub fn check_tx(&mut self, tx: Vec<u8>, r#type: i32) -> AbciResult<protos::ResponseCheckTx> {
+    fn check_tx(
+        &mut self,
+        tx: Vec<u8>,
+        r#type: i32,
+    ) -> crate::AbciResult<dyn crate::ResponseCheckTx> {
         let request = tonic::Request::new(protos::RequestCheckTx { tx, r#type });
         let future = self.client.check_tx(request);
         let response = wait(&self.rt, future)?;
-        Ok(response.into_inner())
+        Ok(Box::new(response.into_inner()))
     }
 
-    pub fn deliver_tx(&mut self, tx: Vec<u8>) -> AbciResult<protos::ResponseDeliverTx> {
+    fn deliver_tx(&mut self, tx: Vec<u8>) -> crate::AbciResult<dyn crate::ResponseDeliverTx> {
         let request = tonic::Request::new(protos::RequestDeliverTx { tx });
         let future = self.client.deliver_tx(request);
         let response = wait(&self.rt, future)?;
-        Ok(response.into_inner())
+        Ok(Box::new(response.into_inner()))
     }
 
-    pub fn init_chain(&mut self, genesis: &str) -> AbciResult<protos::ResponseInitChain> {
-        let genesis: serde_json::Value = serde_json::from_str(genesis).map_err(|e| e.to_string())?;
-        let chain_id = genesis["chain_id"].as_str().ok_or("chain_id not found".to_owned())?;
+    fn init_chain(&mut self, genesis: &str) -> crate::AbciResult<dyn crate::ResponseInitChain> {
+        let genesis: serde_json::Value =
+            serde_json::from_str(genesis).map_err(|e| e.to_string())?;
+        let chain_id = genesis["chain_id"]
+            .as_str()
+            .ok_or("chain_id not found".to_owned())?;
         // let genesis_time = genesis["genesis_time"].as_str().ok_or("chain_id not found".to_owned())?;
         let pub_key_types: Vec<String> = genesis["consensus_params"]["validator"]["pub_key_types"]
             .as_array()
@@ -161,15 +153,15 @@ impl Client {
         });
         let future = self.client.init_chain(request);
         let response = wait(&self.rt, future)?;
-        Ok(response.into_inner())
+        Ok(Box::new(response.into_inner()))
     }
 
-    pub fn begin_block(
+    fn begin_block(
         &mut self,
         height: i64,
         hash: Vec<u8>,
         proposer_address: Vec<u8>,
-    ) -> AbciResult<protos::ResponseBeginBlock> {
+    ) -> crate::AbciResult<dyn crate::ResponseBeginBlock> {
         let chain_id: String = get_chain_id()?.to_string();
         let request = tonic::Request::new(protos::RequestBeginBlock {
             hash,
@@ -195,30 +187,30 @@ impl Client {
         let future = self.client.begin_block(request);
         let response = wait(&self.rt, future)?;
         println!("{:?}", response);
-        Ok(response.into_inner())
+        Ok(Box::new(response.into_inner()))
     }
 
-    pub fn end_block(&mut self, height: i64) -> AbciResult<protos::ResponseEndBlock> {
+    fn end_block(&mut self, height: i64) -> crate::AbciResult<dyn crate::ResponseEndBlock> {
         let request = tonic::Request::new(protos::RequestEndBlock { height });
         let future = self.client.end_block(request);
         let response = wait(&self.rt, future)?;
-        Ok(response.into_inner())
+        Ok(Box::new(response.into_inner()))
     }
 
-    pub fn commit(&mut self) -> AbciResult<protos::ResponseCommit> {
+    fn commit(&mut self) -> crate::AbciResult<dyn crate::ResponseCommit> {
         let request = tonic::Request::new(protos::RequestCommit {});
         let future = self.client.commit(request);
         let response = wait(&self.rt, future)?;
-        Ok(response.into_inner())
+        Ok(Box::new(response.into_inner()))
     }
 
-    pub fn query(
+    fn query(
         &mut self,
         path: String,
         data: Vec<u8>,
         height: i64,
         prove: bool,
-    ) -> AbciResult<protos::ResponseQuery> {
+    ) -> crate::AbciResult<dyn crate::ResponseQuery> {
         let request = tonic::Request::new(protos::RequestQuery {
             path,
             data,
@@ -227,7 +219,7 @@ impl Client {
         });
         let future = self.client.query(request);
         let response = wait(&self.rt, future)?;
-        Ok(response.into_inner())
+        Ok(Box::new(response.into_inner()))
     }
 }
 

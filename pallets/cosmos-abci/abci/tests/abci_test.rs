@@ -13,7 +13,7 @@ fn test_abci_begin_block() {
     let node = docker.run(cosmos);
     let url = format!("tcp://localhost:{}", node.get_host_port(26658).unwrap());
 
-    let mut client = abci::connect_or_get_connection(&url).unwrap();
+    let mut client = abci::get_abci_instance(&url).unwrap();
     assert!(
         abci::set_chain_id("nameservice").is_ok(),
         "should set chain id"
