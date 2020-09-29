@@ -121,15 +121,27 @@ pub trait ABCIInterface {
     ) -> AbciResult<dyn ResponseQuery>;
 }
 
-pub fn get_abci_instance<'ret>(
-    abci_endpoint: &str,
+pub fn set_abci_instance<'ret>(
+    new_instance: Box<dyn ABCIInterface + Send>,
 ) -> Result<
     MutexGuardRefMut<'ret, Option<Box<dyn ABCIInterface + Send>>, Box<dyn ABCIInterface + Send>>,
     Box<dyn std::error::Error>,
 > {
     let mut instance = ABCI_INTERFACE_INSTANCE.lock()?;
+    *instance = Some(new_instance);
+    // Here we create a ref to the inner value of the mutex guard.
+    // Unwrap should never panic as we set it previously.
+    let res = MutexGuardRefMut::new(instance).map_mut(|mg| mg.as_mut().unwrap());
+    Ok(res)
+}
+
+pub fn get_abci_instance<'ret>() -> Result<
+    MutexGuardRefMut<'ret, Option<Box<dyn ABCIInterface + Send>>, Box<dyn ABCIInterface + Send>>,
+    Box<dyn std::error::Error>,
+> {
+    let instance = ABCI_INTERFACE_INSTANCE.lock()?;
     if instance.is_none() {
-        *instance = Some(Box::new(ABCIInterface_grpc::connect(abci_endpoint)?));
+        panic!("abci instance has not been set, execute set_abci_instance before calling this function");
     }
     // Here we create a ref to the inner value of the mutex guard.
     // Unwrap should never panic as we set it previously.

@@ -42,7 +42,7 @@ pub fn increment_on_initialize_variable() -> i64 {
 
 type AbciClient = abci_application_client::AbciApplicationClient<tonic::transport::Channel>;
 
-pub struct ABCIInterface_grpc {
+pub struct AbciinterfaceGrpc {
     rt: Runtime,
     client: AbciClient,
 }
@@ -65,7 +65,7 @@ pub fn get_chain_id<'ret>(
     Ok(res)
 }
 
-impl ABCIInterface_grpc {
+impl AbciinterfaceGrpc {
     pub fn connect(abci_endpoint: &str) -> Result<Self, Box<dyn std::error::Error>> {
         let mut rt = Runtime::new()?;
         let future = async {
@@ -74,11 +74,11 @@ impl ABCIInterface_grpc {
             AbciClient::connect(endpoint).await
         };
         let client = rt.block_on(future)?;
-        Ok(ABCIInterface_grpc { rt, client })
+        Ok(AbciinterfaceGrpc { rt, client })
     }
 }
 
-impl crate::ABCIInterface for ABCIInterface_grpc {
+impl crate::ABCIInterface for AbciinterfaceGrpc {
     fn echo(&mut self, message: String) -> crate::AbciResult<dyn crate::ResponseEcho> {
         let request = tonic::Request::new(protos::RequestEcho { message });
         let future = self.client.echo(request);

@@ -151,7 +151,7 @@ pub trait AbciInterface {
     }
 
     fn echo(msg: &str) -> DispatchResult {
-        let _result = abci::get_abci_instance(&abci::get_server_url())
+        let _result = abci::get_abci_instance()
             .map_err(|_| "failed to setup connection")?
             .echo(msg.to_owned())
             .map_err(|_| "echo failed")?;
@@ -160,7 +160,7 @@ pub trait AbciInterface {
     }
 
     fn check_tx(data: Vec<u8>) -> Result<u64, DispatchError> {
-        let result = abci::get_abci_instance(&abci::get_server_url())
+        let result = abci::get_abci_instance()
             .map_err(|_| "failed to setup connection")?
             .check_tx(data, 0)
             .map_err(|_| "check_tx failed")?;
@@ -172,7 +172,7 @@ pub trait AbciInterface {
     }
 
     fn deliver_tx(data: Vec<u8>) -> DispatchResult {
-        let _result = abci::get_abci_instance(&abci::get_server_url())
+        let _result = abci::get_abci_instance()
             .map_err(|_| "failed to setup connection")?
             .deliver_tx(data)
             .map_err(|_| "deliver_tx failed")?;
@@ -181,7 +181,7 @@ pub trait AbciInterface {
     }
 
     fn begin_block(height: i64, hash: Vec<u8>, proposer_address: Vec<u8>) -> DispatchResult {
-        let _result = abci::get_abci_instance(&abci::get_server_url())
+        let _result = abci::get_abci_instance()
             .map_err(|_| "failed to setup connection")?
             .begin_block(height, hash, proposer_address)
             .map_err(|_| "begin_block failed")?;
@@ -190,7 +190,7 @@ pub trait AbciInterface {
     }
 
     fn end_block(height: i64) -> DispatchResult {
-        let _result = abci::get_abci_instance(&abci::get_server_url())
+        let _result = abci::get_abci_instance()
             .map_err(|_| "failed to setup connection")?
             .end_block(height)
             .map_err(|_| "end_block failed")?;
@@ -199,7 +199,7 @@ pub trait AbciInterface {
     }
 
     fn commit() -> DispatchResult {
-        let _result = abci::get_abci_instance(&abci::get_server_url())
+        let _result = abci::get_abci_instance()
             .map_err(|_| "failed to setup connection")?
             .commit()
             .map_err(|_| "commit failed")?;
@@ -208,7 +208,7 @@ pub trait AbciInterface {
     }
 
     fn query(path: &str, data: Vec<u8>, height: i64, prove: bool) -> DispatchResult {
-        let _result = abci::get_abci_instance(&abci::get_server_url())
+        let _result = abci::get_abci_instance()
             .map_err(|_| "failed to setup connection")?
             .query(path.to_owned(), data, height, prove)
             .map_err(|_| "query failed")?;
