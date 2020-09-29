@@ -185,7 +185,6 @@ pub trait AbciInterface {
             .map_err(|_| "failed to setup connection")?
             .begin_block(height, hash, proposer_address)
             .map_err(|_| "begin_block failed")?;
-        debug::info!("Result: {:?}", _result);
         Ok(())
     }
 

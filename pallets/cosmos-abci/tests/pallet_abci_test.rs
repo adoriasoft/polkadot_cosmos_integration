@@ -117,10 +117,6 @@ fn should_begin_block_on_initialize() {
     .unwrap();
 
     let mut client = abci::get_abci_instance().unwrap();
-    assert!(
-        abci::set_chain_id("nameservice").is_ok(),
-        "should set chain id"
-    );
     let result = client.init_chain(abci::TEST_GENESIS);
     assert!(result.is_ok(), "should successfully call init chain");
 

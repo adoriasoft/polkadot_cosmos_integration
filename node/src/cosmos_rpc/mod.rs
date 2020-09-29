@@ -31,7 +31,7 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
             )
             .map_err(|_| "query failed")
             .unwrap();
-        println!("abci query result: {:?}", result);
+
         // TODO: parse result.proof and if it is qual to None in the json proof field put null
         // TODO: if key len == 0 put null in the json key field
         Ok(json!({
@@ -57,7 +57,7 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
                 .check_tx(tx_value.clone(), 0)
                 .map_err(|_| "query failed")
                 .unwrap();
-            println!("abci check_tx result: {:?}", result);
+
             let info = client.info();
             let best_hash = info.best_hash;
             let best_height: u32 = info.best_number.into();

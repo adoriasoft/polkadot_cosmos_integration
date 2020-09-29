@@ -1,7 +1,6 @@
 pub mod protos;
 
 use lazy_static::lazy_static;
-use owning_ref::MutexGuardRefMut;
 use protos::abci_application_client;
 use std::{
     future::Future,
@@ -9,10 +8,6 @@ use std::{
     time::{Duration, SystemTime},
 };
 use tokio::{runtime::Runtime, task::block_in_place};
-
-lazy_static! {
-    static ref ABCI_CHAIN_ID: Mutex<Option<String>> = Mutex::new(None);
-}
 
 // TODO: find better solution for the assync problem https://adoriasoft.atlassian.net/browse/PCI-108
 // ----
@@ -45,24 +40,7 @@ type AbciClient = abci_application_client::AbciApplicationClient<tonic::transpor
 pub struct AbciinterfaceGrpc {
     rt: Runtime,
     client: AbciClient,
-}
-
-pub fn set_chain_id(chain_id: &str) -> Result<(), Box<dyn std::error::Error>> {
-    let mut stored_chain_id = ABCI_CHAIN_ID.lock()?;
-    *stored_chain_id = Some(chain_id.to_owned());
-    Ok(())
-}
-
-pub fn get_chain_id<'ret>(
-) -> Result<MutexGuardRefMut<'ret, Option<String>, String>, Box<dyn std::error::Error>> {
-    let mut chain_id = ABCI_CHAIN_ID.lock()?;
-    if chain_id.is_none() {
-        *chain_id = Some("default-chain-id".to_string());
-    }
-    // Here we create a ref to the inner value of the mutex guard.
-    // Unwrap should never panic as we set it previously.
-    let res = MutexGuardRefMut::new(chain_id).map_mut(|mg| mg.as_mut().unwrap());
-    Ok(res)
+    chain_id: String,
 }
 
 impl AbciinterfaceGrpc {
@@ -74,7 +52,11 @@ impl AbciinterfaceGrpc {
             AbciClient::connect(endpoint).await
         };
         let client = rt.block_on(future)?;
-        Ok(AbciinterfaceGrpc { rt, client })
+        Ok(AbciinterfaceGrpc {
+            rt,
+            client,
+            chain_id: "default chain id".to_string(),
+        })
     }
 }
 
@@ -136,7 +118,8 @@ impl crate::ABCIInterface for AbciinterfaceGrpc {
             .parse::<u64>()?;
         let app_state_bytes = genesis["app_state"].to_string().as_bytes().to_vec();
         // Sets chain_id for future begin_block calls
-        set_chain_id(chain_id)?;
+        self.chain_id = chain_id.to_string();
+
         let request = tonic::Request::new(protos::RequestInitChain {
             time: Some(SystemTime::now().into()),
             chain_id: chain_id.to_owned(),
@@ -162,7 +145,8 @@ impl crate::ABCIInterface for AbciinterfaceGrpc {
         hash: Vec<u8>,
         proposer_address: Vec<u8>,
     ) -> crate::AbciResult<dyn crate::ResponseBeginBlock> {
-        let chain_id: String = get_chain_id()?.to_string();
+        let chain_id: String = self.chain_id.clone();
+
         let request = tonic::Request::new(protos::RequestBeginBlock {
             hash,
             header: Some(protos::Header {
@@ -231,19 +215,6 @@ fn wait<F: Future>(rt: &Runtime, future: F) -> F::Output {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn should_set_and_get_chain_id() {
-        assert!(
-            set_chain_id("default-chain-id").is_ok(),
-            "should set chain id"
-        );
-
-        assert_eq!(
-            get_chain_id().unwrap().as_str(),
-            "default-chain-id".to_string()
-        );
-    }
 
     #[test]
     fn should_init_variable_and_increment_variable() {

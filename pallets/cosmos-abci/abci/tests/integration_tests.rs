@@ -23,10 +23,6 @@ fn test_abci_begin_block() {
     .unwrap();
 
     let mut client = abci::get_abci_instance().unwrap();
-    assert!(
-        abci::set_chain_id("nameservice").is_ok(),
-        "should set chain id"
-    );
     let result = client.echo("test".to_owned());
     assert!(result.is_ok(), "should successfully call echo");
 

@@ -262,14 +262,6 @@ pub fn new_full(config: Configuration) -> Result<TaskManager, ServiceError> {
 
     // Run ABCI RPC server
     crate::cosmos_rpc::start_server(client);
-    // Init ABCI instance
-    abci::set_abci_instance(Box::new(
-        abci::grpc::AbciinterfaceGrpc::connect(&abci::get_server_url())
-            .map_err(|_| "failed to connect")
-            .unwrap(),
-    ))
-    .map_err(|_| "failed to set abci instance")
-    .unwrap();
 
     network_starter.start_network();
     Ok(task_manager)
