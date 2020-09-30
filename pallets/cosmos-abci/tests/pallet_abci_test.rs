@@ -105,13 +105,18 @@ fn should_begin_block_on_initialize() {
         ])
         .with_wait_for(images::generic::WaitFor::message_on_stdout("starting ABCI"));
     let node = docker.run(cosmos);
-    let url = format!("tcp://localhost:{}", node.get_host_port(26658).unwrap());
 
-    let mut client = abci::get_abci_instance(&url).unwrap();
-    assert!(
-        abci::set_chain_id("nameservice").is_ok(),
-        "should set chain id"
-    );
+    // Init ABCI instance
+    let url = format!("tcp://localhost:{}", node.get_host_port(26658).unwrap());
+    abci::set_abci_instance(Box::new(
+        abci::grpc::AbciinterfaceGrpc::connect(&url)
+            .map_err(|_| "failed to connect")
+            .unwrap(),
+    ))
+    .map_err(|_| "failed to set abci instance")
+    .unwrap();
+
+    let mut client = abci::get_abci_instance().unwrap();
     let result = client.init_chain(abci::TEST_GENESIS);
     assert!(result.is_ok(), "should successfully call init chain");
 

@@ -13,6 +13,7 @@ prost = { version = '0.6' }
 prost-types = '0.6'
 lazy_static = '1.2.0'
 owning_ref = '0.4.1'
+mockall = '0.8.1'
 
 [dev-dependencies]
 testcontainers = '0.10'
