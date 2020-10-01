@@ -15,6 +15,32 @@ lazy_static! {
         Mutex::new(None);
 }
 
+// TODO: find better solution for the assync problem https://adoriasoft.atlassian.net/browse/PCI-108
+// ----
+lazy_static! {
+    static ref ON_INITIALIZE_VARIABLE: Mutex<Option<i64>> = Mutex::new(None);
+}
+
+pub fn get_on_initialize_variable() -> i64 {
+    let mut value = ON_INITIALIZE_VARIABLE.lock().unwrap();
+    if value.is_none() {
+        *value = Some(0);
+    }
+    let res = *value;
+    return res.unwrap();
+}
+
+pub fn increment_on_initialize_variable() -> i64 {
+    let mut value = ON_INITIALIZE_VARIABLE.lock().unwrap();
+    if value.is_none() {
+        *value = Some(0);
+    }
+    let temp = value.unwrap();
+    *value = Some(temp + 1);
+    value.unwrap()
+}
+// ----
+
 type AbciResult<T> = Result<Box<T>, Box<dyn std::error::Error>>;
 
 #[automock]
@@ -157,4 +183,16 @@ pub fn get_abci_instance<'ret>() -> Result<
     // Unwrap should never panic as we set it previously.
     let res = MutexGuardRefMut::new(instance).map_mut(|mg| mg.as_mut().unwrap());
     Ok(res)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn should_init_variable_and_increment_variable() {
+        assert_eq!(increment_on_initialize_variable(), 1);
+
+        assert_eq!(get_on_initialize_variable(), 1);
+    }
 }

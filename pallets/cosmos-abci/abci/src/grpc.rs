@@ -1,39 +1,11 @@
-pub mod protos;
+mod protos;
 
-use lazy_static::lazy_static;
 use protos::abci_application_client;
 use std::{
     future::Future,
-    sync::Mutex,
     time::{Duration, SystemTime},
 };
 use tokio::{runtime::Runtime, task::block_in_place};
-
-// TODO: find better solution for the assync problem https://adoriasoft.atlassian.net/browse/PCI-108
-// ----
-lazy_static! {
-    static ref ON_INITIALIZE_VARIABLE: Mutex<Option<i64>> = Mutex::new(None);
-}
-
-pub fn get_on_initialize_variable() -> i64 {
-    let mut value = ON_INITIALIZE_VARIABLE.lock().unwrap();
-    if value.is_none() {
-        *value = Some(0);
-    }
-    let res = *value;
-    return res.unwrap();
-}
-
-pub fn increment_on_initialize_variable() -> i64 {
-    let mut value = ON_INITIALIZE_VARIABLE.lock().unwrap();
-    if value.is_none() {
-        *value = Some(0);
-    }
-    let temp = value.unwrap();
-    *value = Some(temp + 1);
-    value.unwrap()
-}
-// ----
 
 type AbciClient = abci_application_client::AbciApplicationClient<tonic::transport::Channel>;
 
@@ -210,16 +182,4 @@ impl crate::ABCIInterface for AbciinterfaceGrpc {
 fn wait<F: Future>(rt: &Runtime, future: F) -> F::Output {
     let handle = rt.handle().clone();
     block_in_place(move || handle.block_on(future))
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn should_init_variable_and_increment_variable() {
-        assert_eq!(increment_on_initialize_variable(), 1);
-
-        assert_eq!(get_on_initialize_variable(), 1);
-    }
 }

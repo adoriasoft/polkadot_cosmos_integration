@@ -2,7 +2,7 @@
 #[warn(unused_must_use)]
 use frame_support::{debug, decl_module, dispatch::DispatchResult, dispatch::Vec, weights::Weight};
 use frame_system::{
-    ensure_signed,
+    ensure_none,
     offchain::{AppCrypto, CreateSignedTransaction},
 };
 use sp_core::crypto::KeyTypeId;
@@ -71,7 +71,7 @@ decl_module! {
 
         #[weight = 0]
         pub fn deliver_tx(origin, data: Vec<u8>) -> DispatchResult {
-            ensure_signed(origin)?;
+            let _ = ensure_none(origin)?;
             debug::info!("Received deliver tx request");
             <Self as CosmosAbci>::deliver_tx(data)?;
             Ok(())
@@ -136,7 +136,7 @@ impl<T: Trait> CosmosAbci for Module<T> {
 
 sp_api::decl_runtime_apis! {
     pub trait ExtrinsicConstructionApi {
-        fn sign_and_send_deliver_tx(data: &Vec<u8>);
+        fn broadcast_deliver_tx(data: &Vec<u8>);
     }
 }
 

@@ -64,7 +64,7 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
             let at = BlockId::<Block>::hash(best_hash);
             client
                 .runtime_api()
-                .sign_and_send_deliver_tx(&at, &tx_value)
+                .broadcast_deliver_tx(&at, &tx_value)
                 .ok();
             Ok(json!({
                 "height": (best_height + 1).to_string(),
