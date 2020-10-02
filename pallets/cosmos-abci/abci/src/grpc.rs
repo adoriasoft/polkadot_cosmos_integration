@@ -222,13 +222,12 @@ impl crate::ABCIInterface for ABCIInterface_grpc {
         Ok(Box::new(response.into_inner()))
     }
 
-    // &mut self, p2p_version: u64, block_version: u64, version: String
     fn info(&mut self) -> crate::AbciResult<dyn crate::ResponseInfo> {
         let app_configs = crate::defaults::get_app_configs();
         let request = tonic::Request::new(protos::RequestInfo {
             p2p_version: app_configs.p2p_version,
             block_version: app_configs.block_version,
-            version: app_configs.app_version
+            version: app_configs.app_version,
         });
         let future = self.client.info(request);
         let response = wait(&self.rt, future)?;
