@@ -14,6 +14,28 @@ pub const DEFAULT_ABCI_RPC_URL: &str = "127.0.0.1:26657";
 pub fn start_server(client: Arc<crate::service::FullClient>) {
     let mut io = IoHandler::new();
 
+    // todo
+    // Handle error response.
+    io.add_method("abci_info", |_params: Params| async {
+        let result = abci::get_abci_instance(&abci::get_server_url())
+            .map_err(|_| "failed to setup connection")
+            .unwrap()
+            .info()
+            .map_err(|_| "query failed")
+            .unwrap();
+        let last_block_app_hash = result.get_last_block_app_hash();
+        let last_block_height = result.get_last_block_height();
+        println!("last block height: {:?}", last_block_height);
+        println!("last block app hash: {:?}", last_block_app_hash);
+        Ok(json!({
+            "response": {
+                "data": format!("{}", result.get_data()),
+                "version": format!("{}", result.get_version()),
+                "app_version": format!("{}", result.get_app_version())
+            }
+        }))
+    });
+
     io.add_method("abci_query", |params: Params| async {
         let query_params: types::ABCIQueryParams = params.parse().unwrap();
         println!(
@@ -46,6 +68,7 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
             }
         }))
     });
+
     io.add_method("broadcast_tx_commit", move |params: Params| {
         let client = client.clone();
         async move {

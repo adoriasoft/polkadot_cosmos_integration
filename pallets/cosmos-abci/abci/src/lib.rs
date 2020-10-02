@@ -72,6 +72,14 @@ pub trait ResponseCommit: Debug {
     fn set_retain_height(&mut self, v: i64);
 }
 
+pub trait ResponseInfo: Debug {
+    fn get_version(&self) -> String;
+    fn get_app_version(&self) -> String;
+    fn get_data(&self) -> String;
+    fn get_last_block_height(&self) -> i64;
+    fn get_last_block_app_hash(&self) -> Vec<u8>;
+}
+
 pub trait ResponseQuery: Debug {
     fn get_code(&self) -> u32;
     fn get_log(&self) -> String;
@@ -119,6 +127,8 @@ pub trait ABCIInterface {
         height: i64,
         prove: bool,
     ) -> AbciResult<dyn ResponseQuery>;
+
+    fn info(&mut self) -> AbciResult<dyn ResponseInfo>;
 }
 
 pub fn get_abci_instance<'ret>(
