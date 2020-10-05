@@ -2,13 +2,22 @@
 #[warn(unused_must_use)]
 use frame_support::{debug, decl_module, dispatch::DispatchResult, dispatch::Vec, weights::Weight};
 use frame_system::{
-    ensure_signed,
+    ensure_none,
     offchain::{AppCrypto, CreateSignedTransaction},
 };
 use sp_core::crypto::KeyTypeId;
-use sp_runtime::{traits::SaturatedConversion, DispatchError};
+use sp_runtime::{
+    traits::SaturatedConversion,
+    transaction_validity::{
+        InvalidTransaction, TransactionSource, TransactionValidity, ValidTransaction,
+    },
+    DispatchError,
+};
 use sp_runtime_interface::runtime_interface;
 use sp_std::prelude::*;
+
+/// The type to sign and send transactions.
+pub const UNSIGNED_TXS_PRIORITY: u64 = 100;
 
 pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"abci");
 /// Based on the above `KeyTypeId` we need to generate a pallet-specific crypto type wrapper.
@@ -71,7 +80,7 @@ decl_module! {
 
         #[weight = 0]
         pub fn deliver_tx(origin, data: Vec<u8>) -> DispatchResult {
-            ensure_signed(origin)?;
+            let _ = ensure_none(origin)?;
             debug::info!("Received deliver tx request");
             <Self as CosmosAbci>::deliver_tx(data)?;
             Ok(())
@@ -120,6 +129,26 @@ impl<T: Trait> Module<T> {
     }
 }
 
+impl<T: Trait> frame_support::unsigned::ValidateUnsigned for Module<T> {
+    type Call = Call<T>;
+
+    fn validate_unsigned(_source: TransactionSource, call: &Self::Call) -> TransactionValidity {
+        let valid_tx = |provide| {
+            ValidTransaction::with_tag_prefix("cosmos-abci")
+                .priority(UNSIGNED_TXS_PRIORITY)
+                .and_provides([&provide])
+                .longevity(3)
+                .propagate(true)
+                .build()
+        };
+
+        match call {
+            Call::deliver_tx(_number) => valid_tx(b"submit_deliver_tx".to_vec()),
+            _ => InvalidTransaction::Call.into(),
+        }
+    }
+}
+
 impl<T: Trait> CosmosAbci for Module<T> {
     fn check_tx(data: Vec<u8>) -> Result<u64, DispatchError> {
         abci_interface::check_tx(data)
@@ -136,7 +165,7 @@ impl<T: Trait> CosmosAbci for Module<T> {
 
 sp_api::decl_runtime_apis! {
     pub trait ExtrinsicConstructionApi {
-        fn sign_and_send_deliver_tx(data: &Vec<u8>);
+        fn broadcast_deliver_tx(data: &Vec<u8>);
     }
 }
 
