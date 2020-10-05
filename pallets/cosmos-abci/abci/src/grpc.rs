@@ -206,10 +206,22 @@ impl crate::ABCIInterface for AbciinterfaceGrpc {
         Ok(Box::new(response.into_inner()))
     }
 
+    fn info(&mut self) -> crate::AbciResult<dyn crate::ResponseInfo> {
+        let app_configs = crate::defaults::get_app_configs();
+        let request = tonic::Request::new(protos::RequestInfo {
+            p2p_version: app_configs.p2p_version,
+            block_version: app_configs.block_version,
+            version: app_configs.app_version,
+        });
+        let future = self.client.info(request);
+        let response = wait(&self.rt, future)?;
+        Ok(Box::new(response.into_inner()))
+    }
+
     fn set_option(&mut self, key: &str, value: &str) -> crate::AbciResult<dyn crate::ResponseSetOption> {
         let request = tonic::Request::new(protos::RequestSetOption {
-            key,
-            value,
+            key: key.to_string(),
+            value: value.to_string(),
         });
         let future = self.client.set_option(request);
         let response = wait(&self.rt, future)?;

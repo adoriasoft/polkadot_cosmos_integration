@@ -68,8 +68,8 @@ pub trait ResponseInitChain {}
 #[automock]
 pub trait ResponseSetOption {
     fn get_code(&self) -> u32;
-    fn get_log(&self) -> &str;
-    fn get_info(&self) -> &str;
+    fn get_log(&self) -> String;
+    fn get_info(&self) -> String;
 }
 
 #[automock]
@@ -85,6 +85,15 @@ pub trait ResponseCommit {
 
     fn set_data(&mut self, v: Vec<u8>);
     fn set_retain_height(&mut self, v: i64);
+}
+
+#[automock]
+pub trait ResponseInfo {
+    fn get_version(&self) -> String;
+    fn get_app_version(&self) -> String;
+    fn get_data(&self) -> String;
+    fn get_last_block_height(&self) -> i64;
+    fn get_last_block_app_hash(&self) -> Vec<u8>;
 }
 
 #[automock]
@@ -138,6 +147,8 @@ pub trait ABCIInterface {
         height: i64,
         prove: bool,
     ) -> AbciResult<dyn ResponseQuery>;
+
+    fn info(&mut self) -> AbciResult<dyn ResponseInfo>;
 }
 
 pub fn set_abci_instance<'ret>(

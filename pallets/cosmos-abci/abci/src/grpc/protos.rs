@@ -20,6 +20,42 @@ pub use crypto::merkle::*;
 pub use libs::kv::*;
 pub use proto::abci_proto::*;
 
+impl crate::ResponseSetOption for ResponseSetOption {
+    fn get_code(&self) -> u32 {
+        self.code.clone()
+    }
+
+    fn get_log(&self) -> String {
+        self.log.clone().to_string()
+    }
+
+    fn get_info(&self) -> String {
+        self.info.clone().to_string()
+    }
+}
+
+impl crate::ResponseInfo for ResponseInfo {
+    fn get_version(&self) -> String {
+        self.version.clone()
+    }
+
+    fn get_app_version(&self) -> String {
+        self.app_version.clone().to_string()
+    }
+
+    fn get_data(&self) -> String {
+        self.data.clone()
+    }
+
+    fn get_last_block_app_hash(&self) -> Vec<u8> {
+        self.last_block_app_hash.clone()
+    }
+
+    fn get_last_block_height(&self) -> i64 {
+        self.last_block_height.clone()
+    }
+}
+
 impl crate::ResponseEcho for ResponseEcho {
     fn get_message(&self) -> String {
         self.message.clone()
