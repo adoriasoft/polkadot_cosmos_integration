@@ -66,6 +66,13 @@ pub trait ResponseDeliverTx {
 pub trait ResponseInitChain {}
 
 #[automock]
+pub trait ResponseSetOption {
+    fn get_code(&self) -> u32;
+    fn get_log(&self) -> &str;
+    fn get_info(&self) -> &str;
+}
+
+#[automock]
 pub trait ResponseBeginBlock {}
 
 #[automock]
@@ -110,6 +117,8 @@ pub trait ABCIInterface {
     fn deliver_tx(&mut self, tx: Vec<u8>) -> AbciResult<dyn ResponseDeliverTx>;
 
     fn init_chain(&mut self, genesis: &str) -> AbciResult<dyn ResponseInitChain>;
+
+    fn set_option(&mut self, key: &str, value: &str) -> AbciResult<dyn ResponseSetOption>;
 
     fn begin_block(
         &mut self,

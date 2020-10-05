@@ -14,6 +14,10 @@ pub const DEFAULT_ABCI_RPC_URL: &str = "127.0.0.1:26657";
 pub fn start_server(client: Arc<crate::service::FullClient>) {
     let mut io = IoHandler::new();
 
+    async fn fetch_abci_set_option(_params: Params) { }
+
+    io.add_method("abci_set_option", fetch_abci_set_option);
+
     io.add_method("abci_query", |params: Params| async {
         let query_params: types::ABCIQueryParams = params.parse().unwrap();
         println!(
