@@ -24,7 +24,7 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
 
     async fn fetch_abci_info(_: Params) -> sc_service::Result<jsonrpc_core::Value, Error> {
         let result = abci::get_abci_instance()
-            .map_err(|_| "failed to setup connection")
+            .map_err(on_error_response)
             .unwrap()
             .info()
             .map_err(on_error_response)
