@@ -1,6 +1,6 @@
 mod types;
 
-use jsonrpc_http_server::jsonrpc_core::{serde_json::json, IoHandler, Params};
+use jsonrpc_http_server::jsonrpc_core::{serde_json::json, Error, IoHandler, Params};
 use jsonrpc_http_server::ServerBuilder;
 use node_template_runtime::cosmos_abci::ExtrinsicConstructionApi;
 use node_template_runtime::opaque::Block;
@@ -13,6 +13,36 @@ pub const DEFAULT_ABCI_RPC_URL: &str = "127.0.0.1:26657";
 
 pub fn start_server(client: Arc<crate::service::FullClient>) {
     let mut io = IoHandler::new();
+
+    fn on_error_response(
+        err: std::boxed::Box<dyn std::error::Error>,
+    ) -> sc_service::Result<jsonrpc_core::Value, Error> {
+        Ok(json!({
+            "error": err.to_string(),
+        }))
+    }
+
+    async fn fetch_abci_info(_: Params) -> sc_service::Result<jsonrpc_core::Value, Error> {
+        let result = abci::get_abci_instance()
+            .map_err(on_error_response)
+            .unwrap()
+            .info()
+            .map_err(on_error_response)
+            .unwrap();
+        let last_block_app_hash = result.get_last_block_app_hash();
+        let last_block_height = result.get_last_block_height();
+        println!("last block height: {:?}", last_block_height);
+        println!("last block app hash: {:?}", last_block_app_hash);
+        Ok(json!({
+            "response": {
+                "data": format!("{}", result.get_data()),
+                "version": format!("{}", result.get_version()),
+                "app_version": format!("{}", result.get_app_version())
+            }
+        }))
+    }
+
+    io.add_method("abci_info", fetch_abci_info);
 
     io.add_method("abci_query", |params: Params| async {
         let query_params: types::ABCIQueryParams = params.parse().unwrap();
@@ -46,6 +76,7 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
             }
         }))
     });
+
     io.add_method("broadcast_tx_commit", move |params: Params| {
         let client = client.clone();
         async move {

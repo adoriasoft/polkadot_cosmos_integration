@@ -254,3 +254,31 @@ pub const TEST_GENESIS: &str = r#"
         }
     }
 }"#;
+
+pub type AppVersion = String;
+pub type BlockVersion = u64;
+pub type P2PVersion = u64;
+
+pub struct VersionConfigs {
+    pub app_version: String,
+    pub block_version: u64,
+    pub p2p_version: u64,
+}
+
+impl VersionConfigs {
+    fn log_info(&self) {
+        println!("BlockVersion is {}", self.block_version);
+        println!("AppVersion is {}", self.app_version);
+        println!("P2PVersion is {}", self.p2p_version);
+    }
+}
+
+pub fn get_app_configs() -> VersionConfigs {
+    let version_configs = VersionConfigs {
+        app_version: "0.1.0".to_string(), // version specified at Cargo.toml of `abci` pallet.
+        block_version: 0,
+        p2p_version: 0,
+    };
+    version_configs.log_info();
+    version_configs
+}

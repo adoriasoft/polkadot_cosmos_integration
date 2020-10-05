@@ -205,6 +205,18 @@ impl crate::ABCIInterface for AbciinterfaceGrpc {
         let response = wait(&self.rt, future)?;
         Ok(Box::new(response.into_inner()))
     }
+
+    fn info(&mut self) -> crate::AbciResult<dyn crate::ResponseInfo> {
+        let app_configs = crate::defaults::get_app_configs();
+        let request = tonic::Request::new(protos::RequestInfo {
+            p2p_version: app_configs.p2p_version,
+            block_version: app_configs.block_version,
+            version: app_configs.app_version,
+        });
+        let future = self.client.info(request);
+        let response = wait(&self.rt, future)?;
+        Ok(Box::new(response.into_inner()))
+    }
 }
 
 fn wait<F: Future>(rt: &Runtime, future: F) -> F::Output {

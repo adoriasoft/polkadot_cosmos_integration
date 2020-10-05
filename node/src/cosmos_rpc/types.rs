@@ -12,3 +12,6 @@ pub struct ABCIQueryParams {
 pub struct ABCITxCommitParams {
     pub tx: String,
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ABCIInfo {}

@@ -88,3 +88,8 @@ This command will firstly compile your code, and then start a local development 
 # Check whether the code is compilable
 ./scripts/docker_run.sh cargo check
 ```
+
+### CosmosRPC REST calls
+
+- Request to CosmosRPC API:
+  `{ "jsonrpc": "2.0", "method": <method_name>, "id": 0, "params": <method_params> }`
