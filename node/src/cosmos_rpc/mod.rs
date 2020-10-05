@@ -17,11 +17,13 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
     // todo
     // Handle error response.
     io.add_method("abci_info", |_params: Params| async {
-        let result = abci::get_abci_instance(&abci::get_server_url())
+        let result = abci::get_abci_instance()
             .map_err(|_| "failed to setup connection")
             .unwrap()
             .info()
-            .map_err(|_| "query failed")
+            .map_err(|err| println!("{}", err.to_string()) /* Ok(json!({
+                "error": err.to_string(),
+            }) */)
             .unwrap();
         let last_block_app_hash = result.get_last_block_app_hash();
         let last_block_height = result.get_last_block_height();
@@ -42,7 +44,7 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
             "params path: {}, data: {}, height: {}, prove: {}",
             query_params.path, query_params.data, query_params.height, query_params.prove
         );
-        let result = abci::get_abci_instance(&abci::get_server_url())
+        let result = abci::get_abci_instance()
             .map_err(|_| "failed to setup connection")
             .unwrap()
             .query(
@@ -53,7 +55,7 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
             )
             .map_err(|_| "query failed")
             .unwrap();
-        println!("abci query result: {:?}", result);
+
         // TODO: parse result.proof and if it is qual to None in the json proof field put null
         // TODO: if key len == 0 put null in the json key field
         Ok(json!({
@@ -74,13 +76,13 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
         async move {
             let params: types::ABCITxCommitParams = params.parse().unwrap();
             let tx_value = base64::decode(params.tx).unwrap();
-            let result = abci::get_abci_instance(&abci::get_server_url())
+            let result = abci::get_abci_instance()
                 .map_err(|_| "failed to setup connection")
                 .unwrap()
                 .check_tx(tx_value.clone(), 0)
                 .map_err(|_| "query failed")
                 .unwrap();
-            println!("abci check_tx result: {:?}", result);
+
             let info = client.info();
             let best_hash = info.best_hash;
             let best_height: u32 = info.best_number.into();

@@ -6,8 +6,9 @@ pub use grpc::*;
 
 use lazy_static::lazy_static;
 use owning_ref::MutexGuardRefMut;
-use std::fmt::Debug;
 use std::sync::Mutex;
+
+use mockall::automock;
 
 lazy_static! {
     static ref ABCI_INTERFACE_INSTANCE: Mutex<Option<Box<dyn ABCIInterface + Send>>> =
@@ -16,13 +17,15 @@ lazy_static! {
 
 type AbciResult<T> = Result<Box<T>, Box<dyn std::error::Error>>;
 
-pub trait ResponseEcho: Debug {
+#[automock]
+pub trait ResponseEcho {
     fn get_message(&self) -> String;
 
     fn set_message(&mut self, v: String);
 }
 
-pub trait ResponseCheckTx: Debug {
+#[automock]
+pub trait ResponseCheckTx {
     fn get_code(&self) -> u32;
     fn get_data(&self) -> Vec<u8>;
     fn get_log(&self) -> String;
@@ -40,7 +43,8 @@ pub trait ResponseCheckTx: Debug {
     fn set_codespace(&mut self, v: String);
 }
 
-pub trait ResponseDeliverTx: Debug {
+#[automock]
+pub trait ResponseDeliverTx {
     fn get_code(&self) -> u32;
     fn get_data(&self) -> Vec<u8>;
     fn get_log(&self) -> String;
@@ -58,13 +62,17 @@ pub trait ResponseDeliverTx: Debug {
     fn set_codespace(&mut self, v: String);
 }
 
-pub trait ResponseInitChain: Debug {}
+#[automock]
+pub trait ResponseInitChain {}
 
-pub trait ResponseBeginBlock: Debug {}
+#[automock]
+pub trait ResponseBeginBlock {}
 
-pub trait ResponseEndBlock: Debug {}
+#[automock]
+pub trait ResponseEndBlock {}
 
-pub trait ResponseCommit: Debug {
+#[automock]
+pub trait ResponseCommit {
     fn get_data(&self) -> Vec<u8>;
     fn get_retain_height(&self) -> i64;
 
@@ -72,7 +80,8 @@ pub trait ResponseCommit: Debug {
     fn set_retain_height(&mut self, v: i64);
 }
 
-pub trait ResponseInfo: Debug {
+#[automock]
+pub trait ResponseInfo {
     fn get_version(&self) -> String;
     fn get_app_version(&self) -> String;
     fn get_data(&self) -> String;
@@ -80,7 +89,8 @@ pub trait ResponseInfo: Debug {
     fn get_last_block_app_hash(&self) -> Vec<u8>;
 }
 
-pub trait ResponseQuery: Debug {
+#[automock]
+pub trait ResponseQuery {
     fn get_code(&self) -> u32;
     fn get_log(&self) -> String;
     fn get_info(&self) -> String;
@@ -100,6 +110,7 @@ pub trait ResponseQuery: Debug {
     fn set_codespace(&mut self, v: String);
 }
 
+#[automock]
 pub trait ABCIInterface {
     fn echo(&mut self, message: String) -> AbciResult<dyn ResponseEcho>;
 
@@ -131,15 +142,27 @@ pub trait ABCIInterface {
     fn info(&mut self) -> AbciResult<dyn ResponseInfo>;
 }
 
-pub fn get_abci_instance<'ret>(
-    abci_endpoint: &str,
+pub fn set_abci_instance<'ret>(
+    new_instance: Box<dyn ABCIInterface + Send>,
 ) -> Result<
     MutexGuardRefMut<'ret, Option<Box<dyn ABCIInterface + Send>>, Box<dyn ABCIInterface + Send>>,
     Box<dyn std::error::Error>,
 > {
     let mut instance = ABCI_INTERFACE_INSTANCE.lock()?;
+    *instance = Some(new_instance);
+    // Here we create a ref to the inner value of the mutex guard.
+    // Unwrap should never panic as we set it previously.
+    let res = MutexGuardRefMut::new(instance).map_mut(|mg| mg.as_mut().unwrap());
+    Ok(res)
+}
+
+pub fn get_abci_instance<'ret>() -> Result<
+    MutexGuardRefMut<'ret, Option<Box<dyn ABCIInterface + Send>>, Box<dyn ABCIInterface + Send>>,
+    Box<dyn std::error::Error>,
+> {
+    let instance = ABCI_INTERFACE_INSTANCE.lock()?;
     if instance.is_none() {
-        *instance = Some(Box::new(ABCIInterface_grpc::connect(abci_endpoint)?));
+        panic!("abci instance has not been set, execute set_abci_instance before calling this function");
     }
     // Here we create a ref to the inner value of the mutex guard.
     // Unwrap should never panic as we set it previously.
