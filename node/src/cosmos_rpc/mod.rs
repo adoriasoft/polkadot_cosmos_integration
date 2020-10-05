@@ -1,6 +1,6 @@
 mod types;
 
-use jsonrpc_http_server::jsonrpc_core::{serde_json::json, IoHandler, Params};
+use jsonrpc_http_server::jsonrpc_core::{serde_json::json, Error, IoHandler, Params};
 use jsonrpc_http_server::ServerBuilder;
 use node_template_runtime::cosmos_abci::ExtrinsicConstructionApi;
 use node_template_runtime::opaque::Block;
@@ -14,16 +14,20 @@ pub const DEFAULT_ABCI_RPC_URL: &str = "127.0.0.1:26657";
 pub fn start_server(client: Arc<crate::service::FullClient>) {
     let mut io = IoHandler::new();
 
-    // todo
-    // Handle error response.
-    io.add_method("abci_info", |_params: Params| async {
+    fn on_error_response(
+        err: std::boxed::Box<dyn std::error::Error>,
+    ) -> sc_service::Result<jsonrpc_core::Value, Error> {
+        Ok(json!({
+            "error": err.to_string(),
+        }))
+    }
+
+    async fn fetch_abci_info(_: Params) -> sc_service::Result<jsonrpc_core::Value, Error> {
         let result = abci::get_abci_instance()
             .map_err(|_| "failed to setup connection")
             .unwrap()
             .info()
-            .map_err(|err| println!("{}", err.to_string()) /* Ok(json!({
-                "error": err.to_string(),
-            }) */)
+            .map_err(on_error_response)
             .unwrap();
         let last_block_app_hash = result.get_last_block_app_hash();
         let last_block_height = result.get_last_block_height();
@@ -36,7 +40,9 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
                 "app_version": format!("{}", result.get_app_version())
             }
         }))
-    });
+    }
+
+    io.add_method("abci_info", fetch_abci_info);
 
     io.add_method("abci_query", |params: Params| async {
         let query_params: types::ABCIQueryParams = params.parse().unwrap();
