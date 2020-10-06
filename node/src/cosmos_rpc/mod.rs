@@ -41,7 +41,9 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
         }))
     }
 
-    async fn fetch_abci_set_option(_params: Params) -> sc_service::Result<jsonrpc_core::Value, Error> {
+    async fn fetch_abci_set_option(
+        _params: Params,
+    ) -> sc_service::Result<jsonrpc_core::Value, Error> {
         let query_params: types::ABCISetOption = _params.parse().unwrap();
         let key: &str = &query_params.key;
         let value: &str = &query_params.value;
