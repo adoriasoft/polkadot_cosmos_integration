@@ -217,6 +217,16 @@ impl crate::ABCIInterface for AbciinterfaceGrpc {
         let response = wait(&self.rt, future)?;
         Ok(Box::new(response.into_inner()))
     }
+
+    fn set_option(&mut self, key: &str, value: &str) -> crate::AbciResult<dyn crate::ResponseSetOption> {
+        let request = tonic::Request::new(protos::RequestSetOption {
+            key: key.to_string(),
+            value: value.to_string(),
+        });
+        let future = self.client.set_option(request);
+        let response = wait(&self.rt, future)?;
+        Ok(Box::new(response.into_inner()))
+    }
 }
 
 fn wait<F: Future>(rt: &Runtime, future: F) -> F::Output {
