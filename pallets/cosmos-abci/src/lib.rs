@@ -1,8 +1,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #[warn(unused_must_use)]
-use frame_support::{
-    debug, decl_module, dispatch::DispatchResult, dispatch::Vec, weights::Weight,
-};
+use frame_support::{debug, decl_module, dispatch::DispatchResult, dispatch::Vec, weights::Weight};
 use frame_system::{
     ensure_signed,
     offchain::{AppCrypto, CreateSignedTransaction},
