@@ -15,3 +15,9 @@ pub struct ABCITxCommitParams {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ABCIInfo {}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ABCISetOption {
+    pub key: String,
+    pub value: String
+}

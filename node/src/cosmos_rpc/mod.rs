@@ -31,8 +31,7 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
             .unwrap();
         let last_block_app_hash = result.get_last_block_app_hash();
         let last_block_height = result.get_last_block_height();
-        println!("last block height: {:?}", last_block_height);
-        println!("last block app hash: {:?}", last_block_app_hash);
+
         Ok(json!({
             "response": {
                 "data": format!("{}", result.get_data()),
@@ -42,7 +41,32 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
         }))
     }
 
+    async fn fetch_abci_set_option(
+        _params: Params,
+    ) -> sc_service::Result<jsonrpc_core::Value, Error> {
+        let query_params: types::ABCISetOption = _params.parse().unwrap();
+        let key: &str = &query_params.key;
+        let value: &str = &query_params.value;
+
+        let result = abci::get_abci_instance()
+            .map_err(on_error_response)
+            .unwrap()
+            .set_option(key, value)
+            .map_err(on_error_response)
+            .unwrap();
+
+        Ok(json!({
+            "response": {
+                "code": format!("{}", result.get_code()),
+                "log": format!("{}", result.get_log()),
+                "info": format!("{}", result.get_info())
+            }
+        }))
+    }
+
     io.add_method("abci_info", fetch_abci_info);
+
+    io.add_method("abci_set_option", fetch_abci_set_option);
 
     io.add_method("abci_query", |params: Params| async {
         let query_params: types::ABCIQueryParams = params.parse().unwrap();
