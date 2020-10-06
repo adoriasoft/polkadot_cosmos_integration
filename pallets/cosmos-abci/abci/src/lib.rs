@@ -90,7 +90,7 @@ pub trait ResponseCommit {
 #[automock]
 pub trait ResponseInfo {
     fn get_version(&self) -> String;
-    fn get_app_version(&self) -> String;
+    fn get_app_version(&self) -> u64;
     fn get_data(&self) -> String;
     fn get_last_block_height(&self) -> i64;
     fn get_last_block_app_hash(&self) -> Vec<u8>;
