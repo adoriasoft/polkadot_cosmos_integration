@@ -39,8 +39,8 @@ impl crate::ResponseInfo for ResponseInfo {
         self.version.clone()
     }
 
-    fn get_app_version(&self) -> String {
-        self.app_version.clone().to_string()
+    fn get_app_version(&self) -> u64 {
+        self.app_version
     }
 
     fn get_data(&self) -> String {
