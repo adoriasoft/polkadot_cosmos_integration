@@ -29,8 +29,8 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
             .info()
             .map_err(on_error_response)
             .unwrap();
-        let last_block_app_hash = result.get_last_block_app_hash();
-        let last_block_height = result.get_last_block_height();
+        let _last_block_app_hash = result.get_last_block_app_hash();
+        let _last_block_height = result.get_last_block_height();
 
         Ok(json!({
             "response": {

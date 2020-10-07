@@ -59,53 +59,47 @@ impl crate::ABCIInterface for AbciinterfaceGrpc {
         Ok(Box::new(response.into_inner()))
     }
 
-    fn init_chain(&mut self, genesis: &str) -> crate::AbciResult<dyn crate::ResponseInitChain> {
-        let genesis: serde_json::Value =
-            serde_json::from_str(genesis).map_err(|e| e.to_string())?;
-        let chain_id = genesis["chain_id"]
-            .as_str()
-            .ok_or("chain_id not found".to_owned())?;
-        // let genesis_time = genesis["genesis_time"].as_str().ok_or("chain_id not found".to_owned())?;
-        let pub_key_types: Vec<String> = genesis["consensus_params"]["validator"]["pub_key_types"]
-            .as_array()
-            .ok_or("pub_keys_types not found".to_owned())?
-            .into_iter()
-            .map(|v| v.as_str().unwrap().to_owned())
-            .collect();
-        let max_bytes = genesis["consensus_params"]["block"]["max_bytes"]
-            .as_str()
-            .ok_or("chain_id not found".to_owned())?
-            .parse::<i64>()?;
-        let max_gas = genesis["consensus_params"]["block"]["max_gas"]
-            .as_str()
-            .ok_or("chain_id not found".to_owned())?
-            .parse::<i64>()?;
-        let max_age_num_blocks = genesis["consensus_params"]["evidence"]["max_age_num_blocks"]
-            .as_str()
-            .ok_or("chain_id not found".to_owned())?
-            .parse::<i64>()?;
-        let max_age_duration = genesis["consensus_params"]["evidence"]["max_age_duration"]
-            .as_str()
-            .ok_or("chain_id not found".to_owned())?
-            .parse::<u64>()?;
-        let app_state_bytes = genesis["app_state"].to_string().as_bytes().to_vec();
-        // Sets chain_id for future begin_block calls
-        self.chain_id = chain_id.to_string();
+    fn init_chain(
+        &mut self,
+        time_seconds: i64,
+        time_nanos: i32,
+        chain_id: &str,
+        pub_key_types: Vec<String>,
+        max_bytes: i64,
+        max_gas: i64,
+        max_age_num_blocks: i64,
+        max_age_duration: u64,
+        app_state_bytes: Vec<u8>,
+    ) -> crate::AbciResult<dyn crate::ResponseInitChain> {
+        //let time = SystemTime::now().into();
+        let evidence = protos::EvidenceParams {
+            max_age_num_blocks: max_age_num_blocks,
+            max_age_duration: Some(Duration::from_micros(max_age_duration).into()),
+        };
+        let block = protos::BlockParams {
+            max_bytes: max_bytes,
+            max_gas: max_gas,
+        };
+        let validator = protos::ValidatorParams {
+            pub_key_types: pub_key_types,
+        };
 
+        let consensus_params = protos::ConsensusParams {
+            block: Some(block),
+            evidence: Some(evidence),
+            validator: Some(validator),
+        };
         let request = tonic::Request::new(protos::RequestInitChain {
-            time: Some(SystemTime::now().into()),
-            chain_id: chain_id.to_owned(),
-            consensus_params: Some(protos::ConsensusParams {
-                block: Some(protos::BlockParams { max_bytes, max_gas }),
-                evidence: Some(protos::EvidenceParams {
-                    max_age_num_blocks,
-                    max_age_duration: Some(Duration::from_micros(max_age_duration).into()),
-                }),
-                validator: Some(protos::ValidatorParams { pub_key_types }),
+            time: Some(prost_types::Timestamp {
+                seconds: time_seconds,
+                nanos: time_nanos,
             }),
+            chain_id: chain_id.to_owned(),
+            consensus_params: Some(consensus_params),
             validators: vec![],
             app_state_bytes,
         });
+
         let future = self.client.init_chain(request);
         let response = wait(&self.rt, future)?;
         Ok(Box::new(response.into_inner()))
@@ -190,7 +184,11 @@ impl crate::ABCIInterface for AbciinterfaceGrpc {
         Ok(Box::new(response.into_inner()))
     }
 
-    fn set_option(&mut self, key: &str, value: &str) -> crate::AbciResult<dyn crate::ResponseSetOption> {
+    fn set_option(
+        &mut self,
+        key: &str,
+        value: &str,
+    ) -> crate::AbciResult<dyn crate::ResponseSetOption> {
         let request = tonic::Request::new(protos::RequestSetOption {
             key: key.to_string(),
             value: value.to_string(),
