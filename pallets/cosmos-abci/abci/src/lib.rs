@@ -1,5 +1,6 @@
 mod defaults;
 pub mod grpc;
+pub mod utils;
 
 pub use defaults::*;
 pub use grpc::*;
@@ -151,7 +152,18 @@ pub trait ABCIInterface {
 
     fn deliver_tx(&mut self, tx: Vec<u8>) -> AbciResult<dyn ResponseDeliverTx>;
 
-    fn init_chain(&mut self, genesis: &str) -> AbciResult<dyn ResponseInitChain>;
+    fn init_chain(
+        &mut self,
+        time_seconds: i64,
+        time_nanos: i32,
+        chain_id: &str,
+        pub_key_types: Vec<String>,
+        max_bytes: i64,
+        max_gas: i64,
+        max_age_num_blocks: i64,
+        max_age_duration: u64,
+        app_state_bytes: Vec<u8>,
+    ) -> AbciResult<dyn ResponseInitChain>;
 
     fn set_option(&mut self, key: &str, value: &str) -> AbciResult<dyn ResponseSetOption>;
 
