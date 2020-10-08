@@ -89,6 +89,9 @@ impl crate::ABCIInterface for AbciinterfaceGrpc {
             evidence: Some(evidence),
             validator: Some(validator),
         };
+
+        self.chain_id = chain_id.to_string();
+
         let request = tonic::Request::new(protos::RequestInitChain {
             time: Some(prost_types::Timestamp {
                 seconds: time_seconds,
