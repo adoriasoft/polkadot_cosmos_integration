@@ -14,10 +14,10 @@ pub struct ABCITxCommitParams {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct ABCIInfo {}
+pub struct AbciInfo {}
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct ABCISetOption {
+pub struct AbciSetOption {
     pub key: String,
-    pub value: String
+    pub value: String,
 }

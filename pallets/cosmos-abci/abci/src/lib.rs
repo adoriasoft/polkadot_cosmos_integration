@@ -1,5 +1,6 @@
 mod defaults;
 pub mod grpc;
+use protos::crypto;
 
 pub use defaults::*;
 pub use grpc::*;
@@ -106,6 +107,7 @@ pub trait ResponseQuery {
     fn get_value(&self) -> Vec<u8>;
     fn get_height(&self) -> i64;
     fn get_codespace(&self) -> String;
+    fn get_proof(&self) -> Option<crypto::merkle::Proof>;
 
     fn set_code(&mut self, v: u32);
     fn set_log(&mut self, v: String);

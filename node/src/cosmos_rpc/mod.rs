@@ -10,27 +10,27 @@ use sp_runtime::generic::BlockId;
 use std::sync::Arc;
 
 pub const DEFAULT_ABCI_RPC_URL: &str = "127.0.0.1:26657";
+pub const FAILED_SETUP_CONNECTION_MSG: &str = "Failed to get abci instance.";
 
 pub fn start_server(client: Arc<crate::service::FullClient>) {
     let mut io = IoHandler::new();
 
-    fn on_error_response(
-        err: std::boxed::Box<dyn std::error::Error>,
+    fn handle_error(
+        e: std::boxed::Box<dyn std::error::Error>,
     ) -> sc_service::Result<jsonrpc_core::Value, Error> {
-        Ok(json!({
-            "error": err.to_string(),
-        }))
+        Ok(json!({ "error": e.to_string()}))
     }
 
     async fn fetch_abci_info(_: Params) -> sc_service::Result<jsonrpc_core::Value, Error> {
         let result = abci::get_abci_instance()
-            .map_err(on_error_response)
+            .map_err(handle_error)
             .unwrap()
             .info()
-            .map_err(on_error_response)
+            .map_err(handle_error)
             .unwrap();
-        let last_block_app_hash = result.get_last_block_app_hash();
-        let last_block_height = result.get_last_block_height();
+        // todo Must it be save anywhere?
+        // let last_block_app_hash = result.get_last_block_app_hash();
+        // let last_block_height = result.get_last_block_height();
 
         Ok(json!({
             "response": {
@@ -42,64 +42,119 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
     }
 
     async fn fetch_abci_set_option(
-        _params: Params,
+        params: Params,
     ) -> sc_service::Result<jsonrpc_core::Value, Error> {
-        let query_params: types::ABCISetOption = _params.parse().unwrap();
+        let query_params: types::AbciSetOption = params.parse().unwrap();
         let key: &str = &query_params.key;
         let value: &str = &query_params.value;
+        let abci_instance_res = abci::get_abci_instance()
+            .ok()
+            .ok_or(FAILED_SETUP_CONNECTION_MSG);
 
-        let result = abci::get_abci_instance()
-            .map_err(on_error_response)
-            .unwrap()
-            .set_option(key, value)
-            .map_err(on_error_response)
-            .unwrap();
+        match abci_instance_res {
+            Ok(mut abci_instance_res_ok) => {
+                let abci_set_option_res = abci_instance_res_ok
+                    .set_option(key, value)
+                    .ok()
+                    .ok_or("Failed to SetOption().");
 
-        Ok(json!({
-            "response": {
-                "code": format!("{}", result.get_code()),
-                "log": format!("{}", result.get_log()),
-                "info": format!("{}", result.get_info())
+                match abci_set_option_res {
+                    Err(e) => Ok(json!({ "error": e })),
+                    Ok(abci_set_option_res_ok) => Ok(json!({
+                        "response": {
+                            "code": format!("{}", abci_set_option_res_ok.get_code()),
+                            "log": format!("{}", abci_set_option_res_ok.get_log()),
+                            "info": format!("{}", abci_set_option_res_ok.get_info())
+                        }
+                    })),
+                }
             }
-        }))
+            Err(e) => Ok(json!({ "error": e })),
+        }
+    }
+
+    async fn query(params: Params) -> sc_service::Result<jsonrpc_core::Value, Error> {
+        let query_params: types::ABCIQueryParams = params.parse().unwrap();
+        let abci_instance_res = abci::get_abci_instance()
+            .ok()
+            .ok_or(FAILED_SETUP_CONNECTION_MSG);
+
+        match abci_instance_res {
+            Ok(mut abci_instance_res_ok) => {
+                let data = hex::decode(query_params.data).unwrap_or(vec![]);
+                let mut path = query_params.path;
+
+                if path.chars().count() == 0 {
+                    path = "/".to_string();
+                }
+
+                let height = query_params.height.parse::<i64>().unwrap_or(0);
+                let abci_query_res = abci_instance_res_ok
+                    .query(path, data, height, query_params.prove)
+                    .ok()
+                    .ok_or("Failed to Query().");
+
+                match abci_query_res {
+                    Err(e) => Ok(json!({ "error": e })),
+                    Ok(abci_query_res_ok) => {
+                        let origin_key = &abci_query_res_ok.get_key();
+                        let origin_proof = &abci_query_res_ok.get_proof();
+                        let origin_value = &abci_query_res_ok.get_value();
+
+                        let mut proof: Option<String> = None;
+                        let mut key: Option<String> = None;
+                        let mut value: Option<String> = None;
+
+                        match origin_proof {
+                            Some(proof_res_ok) => {
+                                proof = Some(format!("{:?}", proof_res_ok));
+                            }
+                            None => {}
+                        }
+
+                        match std::str::from_utf8(origin_key) {
+                            Ok(key_res_ok) => {
+                                let key_str = key_res_ok.to_string();
+                                if key_str.chars().count() > 0 {
+                                    key = Some(key_str);
+                                }
+                            }
+                            Err(_e) => {}
+                        }
+
+                        match std::str::from_utf8(origin_value) {
+                            Ok(value_res_ok) => {
+                                let value_str = value_res_ok.to_string();
+                                if value_str.chars().count() > 0 {
+                                    value = Some(value_str);
+                                }
+                            }
+                            Err(_e) => {}
+                        }
+
+                        Ok(json!({
+                            "response": {
+                                "log" : format!("{}", abci_query_res_ok.get_log()),
+                                "height" : format!("{}", abci_query_res_ok.get_height()),
+                                "key" : key,
+                                "value" : value,
+                                "index" : format!("{}", abci_query_res_ok.get_index()),
+                                "code" : format!("{}", abci_query_res_ok.get_code()),
+                                "proof" : proof,
+                            }
+                        }))
+                    }
+                }
+            }
+            Err(e) => Ok(json!({ "error": e })),
+        }
     }
 
     io.add_method("abci_info", fetch_abci_info);
 
     io.add_method("abci_set_option", fetch_abci_set_option);
 
-    io.add_method("abci_query", |params: Params| async {
-        let query_params: types::ABCIQueryParams = params.parse().unwrap();
-        println!(
-            "params path: {}, data: {}, height: {}, prove: {}",
-            query_params.path, query_params.data, query_params.height, query_params.prove
-        );
-        let result = abci::get_abci_instance()
-            .map_err(|_| "failed to setup connection")
-            .unwrap()
-            .query(
-                query_params.path,
-                hex::decode(query_params.data).expect("Decoding failed"),
-                query_params.height.parse::<i64>().unwrap(),
-                query_params.prove,
-            )
-            .map_err(|_| "query failed")
-            .unwrap();
-
-        // TODO: parse result.proof and if it is qual to None in the json proof field put null
-        // TODO: if key len == 0 put null in the json key field
-        Ok(json!({
-            "response": {
-                "log" : format!("{}", result.get_log()),
-                "height" : format!("{}", result.get_height()),
-                "proof" : null,
-                "value" : format!("{}", base64::encode(result.get_value())),
-                "key" : format!("{}", std::str::from_utf8(&result.get_key()).unwrap()),
-                "index" : format!("{}", result.get_index()),
-                "code" : format!("{}", result.get_code()),
-            }
-        }))
-    });
+    io.add_method("abci_query", query);
 
     io.add_method("broadcast_tx_commit", move |params: Params| {
         let client = client.clone();
