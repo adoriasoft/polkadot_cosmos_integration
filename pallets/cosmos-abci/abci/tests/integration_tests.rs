@@ -26,7 +26,18 @@ fn test_abci_begin_block() {
     let result = client.echo("test".to_owned());
     assert!(result.is_ok(), "should successfully call echo");
 
-    let result = client.init_chain(abci::TEST_GENESIS);
+    let genesis = abci::utils::parse_cosmos_genesis_file(abci::TEST_GENESIS).unwrap();
+    let result = client.init_chain(
+        genesis.time_seconds,
+        genesis.time_nanos,
+        &genesis.chain_id,
+        genesis.pub_key_types,
+        genesis.max_bytes,
+        genesis.max_gas,
+        genesis.max_age_num_blocks,
+        genesis.max_age_duration,
+        genesis.app_state_bytes,
+    );
     assert!(result.is_ok(), "should successfully call init chain");
 
     let height = 1;

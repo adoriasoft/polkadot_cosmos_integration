@@ -42,9 +42,22 @@ fn get_abci_genesis() -> String {
 }
 
 fn init_chain() -> sc_cli::Result<()> {
+    let genesis = abci::utils::parse_cosmos_genesis_file(&get_abci_genesis())
+        .map_err(|err| sc_cli::Error::Other(err.to_string()))?;
+
     abci::get_abci_instance()
         .map_err(|err| sc_cli::Error::Other(err.to_string()))?
-        .init_chain(&get_abci_genesis())
+        .init_chain(
+            genesis.time_seconds,
+            genesis.time_nanos,
+            &genesis.chain_id,
+            genesis.pub_key_types,
+            genesis.max_bytes,
+            genesis.max_gas,
+            genesis.max_age_num_blocks,
+            genesis.max_age_duration,
+            genesis.app_state_bytes,
+        )
         .map_err(|err| sc_cli::Error::Other(err.to_string()))?;
     Ok(())
 }

@@ -1,5 +1,6 @@
 mod defaults;
 pub mod grpc;
+pub mod utils;
 use protos::crypto;
 
 pub use defaults::*;
@@ -15,6 +16,32 @@ lazy_static! {
     static ref ABCI_INTERFACE_INSTANCE: Mutex<Option<Box<dyn ABCIInterface + Send>>> =
         Mutex::new(None);
 }
+
+// TODO: find better solution for the assync problem https://adoriasoft.atlassian.net/browse/PCI-108
+// ----
+lazy_static! {
+    static ref ON_INITIALIZE_VARIABLE: Mutex<Option<i64>> = Mutex::new(None);
+}
+
+pub fn get_on_initialize_variable() -> i64 {
+    let mut value = ON_INITIALIZE_VARIABLE.lock().unwrap();
+    if value.is_none() {
+        *value = Some(0);
+    }
+    let res = *value;
+    return res.unwrap();
+}
+
+pub fn increment_on_initialize_variable() -> i64 {
+    let mut value = ON_INITIALIZE_VARIABLE.lock().unwrap();
+    if value.is_none() {
+        *value = Some(0);
+    }
+    let temp = value.unwrap();
+    *value = Some(temp + 1);
+    value.unwrap()
+}
+// ----
 
 type AbciResult<T> = Result<Box<T>, Box<dyn std::error::Error>>;
 
@@ -127,7 +154,18 @@ pub trait ABCIInterface {
 
     fn deliver_tx(&mut self, tx: Vec<u8>) -> AbciResult<dyn ResponseDeliverTx>;
 
-    fn init_chain(&mut self, genesis: &str) -> AbciResult<dyn ResponseInitChain>;
+    fn init_chain(
+        &mut self,
+        time_seconds: i64,
+        time_nanos: i32,
+        chain_id: &str,
+        pub_key_types: Vec<String>,
+        max_bytes: i64,
+        max_gas: i64,
+        max_age_num_blocks: i64,
+        max_age_duration: u64,
+        app_state_bytes: Vec<u8>,
+    ) -> AbciResult<dyn ResponseInitChain>;
 
     fn set_option(&mut self, key: &str, value: &str) -> AbciResult<dyn ResponseSetOption>;
 
@@ -179,4 +217,16 @@ pub fn get_abci_instance<'ret>() -> Result<
     // Unwrap should never panic as we set it previously.
     let res = MutexGuardRefMut::new(instance).map_mut(|mg| mg.as_mut().unwrap());
     Ok(res)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn should_init_variable_and_increment_variable() {
+        assert_eq!(increment_on_initialize_variable(), 1);
+
+        assert_eq!(get_on_initialize_variable(), 1);
+    }
 }
