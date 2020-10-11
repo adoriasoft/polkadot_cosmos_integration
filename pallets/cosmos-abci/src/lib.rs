@@ -2,7 +2,7 @@
 #[warn(unused_must_use)]
 use frame_support::{debug, decl_module, dispatch::DispatchResult, dispatch::Vec, weights::Weight};
 use frame_system::{
-    ensure_none,
+    self as system, ensure_none,
     offchain::{AppCrypto, CreateSignedTransaction},
 };
 use sp_core::crypto::KeyTypeId;
@@ -95,7 +95,18 @@ impl<T: Trait> Module<T> {
             "on_initialize() processing, block number: {:?},",
             block_number_current,
         );
-        if let Err(err) = abci_interface::begin_block(block_number_current, vec![], vec![]) {
+
+        // hash of the current block
+        let block_hash = <system::Module<T>>::block_hash(block_number);
+        // hash of the previous block
+        let parent_hash = <system::Module<T>>::parent_hash();
+
+        if let Err(err) = abci_interface::begin_block(
+            block_number_current,
+            block_hash.as_ref().to_vec(),
+            parent_hash.as_ref().to_vec(),
+            vec![],
+        ) {
             // We have to panic, as if cosmos will not have some blocks - it will fail.
             panic!("Begin block failed: {:?}", err);
         }
@@ -200,10 +211,15 @@ pub trait AbciInterface {
         Ok(())
     }
 
-    fn begin_block(height: i64, hash: Vec<u8>, proposer_address: Vec<u8>) -> DispatchResult {
+    fn begin_block(
+        height: i64,
+        hash: Vec<u8>,
+        last_block_id: Vec<u8>,
+        proposer_address: Vec<u8>,
+    ) -> DispatchResult {
         let _result = abci::get_abci_instance()
             .map_err(|_| "failed to setup connection")?
-            .begin_block(height, hash, proposer_address)
+            .begin_block(height, hash, last_block_id, proposer_address)
             .map_err(|_| "begin_block failed")?;
         Ok(())
     }
