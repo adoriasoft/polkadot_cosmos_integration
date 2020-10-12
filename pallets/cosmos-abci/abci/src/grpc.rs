@@ -200,6 +200,13 @@ impl crate::ABCIInterface for AbciinterfaceGrpc {
         let response = wait(&self.rt, future)?;
         Ok(Box::new(response.into_inner()))
     }
+
+    fn flush(&mut self) -> crate::AbciResult<dyn crate::ResponseFlush> {
+        let request = tonic::Request::new(protos::RequestFlush {});
+        let future = self.client.flush(request);
+        let response = wait(&self.rt, future)?;
+        Ok(Box::new(response.into_inner()))
+    }
 }
 
 fn wait<F: Future>(rt: &Runtime, future: F) -> F::Output {
