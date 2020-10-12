@@ -56,6 +56,8 @@ impl crate::ResponseInfo for ResponseInfo {
     }
 }
 
+impl crate::ResponseFlush for ResponseFlush {}
+
 impl crate::ResponseEcho for ResponseEcho {
     fn get_message(&self) -> String {
         self.message.clone()

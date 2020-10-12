@@ -47,6 +47,9 @@ pub fn increment_on_initialize_variable() -> i64 {
 type AbciResult<T> = Result<Box<T>, Box<dyn std::error::Error>>;
 
 #[automock]
+pub trait ResponseFlush {}
+
+#[automock]
 pub trait ResponseEcho {
     fn get_message(&self) -> String;
 
@@ -190,6 +193,8 @@ pub trait ABCIInterface {
     ) -> AbciResult<dyn ResponseQuery>;
 
     fn info(&mut self) -> AbciResult<dyn ResponseInfo>;
+
+    fn flush(&mut self) -> AbciResult<dyn ResponseFlush>;
 }
 
 pub fn set_abci_instance<'ret>(

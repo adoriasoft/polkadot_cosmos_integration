@@ -73,7 +73,7 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
         }
     }
 
-    async fn query(params: Params) -> sc_service::Result<jsonrpc_core::Value, Error> {
+    async fn fetch_abci_query(params: Params) -> sc_service::Result<jsonrpc_core::Value, Error> {
         let query_params: types::ABCIQueryParams = params.parse().unwrap();
         let abci_instance_res = abci::get_abci_instance()
             .ok()
@@ -150,11 +150,34 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
         }
     }
 
+    async fn fetch_abci_flush(_: Params) -> sc_service::Result<jsonrpc_core::Value, Error> {
+        let abci_instance_res = abci::get_abci_instance()
+            .ok()
+            .ok_or("Failed to get abci instance.");
+        match abci_instance_res {
+            Ok(mut abci_instance_res_ok) => {
+                let abci_flush_resp = abci_instance_res_ok
+                    .flush()
+                    .ok()
+                    .ok_or("Failed to Flush().");
+                match abci_flush_resp {
+                    Ok(_) => Ok(json!({
+                        "response": { }
+                    })),
+                    Err(_e) => Ok(json!({ "error": _e })),
+                }
+            }
+            Err(_e) => Ok(json!({ "error": _e })),
+        }
+    }
+
     io.add_method("abci_info", fetch_abci_info);
 
     io.add_method("abci_set_option", fetch_abci_set_option);
 
-    io.add_method("abci_query", query);
+    io.add_method("abci_query", fetch_abci_query);
+
+    io.add_method("abci_flush", fetch_abci_flush);
 
     io.add_method("broadcast_tx_commit", move |params: Params| {
         let client = client.clone();
