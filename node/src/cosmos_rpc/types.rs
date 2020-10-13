@@ -19,5 +19,11 @@ pub struct ABCIInfo {}
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ABCISetOption {
     pub key: String,
-    pub value: String
+    pub value: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct AbciCheckTx {
+    pub tx: String,
+    pub check_tx_type: i32,
 }

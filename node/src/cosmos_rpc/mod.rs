@@ -85,11 +85,62 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
         }
     }
 
+    async fn abci_check_tx(params: Params) -> sc_service::Result<jsonrpc_core::Value, Error> {
+        let query_params: types::AbciCheckTx = params.parse().unwrap();
+        let tx = hex::decode(query_params.tx).unwrap_or(vec![]);
+        let check_tx_type = query_params.check_tx_type;
+        let abci_instance_res = abci::get_abci_instance()
+            .ok()
+            .ok_or("Failed to get abci instance.");
+
+        match abci_instance_res {
+            Ok(mut abci_instance_res_ok) => {
+                let abci_check_tx_res = abci_instance_res_ok
+                    .check_tx(tx, check_tx_type)
+                    .ok()
+                    .ok_or("Failed to CheckTx().");
+
+                match abci_check_tx_res {
+                    Ok(abci_check_tx_res_ok) => {
+                        let origin_data = abci_check_tx_res_ok.get_data();
+                        let mut data: Option<String> = None;
+
+                        match std::str::from_utf8(&origin_data) {
+                            Ok(data_res_ok) => {
+                                let data_str = data_res_ok.to_string();
+                                if data_str.chars().count() > 0 {
+                                    data = Some(data_str);
+                                }
+                            }
+                            Err(_e) => {}
+                        }
+
+                        Ok(json!({
+                            "response": {
+                                "code": abci_check_tx_res_ok.get_code(),
+                                "info": abci_check_tx_res_ok.get_info(),
+                                "log": abci_check_tx_res_ok.get_log(),
+                                "data": data,
+                                "gas_wanted": abci_check_tx_res_ok.get_gas_wanted(),
+                                "gas_used": abci_check_tx_res_ok.get_gas_used(),
+                                "codespace": abci_check_tx_res_ok.get_codespace()
+                            }
+                        }))
+                    }
+                    Err(_e) => Ok(json!({ "error": _e })),
+                }
+            }
+            Err(_e) => Ok(json!({ "error": _e })),
+        }
+    }
+
     io.add_method("abci_info", fetch_abci_info);
 
     io.add_method("abci_set_option", fetch_abci_set_option);
 
     io.add_method("abci_flush", fetch_abci_flush);
+
+    io.add_method("abci_check_tx", abci_check_tx);
 
     io.add_method("abci_query", |params: Params| async {
         let query_params: types::ABCIQueryParams = params.parse().unwrap();
