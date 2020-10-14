@@ -1,7 +1,7 @@
 use serde_derive::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
-pub struct ABCIQueryParams {
+pub struct AbciQueryParams {
     pub path: String,
     pub data: String,
     pub height: String,
@@ -9,7 +9,7 @@ pub struct ABCIQueryParams {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct ABCITxCommitParams {
+pub struct AbciTxCommitParams {
     pub tx: String,
 }
 

@@ -14,7 +14,7 @@ use std::sync::Mutex;
 use mockall::automock;
 
 lazy_static! {
-    static ref ABCI_INTERFACE_INSTANCE: Mutex<Option<Box<dyn ABCIInterface + Send>>> =
+    static ref ABCI_INTERFACE_INSTANCE: Mutex<Option<Box<dyn AbciInterface + Send>>> =
         Mutex::new(None);
 }
 
@@ -151,7 +151,7 @@ pub trait ResponseQuery {
 }
 
 #[automock]
-pub trait ABCIInterface {
+pub trait AbciInterface {
     fn echo(&mut self, message: String) -> AbciResult<dyn ResponseEcho>;
 
     fn check_tx(&mut self, tx: Vec<u8>, r#type: i32) -> AbciResult<dyn ResponseCheckTx>;
@@ -198,9 +198,9 @@ pub trait ABCIInterface {
 }
 
 pub fn set_abci_instance<'ret>(
-    new_instance: Box<dyn ABCIInterface + Send>,
+    new_instance: Box<dyn AbciInterface + Send>,
 ) -> Result<
-    MutexGuardRefMut<'ret, Option<Box<dyn ABCIInterface + Send>>, Box<dyn ABCIInterface + Send>>,
+    MutexGuardRefMut<'ret, Option<Box<dyn AbciInterface + Send>>, Box<dyn AbciInterface + Send>>,
     Box<dyn std::error::Error>,
 > {
     let mut instance = ABCI_INTERFACE_INSTANCE.lock()?;
@@ -212,7 +212,7 @@ pub fn set_abci_instance<'ret>(
 }
 
 pub fn get_abci_instance<'ret>() -> Result<
-    MutexGuardRefMut<'ret, Option<Box<dyn ABCIInterface + Send>>, Box<dyn ABCIInterface + Send>>,
+    MutexGuardRefMut<'ret, Option<Box<dyn AbciInterface + Send>>, Box<dyn AbciInterface + Send>>,
     Box<dyn std::error::Error>,
 > {
     let instance = ABCI_INTERFACE_INSTANCE.lock()?;
