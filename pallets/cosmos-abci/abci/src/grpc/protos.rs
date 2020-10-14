@@ -4,7 +4,7 @@ mod libs {
     }
 }
 
-mod crypto {
+pub mod crypto {
     pub mod merkle {
         tonic::include_proto!("tendermint.crypto.merkle");
     }
@@ -206,6 +206,9 @@ impl crate::ResponseQuery for ResponseQuery {
     }
     fn get_codespace(&self) -> String {
         self.codespace.clone()
+    }
+    fn get_proof(&self) -> Option<crypto::merkle::Proof> {
+        self.proof.clone()
     }
 
     fn set_code(&mut self, v: u32) {

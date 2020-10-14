@@ -1,13 +1,12 @@
-mod protos;
+pub mod protos;
 
-use protos::abci_application_client;
 use std::{
     future::Future,
     time::{Duration, SystemTime},
 };
 use tokio::{runtime::Runtime, task::block_in_place};
 
-type AbciClient = abci_application_client::AbciApplicationClient<tonic::transport::Channel>;
+type AbciClient = protos::abci_application_client::AbciApplicationClient<tonic::transport::Channel>;
 
 pub struct AbciinterfaceGrpc {
     rt: Runtime,
