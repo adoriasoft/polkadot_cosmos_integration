@@ -20,10 +20,9 @@ jobs:
         run: | 
             curl https://getsubstrate.io -sSf | bash -s -- --fast
             source ~/.cargo/env
-            rustup default stable
-            rustup update nightly
-            rustup update stable
-            rustup target add wasm32-unknown-unknown --toolchain nightly
+            rustup default nightly
+            rustup target add wasm32-unknown-unknown
+            rustup component add rustfmt
             rustup update
       - name: test
         run: cargo test --all
