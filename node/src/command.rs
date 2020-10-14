@@ -104,7 +104,7 @@ impl SubstrateCli for Cli {
 
 /// Parse and run command line arguments
 pub fn run() -> sc_cli::Result<()> {
-    // Init ABCI instance
+    // Init Abci instance
     abci::set_abci_instance(Box::new(
         abci::grpc::AbciinterfaceGrpc::connect(&abci::get_server_url())
             .map_err(|_| "failed to connect")

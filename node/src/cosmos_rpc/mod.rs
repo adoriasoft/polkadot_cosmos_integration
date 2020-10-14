@@ -1,6 +1,6 @@
 mod types;
 
-use jsonrpc_http_server::jsonrpc_core::{serde_json::json, Error, IoHandler, Params};
+use jsonrpc_http_server::jsonrpc_core::{serde_json::json, Error, ErrorCode, IoHandler, Params};
 use jsonrpc_http_server::ServerBuilder;
 use node_template_runtime::cosmos_abci::ExtrinsicConstructionApi;
 use node_template_runtime::opaque::Block;
@@ -15,19 +15,19 @@ pub const FAILED_SETUP_CONNECTION_MSG: &str = "Failed to get abci instance.";
 pub fn start_server(client: Arc<crate::service::FullClient>) {
     let mut io = IoHandler::new();
 
-    fn handle_error(
-        e: std::boxed::Box<dyn std::error::Error>,
-    ) -> sc_service::Result<jsonrpc_core::Value, Error> {
-        Ok(json!({ "error": e.to_string()}))
+    fn handle_error(e: std::boxed::Box<dyn std::error::Error>) -> Error {
+        Error {
+            code: ErrorCode::ServerError(1),
+            message: e.to_string(),
+            data: None,
+        }
     }
 
     async fn fetch_abci_info(_: Params) -> sc_service::Result<jsonrpc_core::Value, Error> {
         let result = abci::get_abci_instance()
-            .map_err(handle_error)
-            .unwrap()
+            .map_err(handle_error)?
             .info()
-            .map_err(handle_error)
-            .unwrap();
+            .map_err(handle_error)?;
         // todo Must it be save anywhere?
         // let last_block_app_hash = result.get_last_block_app_hash();
         // let last_block_height = result.get_last_block_height();
@@ -44,7 +44,7 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
     async fn fetch_abci_set_option(
         params: Params,
     ) -> sc_service::Result<jsonrpc_core::Value, Error> {
-        let query_params: types::AbciSetOption = params.parse().unwrap();
+        let query_params: types::AbciSetOption = params.parse()?;
         let key: &str = &query_params.key;
         let value: &str = &query_params.value;
         let abci_instance_res = abci::get_abci_instance()
@@ -74,7 +74,7 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
     }
 
     async fn fetch_abci_query(params: Params) -> sc_service::Result<jsonrpc_core::Value, Error> {
-        let query_params: types::ABCIQueryParams = params.parse().unwrap();
+        let query_params: types::AbciQueryParams = params.parse()?;
         let abci_instance_res = abci::get_abci_instance()
             .ok()
             .ok_or(FAILED_SETUP_CONNECTION_MSG);
@@ -182,14 +182,13 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
     io.add_method("broadcast_tx_commit", move |params: Params| {
         let client = client.clone();
         async move {
-            let params: types::ABCITxCommitParams = params.parse().unwrap();
-            let tx_value = base64::decode(params.tx).unwrap();
+            let params: types::AbciTxCommitParams = params.parse()?;
+            let tx_value = base64::decode(params.tx)
+                .map_err(|_| handle_error("Failde to decode tx".to_owned().into()))?;
             let result = abci::get_abci_instance()
-                .map_err(|_| "failed to setup connection")
-                .unwrap()
+                .map_err(handle_error)?
                 .check_tx(tx_value.clone(), 0)
-                .map_err(|_| "query failed")
-                .unwrap();
+                .map_err(handle_error)?;
 
             let info = client.info();
             let best_hash = info.best_hash;

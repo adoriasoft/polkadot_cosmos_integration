@@ -260,7 +260,7 @@ pub fn new_full(config: Configuration) -> Result<TaskManager, ServiceError> {
         )?;
     }
 
-    // Run ABCI RPC server
+    // Run Abci RPC server
     crate::cosmos_rpc::start_server(client);
 
     network_starter.start_network();

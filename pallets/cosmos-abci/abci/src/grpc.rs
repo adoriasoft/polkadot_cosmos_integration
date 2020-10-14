@@ -31,7 +31,7 @@ impl AbciinterfaceGrpc {
     }
 }
 
-impl crate::ABCIInterface for AbciinterfaceGrpc {
+impl crate::AbciInterface for AbciinterfaceGrpc {
     fn echo(&mut self, message: String) -> crate::AbciResult<dyn crate::ResponseEcho> {
         let request = tonic::Request::new(protos::RequestEcho { message });
         let future = self.client.echo(request);
