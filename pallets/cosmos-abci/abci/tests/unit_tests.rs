@@ -2,7 +2,7 @@ use abci::*;
 
 #[test]
 fn test_abci_echo() {
-    let mut abci_mock = MockABCIInterface::new();
+    let mut abci_mock = MockAbciInterface::new();
     abci_mock.expect_echo().returning(|mut v: String| {
         let mut ret = MockResponseEcho::new();
         ret.expect_get_message().returning(move || -> String {
@@ -44,7 +44,7 @@ fn test_abci_echo() {
 
 #[test]
 fn test_abci_check_tx() {
-    let mut abci_mock = MockABCIInterface::new();
+    let mut abci_mock = MockAbciInterface::new();
     abci_mock
         .expect_check_tx()
         .returning(|v: Vec<u8>, r#_type: i32| {
@@ -77,7 +77,7 @@ fn test_abci_check_tx() {
 
 #[test]
 fn test_abci_deliver_tx() {
-    let mut abci_mock = MockABCIInterface::new();
+    let mut abci_mock = MockAbciInterface::new();
     abci_mock.expect_deliver_tx().returning(|v: Vec<u8>| {
         let mut ret = MockResponseDeliverTx::new();
         ret.expect_get_data()
@@ -108,7 +108,7 @@ fn test_abci_deliver_tx() {
 
 #[test]
 fn test_abci_info() {
-    let mut abci_mock = MockABCIInterface::new();
+    let mut abci_mock = MockAbciInterface::new();
     let cosmos_response_app_version = 0;
     let cosmos_response_version = "".to_string();
     let cosmos_response_data = "SimApp".to_string();
@@ -147,7 +147,7 @@ fn test_abci_info() {
 
 #[test]
 fn test_abci_set_option() {
-    let mut abci_mock = MockABCIInterface::new();
+    let mut abci_mock = MockAbciInterface::new();
     let cosmos_response_code: u32 = 0;
     let cosmos_response_log = "IHAVEIDEA";
     let cosmos_response_info = "IHAVENOIDEA";
