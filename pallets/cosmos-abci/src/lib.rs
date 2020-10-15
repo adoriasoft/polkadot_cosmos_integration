@@ -193,11 +193,18 @@ pub trait AbciInterface {
             .map_err(|_| "failed to setup connection")?
             .check_tx(data, 0)
             .map_err(|_| "check_tx failed")?;
+
+        if result.get_code() != 0 {
+            Err(sp_runtime::DispatchError::Module {
+                index: u8::MIN,
+                error: result.get_code() as u8,
+                message: Some("Invalid tx data."),
+            })
+        } else {
+            let dif = result.get_gas_wanted() - result.get_gas_used();
+            Ok(dif as u64)
+        }
         // debug::info!("Result: {:?}", result);
-        // If GasWanted is greater than GasUsed, we will increase the priority
-        // Todo: Make it more logical
-        let dif = result.get_gas_wanted() - result.get_gas_used();
-        Ok(dif as u64)
     }
 
     fn deliver_tx(data: Vec<u8>) -> DispatchResult {
