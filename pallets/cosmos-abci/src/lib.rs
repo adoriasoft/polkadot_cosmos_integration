@@ -90,21 +90,15 @@ decl_module! {
 
 impl<T: Trait> Module<T> {
     pub fn call_on_initialize(block_number: T::BlockNumber) -> bool {
-        let value: i64 = abci_interface::get_on_initialize_variable();
         let block_number_current: i64 = block_number.saturated_into() as i64;
         debug::info!(
-            "on_initialize() processing, block number: {:?}, value: {:?}",
+            "on_initialize() processing, block number: {:?},",
             block_number_current,
-            value,
         );
-        if value > block_number_current {
-            return false;
-        }
         if let Err(err) = abci_interface::begin_block(block_number_current, vec![], vec![]) {
             // We have to panic, as if cosmos will not have some blocks - it will fail.
             panic!("Begin block failed: {:?}", err);
         }
-        abci_interface::increment_on_initialize_variable();
         return true;
     }
 
@@ -171,14 +165,6 @@ sp_api::decl_runtime_apis! {
 
 #[runtime_interface]
 pub trait AbciInterface {
-    fn get_on_initialize_variable() -> i64 {
-        abci::get_on_initialize_variable()
-    }
-
-    fn increment_on_initialize_variable() {
-        abci::increment_on_initialize_variable();
-    }
-
     fn echo(msg: &str) -> DispatchResult {
         let _result = abci::get_abci_instance()
             .map_err(|_| "failed to setup connection")?
