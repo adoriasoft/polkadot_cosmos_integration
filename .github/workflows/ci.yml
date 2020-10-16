@@ -30,7 +30,7 @@ jobs:
             git submodule update --init
             cd cosmos-sdk
             git checkout feature/add_nameservice
-            make build-simd
+            sudo make build-simd
             cd simapp
             chmod +x init.sh
             ./init.sh
