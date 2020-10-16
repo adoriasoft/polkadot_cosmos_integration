@@ -3,7 +3,8 @@ trap "exit" INT TERM ERR
 trap "kill 0" EXIT
 
 function clean() {
-    rm -rf tmp/*
+    rm -rf tmp
+    mkdir tmp
     touch tmp/substrate_log.log
     touch tmp/cosmos_log.log
 }
