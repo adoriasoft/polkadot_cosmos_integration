@@ -41,6 +41,7 @@ jobs:
         run: cargo test --all
       - name: integration-test
         run: |
+            export PATH="$HOME/go/bin:$PATH"
             cd scripts/integration_tests/
             ./basic_test.sh
 
