@@ -31,5 +31,7 @@ jobs:
             cd cosmos-sdk
             git checkout feature/add_nameservice
             make build-simd
+            cd simapp
+            ./init.sh
       - name: test
         run: cargo test --all
