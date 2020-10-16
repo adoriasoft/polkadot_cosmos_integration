@@ -3,7 +3,9 @@ trap "exit" INT TERM ERR
 trap "kill 0" EXIT
 
 function clean() {
-    rm -rf ../tmp/*
+    rm -rf tmp/*
+    touch tmp/substrate_log.log
+    touch tmp/cosmos_log.log
 }
 
 function substrate_start() {
