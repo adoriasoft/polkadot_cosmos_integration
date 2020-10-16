@@ -16,7 +16,7 @@ jobs:
     
     steps:
       - uses: actions/checkout@v1
-      - name: setup
+      - name: rust-setup
         run: | 
             curl https://getsubstrate.io -sSf | bash -s -- --fast
             source ~/.cargo/env
@@ -25,5 +25,12 @@ jobs:
             rustup update stable
             rustup target add wasm32-unknown-unknown --toolchain nightly
             rustup update
+      - name: dependecies-setup
+        run: |
+            git submodule update --init
+            cd cosmos-sdk
+            git checkout feature/add_nameservice
+            make build-simd
       - name: test
         run: cargo test --all
+      - name: 
