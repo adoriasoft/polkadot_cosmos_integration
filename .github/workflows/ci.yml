@@ -35,10 +35,12 @@ jobs:
             cd simapp
             chmod +x init.sh
             ./init.sh
+      - name: build
+        run: cargo build
+      - name: test
+        run: cargo test --all
       - name: integration-test
         run: |
             cd scripts/integration_tests/
             ./basic_test.sh
-      - name: test
-        run: cargo test --all
 
