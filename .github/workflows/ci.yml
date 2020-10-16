@@ -33,7 +33,6 @@ jobs:
             git checkout feature/add_nameservice
             make build-simd
             cd simapp
-            chmod +x init.sh
             ./init.sh
       - name: build
         run: cargo build
