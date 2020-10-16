@@ -27,10 +27,11 @@ jobs:
             rustup update
       - name: dependecies-setup
         run: |
+            export PATH="$HOME/go/bin:$PATH"
             git submodule update --init
             cd cosmos-sdk
             git checkout feature/add_nameservice
-            sudo make build-simd
+            make build-simd
             cd simapp
             chmod +x init.sh
             ./init.sh
