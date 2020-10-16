@@ -21,3 +21,9 @@ pub struct AbciSetOption {
     pub key: String,
     pub value: String,
 }
+
+#[derive(Serialize, Deserialize)]
+pub struct AbciCheckTx {
+    pub tx: String,
+    pub check_tx_type: i32,
+}
