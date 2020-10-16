@@ -15,6 +15,7 @@ pub const FAILED_SETUP_CONNECTION_MSG: &str = "Failed to get abci instance.";
 pub fn start_server(client: Arc<crate::service::FullClient>) {
     let mut io = IoHandler::new();
 
+    // Handlers.
     fn handle_error(e: std::boxed::Box<dyn std::error::Error>) -> Error {
         Error {
             code: ErrorCode::ServerError(1),
@@ -23,14 +24,18 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
         }
     }
 
+    fn handle_ok_error(e: &str) -> sc_service::Result<jsonrpc_core::Value, Error> {
+        Ok(json!({
+            "error": e.to_string()
+        }))
+    }
+
+    // Methods.
     async fn fetch_abci_info(_: Params) -> sc_service::Result<jsonrpc_core::Value, Error> {
         let result = abci::get_abci_instance()
             .map_err(handle_error)?
             .info()
             .map_err(handle_error)?;
-        // todo Must it be save anywhere?
-        // let last_block_app_hash = result.get_last_block_app_hash();
-        // let last_block_height = result.get_last_block_height();
 
         Ok(json!({
             "response": {
@@ -59,7 +64,7 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
                     .ok_or("Failed to SetOption().");
 
                 match abci_set_option_res {
-                    Err(e) => Ok(json!({ "error": e })),
+                    Err(_e) => handle_ok_error(_e),
                     Ok(abci_set_option_res_ok) => Ok(json!({
                         "response": {
                             "code": format!("{}", abci_set_option_res_ok.get_code()),
@@ -69,7 +74,7 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
                     })),
                 }
             }
-            Err(e) => Ok(json!({ "error": e })),
+            Err(_e) => handle_ok_error(_e),
         }
     }
 
@@ -146,14 +151,15 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
                     }
                 }
             }
-            Err(e) => Ok(json!({ "error": e })),
+            Err(_e) => handle_ok_error(_e),
         }
     }
 
     async fn fetch_abci_flush(_: Params) -> sc_service::Result<jsonrpc_core::Value, Error> {
         let abci_instance_res = abci::get_abci_instance()
             .ok()
-            .ok_or("Failed to get abci instance.");
+            .ok_or(FAILED_SETUP_CONNECTION_MSG);
+
         match abci_instance_res {
             Ok(mut abci_instance_res_ok) => {
                 let abci_flush_resp = abci_instance_res_ok
@@ -164,13 +170,63 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
                     Ok(_) => Ok(json!({
                         "response": { }
                     })),
-                    Err(_e) => Ok(json!({ "error": _e })),
+                    Err(_e) => handle_ok_error(_e),
                 }
             }
-            Err(_e) => Ok(json!({ "error": _e })),
+            Err(_e) => handle_ok_error(_e),
         }
     }
 
+    async fn abci_check_tx(params: Params) -> sc_service::Result<jsonrpc_core::Value, Error> {
+        let query_params: types::AbciCheckTx = params.parse().unwrap();
+        let tx = hex::decode(query_params.tx).unwrap_or(vec![]);
+        let check_tx_type = query_params.check_tx_type;
+        let abci_instance_res = abci::get_abci_instance()
+            .ok()
+            .ok_or(FAILED_SETUP_CONNECTION_MSG);
+
+        match abci_instance_res {
+            Ok(mut abci_instance_res_ok) => {
+                let abci_check_tx_res = abci_instance_res_ok
+                    .check_tx(tx, check_tx_type)
+                    .ok()
+                    .ok_or("Failed to CheckTx().");
+
+                match abci_check_tx_res {
+                    Ok(abci_check_tx_res_ok) => {
+                        let origin_data = abci_check_tx_res_ok.get_data();
+                        let mut data: Option<String> = None;
+
+                        match std::str::from_utf8(&origin_data) {
+                            Ok(data_res_ok) => {
+                                let data_str = data_res_ok.to_string();
+                                if data_str.chars().count() > 0 {
+                                    data = Some(data_str);
+                                }
+                            }
+                            Err(_e) => {}
+                        }
+
+                        Ok(json!({
+                            "response": {
+                                "code": abci_check_tx_res_ok.get_code(),
+                                "info": abci_check_tx_res_ok.get_info(),
+                                "log": abci_check_tx_res_ok.get_log(),
+                                "data": data,
+                                "gas_wanted": abci_check_tx_res_ok.get_gas_wanted(),
+                                "gas_used": abci_check_tx_res_ok.get_gas_used(),
+                                "codespace": abci_check_tx_res_ok.get_codespace()
+                            }
+                        }))
+                    }
+                    Err(_e) => handle_ok_error(_e),
+                }
+            }
+            Err(_e) => handle_ok_error(_e),
+        }
+    }
+
+    // IO methods mapping.
     io.add_method("abci_info", fetch_abci_info);
 
     io.add_method("abci_set_option", fetch_abci_set_option);
@@ -178,6 +234,8 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
     io.add_method("abci_query", fetch_abci_query);
 
     io.add_method("abci_flush", fetch_abci_flush);
+
+    io.add_method("abci_check_tx", abci_check_tx);
 
     io.add_method("broadcast_tx_commit", move |params: Params| {
         let client = client.clone();
@@ -192,39 +250,33 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
                 .map_err(handle_error)?;
 
             let info = client.info();
+            let best_hash = info.best_hash;
+            let at = BlockId::<Block>::hash(best_hash);
+            client
+                    .runtime_api()
+                    .broadcast_deliver_tx(&at, &tx_value)
+                    .ok();
 
-            match result {
-                Err(_e) => {}
-                Ok(_) => {
-                    let best_hash = info.best_hash;
-                    let at = BlockId::<Block>::hash(best_hash);
-                    client
-                        .runtime_api()
-                        .broadcast_deliver_tx(&at, &tx_value)
-                        .ok();
-                }
-            }
-
-            let valid_result = result.unwrap();
             let best_height: u32 = info.best_number.into();
 
             Ok(json!({
                 "height": (best_height + 1).to_string(),
                 "hash": "",
                 "deliver_tx": {
-                    "log": format!("{}", valid_result.get_log()),
-                    "data": format!("{}", base64::encode(valid_result.get_data().clone())),
-                    "code": format!("{}", valid_result.get_code())
+                    "log": format!("{}", result.get_log()),
+                    "data": format!("{}", base64::encode(result.get_data().clone())),
+                    "code": format!("{}", result.get_code())
                 },
                 "check_tx": {
-                    "log": format!("{}", valid_result.get_log()),
-                    "data": format!("{}", base64::encode(valid_result.get_data())),
-                    "code": format!("{}", valid_result.get_code())
+                    "log": format!("{}", result.get_log()),
+                    "data": format!("{}", base64::encode(result.get_data())),
+                    "code": format!("{}", result.get_code())
                 }
             }))
         }
     });
 
+    // Running.
     std::thread::spawn(move || {
         let server = ServerBuilder::new(io)
             .threads(3)

@@ -204,7 +204,6 @@ pub trait AbciInterface {
             let dif = result.get_gas_wanted() - result.get_gas_used();
             Ok(dif as u64)
         }
-        // debug::info!("Result: {:?}", result);
     }
 
     fn deliver_tx(data: Vec<u8>) -> DispatchResult {
@@ -212,7 +211,6 @@ pub trait AbciInterface {
             .map_err(|_| "failed to setup connection")?
             .deliver_tx(data)
             .map_err(|_| "deliver_tx failed")?;
-        // debug::info!("Result: {:?}", result);
         Ok(())
     }
 
