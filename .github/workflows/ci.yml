@@ -33,4 +33,3 @@ jobs:
             make build-simd
       - name: test
         run: cargo test --all
-      - name: 
