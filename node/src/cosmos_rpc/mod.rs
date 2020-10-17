@@ -30,7 +30,7 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
         }))
     }
 
-    // Methods.
+    // Methods implementation.
     async fn fetch_abci_info(_: Params) -> sc_service::Result<jsonrpc_core::Value, Error> {
         let result = abci::get_abci_instance()
             .map_err(handle_error)?
