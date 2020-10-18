@@ -23,6 +23,8 @@ target
 
 node_modules
 
+scripts/integration_tests/tmp
+
 # *pb.*
 token_datas
 
