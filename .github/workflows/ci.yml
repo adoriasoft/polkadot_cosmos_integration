@@ -33,7 +33,7 @@ jobs:
             git checkout feature/add_nameservice
             make build-simd
             cd simapp
-            echo ./init.sh
+            echo <&./init.sh
             nscli tx nameservice buy-name jack.id 5nametoken --from jack --chain-id namechain -y
       - name: build
         run: cargo build
