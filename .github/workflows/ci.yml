@@ -32,8 +32,18 @@ jobs:
             cd cosmos-sdk
             git checkout feature/add_nameservice
             make build-simd
-            cd simapp
-            echo <&./init.sh
+            rm -rf ~/.nsd
+            rm -rf ~/.nscli
+            nsd init test --chain-id=namechain
+            nscli --chain-id namechain --output json keys add jack
+            nscli --chain-id namechain --output json keys add alice
+            nsd add-genesis-account $(nscli keys show jack -a) 1000nametoken,100000000stake
+            nsd add-genesis-account $(nscli keys show alice -a) 1000nametoken,100000000stake
+            nsd gentx jack --chain-id namechain
+            echo "Collecting genesis txs..."
+            nsd collect-gentxs
+            echo "Validating genesis file..."
+            nsd validate-genesis
             nscli tx nameservice buy-name jack.id 5nametoken --from jack --chain-id namechain -y
       - name: build
         run: cargo build
