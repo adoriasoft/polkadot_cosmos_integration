@@ -32,7 +32,6 @@ jobs:
             git checkout feature/add_nameservice
             make build-simd
             cd simapp
-          #  ./init.sh
             rm -rf ~/.nsd
             rm -rf ~/.nscli
             nsd init test --chain-id=namechain
