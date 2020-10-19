@@ -38,8 +38,8 @@ jobs:
             echo Setup jack keys
             printf ' password \n password \n password ' | nscli --chain-id namechain --output json keys add jack 
             printf ' password \n password \n password ' | nscli --chain-id namechain --output json keys add alice
-            nsd add-genesis-account $(printf ' password ' | nscli keys show jack -a) 1000nametoken,100000000stake
-            nsd add-genesis-account $(printf ' password ' | nscli keys show alice -a) 1000nametoken,100000000stakes
+            nsd add-genesis-account $(printf ' password \n password \n password ' | nscli keys show jack -a) 1000nametoken,100000000stake
+            nsd add-genesis-account $(printf ' password \n password \n password ' | nscli keys show alice -a) 1000nametoken,100000000stakes
             nsd gentx jack --chain-id namechain
             echo "Collecting genesis txs..."
             nsd collect-gentxs
