@@ -226,6 +226,19 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
         }
     }
 
+    fn abci_broadcast_tx_sync(params: Params) -> sc_service::Result<jsonrpc_core::Value, Error> {
+        async move {
+            let params: types::AbciTxCommitParams = params.parse()?;
+            let tx_value = base64::decode(params.tx)
+                .map_err(|_| handle_error("Failde to decode tx".to_owned().into()))?;
+
+            // todo
+            // Perform call.
+
+            Ok(json!({}))
+        }
+    }
+
     // IO methods mapping.
     io.add_method("abci_info", fetch_abci_info);
 
@@ -236,6 +249,8 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
     io.add_method("abci_flush", fetch_abci_flush);
 
     io.add_method("abci_check_tx", abci_check_tx);
+
+    io.add_method("broadcast_tx_sync", abci_broadcast_tx_sync);
 
     io.add_method("broadcast_tx_commit", move |params: Params| {
         let client = client.clone();
@@ -253,9 +268,9 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
             let best_hash = info.best_hash;
             let at = BlockId::<Block>::hash(best_hash);
             client
-                    .runtime_api()
-                    .broadcast_deliver_tx(&at, &tx_value)
-                    .ok();
+                .runtime_api()
+                .broadcast_deliver_tx(&at, &tx_value)
+                .ok();
 
             let best_height: u32 = info.best_number.into();
 
