@@ -35,8 +35,9 @@ jobs:
             rm -rf ~/.nsd
             rm -rf ~/.nscli
             nsd init test --chain-id=namechain
-            sudo nscli --chain-id namechain --output json keys add jack
-            nscli --chain-id namechain --output json keys add alice
+            echo Setup jack keys
+            printf ' pass \n pass \n pass \n pass' | nscli --chain-id namechain --output json keys add jack 
+            printf ' pass \n pass \n pass \n pass' | nscli --chain-id namechain --output json keys add alice
             nsd add-genesis-account $(nscli keys show jack -a) 1000nametoken,100000000stake
             nsd add-genesis-account $(nscli keys show alice -a) 1000nametoken,100000000stakes
             nsd gentx jack --chain-id namechain
