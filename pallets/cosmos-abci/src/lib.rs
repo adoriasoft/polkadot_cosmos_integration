@@ -91,15 +91,17 @@ decl_module! {
 impl<T: Trait> Module<T> {
     pub fn call_on_initialize(block_number: T::BlockNumber) -> bool {
         let block_number_current: i64 = block_number.saturated_into() as i64;
-        debug::info!(
-            "on_initialize() processing, block number: {:?},",
-            block_number_current,
-        );
-
         // hash of the current block
         let block_hash = <system::Module<T>>::block_hash(block_number);
         // hash of the previous block
         let parent_hash = <system::Module<T>>::parent_hash();
+
+        debug::info!(
+            "on_initialize() processing, block number: {:?}, block hash: {:?}, previous hash: {:?}",
+            block_number_current,
+            block_hash,
+            parent_hash,
+        );
 
         if let Err(err) = abci_interface::begin_block(
             block_number_current,
@@ -191,16 +193,21 @@ pub trait AbciInterface {
             .check_tx(data, 0)
             .map_err(|_| "check_tx failed")?;
 
-        if result.get_code() != 0 {
-            Err(sp_runtime::DispatchError::Module {
-                index: u8::MIN,
-                error: result.get_code() as u8,
-                message: Some("Invalid tx data."),
-            })
-        } else {
-            let dif = result.get_gas_wanted() - result.get_gas_used();
-            Ok(dif as u64)
-        }
+        // TODO remove it after fix
+        let dif = result.get_gas_wanted() - result.get_gas_used();
+        Ok(dif as u64)
+
+        // TODO uncomment after fix
+        // if result.get_code() != 0 {
+        //     Err(sp_runtime::DispatchError::Module {
+        //         index: u8::MIN,
+        //         error: result.get_code() as u8,
+        //         message: Some("Invalid tx data."),
+        //     })
+        // } else {
+        //     let dif = result.get_gas_wanted() - result.get_gas_used();
+        //     Ok(dif as u64)
+        // }
     }
 
     fn deliver_tx(data: Vec<u8>) -> DispatchResult {
