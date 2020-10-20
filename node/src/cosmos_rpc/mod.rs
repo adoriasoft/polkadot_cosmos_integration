@@ -252,13 +252,6 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
                 .check_tx(tx_value.clone(), 0)
                 .map_err(handle_error)?;
 
-            debug::info!("broadcast_tx_commit tx_value: {}", params.tx);
-            debug::info!(
-                "broadcast_tx_commit check_tx result: {}, {}, {}",
-                result.get_log(),
-                base64::encode(result.get_data().clone()),
-                result.get_code()
-            );
             let info = client.info();
             let best_hash = info.best_hash;
             let at = BlockId::<Block>::hash(best_hash);
