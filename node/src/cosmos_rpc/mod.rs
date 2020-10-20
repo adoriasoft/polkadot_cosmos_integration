@@ -131,21 +131,23 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
                             Ok(value_res_ok) => {
                                 let value_str = value_res_ok.to_string();
                                 if value_str.chars().count() > 0 {
-                                    value = Some(value_str);
+                                    value = Some(base64::encode(origin_value));
                                 }
                             }
-                            Err(_e) => {}
+                            Err(_e) => {
+                                value = Some(base64::encode(""));
+                            }
                         }
 
                         Ok(json!({
                             "response": {
                                 "log" : format!("{}", abci_query_res_ok.get_log()),
                                 "height" : format!("{}", abci_query_res_ok.get_height()),
-                                "key" : key,
-                                "value" : value,
                                 "index" : format!("{}", abci_query_res_ok.get_index()),
                                 "code" : format!("{}", abci_query_res_ok.get_code()),
-                                "proof" : proof,
+                                "key" : &key,
+                                "value" : &value,
+                                "proof" : &proof,
                             }
                         }))
                     }
