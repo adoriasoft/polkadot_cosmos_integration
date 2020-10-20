@@ -53,5 +53,5 @@ jobs:
         run: |
             export PATH="$HOME/go/bin:$PATH"
             cd scripts/integration_tests/
-          #  ./basic_test.sh
+            ./basic_test.sh
 

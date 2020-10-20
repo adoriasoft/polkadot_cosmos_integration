@@ -1,5 +1,6 @@
 mod types;
 
+use frame_support::debug;
 use jsonrpc_http_server::jsonrpc_core::{serde_json::json, Error, ErrorCode, IoHandler, Params};
 use jsonrpc_http_server::ServerBuilder;
 use node_template_runtime::cosmos_abci::ExtrinsicConstructionApi;
@@ -243,14 +244,21 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
         let client = client.clone();
         async move {
             let params: types::AbciTxCommitParams = params.parse()?;
-            let tx_value = base64::decode(params.tx)
-                .map_err(|_| handle_error("Failde to decode tx".to_owned().into()))?;
+            let tx_value = base64::decode(params.tx.clone())
+                .map_err(|_| handle_error("Failed to decode tx".to_owned().into()))?;
 
             let result = abci::get_abci_instance()
                 .map_err(handle_error)?
                 .check_tx(tx_value.clone(), 0)
                 .map_err(handle_error)?;
 
+            debug::info!("broadcast_tx_commit tx_value: {}", params.tx);
+            debug::info!(
+                "broadcast_tx_commit check_tx result: {}, {}, {}",
+                result.get_log(),
+                base64::encode(result.get_data().clone()),
+                result.get_code()
+            );
             let info = client.info();
             let best_hash = info.best_hash;
             let at = BlockId::<Block>::hash(best_hash);
