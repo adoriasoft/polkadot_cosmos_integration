@@ -90,21 +90,22 @@ decl_module! {
 
 impl<T: Trait> Module<T> {
     pub fn call_on_initialize(block_number: T::BlockNumber) -> bool {
-        let block_number_current: i64 = block_number.saturated_into() as i64;
         // hash of the current block
         let block_hash = <system::Module<T>>::block_hash(block_number);
         // hash of the previous block
         let parent_hash = <system::Module<T>>::parent_hash();
+        let extrinsics_root = <system::Module<T>>::extrinsics_root();
 
         debug::info!(
-            "on_initialize() processing, block number: {:?}, block hash: {:?}, previous hash: {:?}",
-            block_number_current,
+            "on_initialize() processing, block number: {:?}, block hash: {:?}, previous hash: {:?}, extrinsics root: {:?}",
+            block_number,
             block_hash,
             parent_hash,
+            extrinsics_root,
         );
 
         if let Err(err) = abci_interface::begin_block(
-            block_number_current,
+            block_number.saturated_into() as i64,
             block_hash.as_ref().to_vec(),
             parent_hash.as_ref().to_vec(),
             vec![],
@@ -116,9 +117,21 @@ impl<T: Trait> Module<T> {
     }
 
     pub fn call_on_finalize(block_number: T::BlockNumber) -> bool {
-        debug::info!("on_finalize() processing, block number: {:?}", block_number);
-        let block_number_current: i64 = block_number.saturated_into() as i64;
-        match abci_interface::end_block(block_number_current) {
+        // hash of the current block
+        let block_hash = <system::Module<T>>::block_hash(block_number);
+        // hash of the previous block
+        let parent_hash = <system::Module<T>>::parent_hash();
+        let extrinsics_root = <system::Module<T>>::extrinsics_root();
+
+        debug::info!(
+            "on_finalize() processing, block number: {:?}, block hash: {:?}, previous hash: {:?}, extrinsics root: {:?}",
+            block_number,
+            block_hash,
+            parent_hash,
+            extrinsics_root,
+        );
+
+        match abci_interface::end_block(block_number.saturated_into() as i64) {
             Ok(_) => {
                 match abci_interface::commit() {
                     Err(err) => {
