@@ -24,34 +24,8 @@ jobs:
             rustup target add wasm32-unknown-unknown
             rustup component add rustfmt
             rustup update
-      - name: dependecies-setup
-        run: |
-            export PATH="$HOME/go/bin:$PATH"
-            git submodule update --init
-            cd cosmos-sdk
-            git checkout feature/add_nameservice
-            make build-simd
-            cd simapp
-            rm -rf ~/.nsd
-            rm -rf ~/.nscli
-            nsd init test --chain-id=namechain
-            echo Setup jack keys
-            printf ' password \n password \n password ' | nscli --chain-id namechain --output json keys add jack 
-            printf ' password \n password \n password ' | nscli --chain-id namechain --output json keys add alice
-            nsd add-genesis-account $(printf ' password \n password \n password ' | nscli keys show jack -a) 1000nametoken,100000000stake
-            nsd add-genesis-account $(printf ' password \n password \n password ' | nscli keys show alice -a) 1000nametoken,100000000stakes
-            printf ' password \n password \n password ' | nsd gentx jack --chain-id namechain
-            echo "Collecting genesis txs..."
-            nsd collect-gentxs
-            echo "Validating genesis file..."
-            nsd validate-genesis
       - name: build
         run: cargo build
       - name: test
         run: cargo test --all
-      - name: integration-test
-        run: |
-            export PATH="$HOME/go/bin:$PATH"
-            cd scripts/integration_tests/
-            ./basic_test.sh
 
