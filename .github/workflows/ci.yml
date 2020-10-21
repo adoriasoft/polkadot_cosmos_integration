@@ -24,22 +24,8 @@ jobs:
             rustup target add wasm32-unknown-unknown
             rustup component add rustfmt
             rustup update
-      - name: dependecies-setup
-        run: |
-            export PATH="$HOME/go/bin:$PATH"
-            git submodule update --init
-            cd cosmos-sdk
-            git checkout feature/add_nameservice
-            make build-simd
-            cd simapp
-            ./init.sh
       - name: build
         run: cargo build
       - name: test
         run: cargo test --all
-      - name: integration-test
-        run: |
-            export PATH="$HOME/go/bin:$PATH"
-            cd scripts/integration_tests/
-          #  ./basic_test.sh
 

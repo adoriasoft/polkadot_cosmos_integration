@@ -2,7 +2,7 @@
 #[warn(unused_must_use)]
 use frame_support::{debug, decl_module, dispatch::DispatchResult, dispatch::Vec, weights::Weight};
 use frame_system::{
-    ensure_none,
+    self as system, ensure_none,
     offchain::{AppCrypto, CreateSignedTransaction},
 };
 use sp_core::crypto::KeyTypeId;
@@ -90,12 +90,26 @@ decl_module! {
 
 impl<T: Trait> Module<T> {
     pub fn call_on_initialize(block_number: T::BlockNumber) -> bool {
-        let block_number_current: i64 = block_number.saturated_into() as i64;
+        // hash of the current block
+        let block_hash = <system::Module<T>>::block_hash(block_number);
+        // hash of the previous block
+        let parent_hash = <system::Module<T>>::parent_hash();
+        let extrinsics_root = <system::Module<T>>::extrinsics_root();
+
         debug::info!(
-            "on_initialize() processing, block number: {:?},",
-            block_number_current,
+            "on_initialize() processing, block number: {:?}, block hash: {:?}, previous hash: {:?}, extrinsics root: {:?}",
+            block_number,
+            block_hash,
+            parent_hash,
+            extrinsics_root,
         );
-        if let Err(err) = abci_interface::begin_block(block_number_current, vec![], vec![]) {
+
+        if let Err(err) = abci_interface::begin_block(
+            block_number.saturated_into() as i64,
+            block_hash.as_ref().to_vec(),
+            parent_hash.as_ref().to_vec(),
+            vec![],
+        ) {
             // We have to panic, as if cosmos will not have some blocks - it will fail.
             panic!("Begin block failed: {:?}", err);
         }
@@ -103,9 +117,21 @@ impl<T: Trait> Module<T> {
     }
 
     pub fn call_on_finalize(block_number: T::BlockNumber) -> bool {
-        debug::info!("on_finalize() processing, block number: {:?}", block_number);
-        let block_number_current: i64 = block_number.saturated_into() as i64;
-        match abci_interface::end_block(block_number_current) {
+        // hash of the current block
+        let block_hash = <system::Module<T>>::block_hash(block_number);
+        // hash of the previous block
+        let parent_hash = <system::Module<T>>::parent_hash();
+        let extrinsics_root = <system::Module<T>>::extrinsics_root();
+
+        debug::info!(
+            "on_finalize() processing, block number: {:?}, block hash: {:?}, previous hash: {:?}, extrinsics root: {:?}",
+            block_number,
+            block_hash,
+            parent_hash,
+            extrinsics_root,
+        );
+
+        match abci_interface::end_block(block_number.saturated_into() as i64) {
             Ok(_) => {
                 match abci_interface::commit() {
                     Err(err) => {
@@ -180,16 +206,21 @@ pub trait AbciInterface {
             .check_tx(data, 0)
             .map_err(|_| "check_tx failed")?;
 
-        if result.get_code() != 0 {
-            Err(sp_runtime::DispatchError::Module {
-                index: u8::MIN,
-                error: result.get_code() as u8,
-                message: Some("Invalid tx data."),
-            })
-        } else {
-            let dif = result.get_gas_wanted() - result.get_gas_used();
-            Ok(dif as u64)
-        }
+        // TODO remove it after fix
+        let dif = result.get_gas_wanted() - result.get_gas_used();
+        Ok(dif as u64)
+
+        // TODO uncomment after fix
+        // if result.get_code() != 0 {
+        //     Err(sp_runtime::DispatchError::Module {
+        //         index: u8::MIN,
+        //         error: result.get_code() as u8,
+        //         message: Some("Invalid tx data."),
+        //     })
+        // } else {
+        //     let dif = result.get_gas_wanted() - result.get_gas_used();
+        //     Ok(dif as u64)
+        // }
     }
 
     fn deliver_tx(data: Vec<u8>) -> DispatchResult {
@@ -200,10 +231,15 @@ pub trait AbciInterface {
         Ok(())
     }
 
-    fn begin_block(height: i64, hash: Vec<u8>, proposer_address: Vec<u8>) -> DispatchResult {
+    fn begin_block(
+        height: i64,
+        hash: Vec<u8>,
+        last_block_id: Vec<u8>,
+        proposer_address: Vec<u8>,
+    ) -> DispatchResult {
         let _result = abci::get_abci_instance()
             .map_err(|_| "failed to setup connection")?
-            .begin_block(height, hash, proposer_address)
+            .begin_block(height, hash, last_block_id, proposer_address)
             .map_err(|_| "begin_block failed")?;
         Ok(())
     }

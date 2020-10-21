@@ -23,6 +23,6 @@ nscli tx nameservice set-name jack.id hello_universe --from jack --chain-id name
 sleep 6s
 
 value=$(nscli query nameservice resolve jack.id)
-assert_eq "$value" "value: hello_universe1"
+assert_eq "$value" "value: hello_universe"
 
 test_passed "basic test"

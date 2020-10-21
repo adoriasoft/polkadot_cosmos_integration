@@ -41,7 +41,7 @@ fn test_abci_begin_block() {
     assert!(result.is_ok(), "should successfully call init chain");
 
     let height = 1;
-    let result = client.begin_block(height, vec![], vec![]);
+    let result = client.begin_block(height, vec![], vec![], vec![]);
     assert!(result.is_ok(), "should successfully call begin block");
 
     let result = client.check_tx(vec![], 0);

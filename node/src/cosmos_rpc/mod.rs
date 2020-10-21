@@ -243,8 +243,8 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
         let client = client.clone();
         async move {
             let params: types::AbciTxCommitParams = params.parse()?;
-            let tx_value = base64::decode(params.tx)
-                .map_err(|_| handle_error("Failde to decode tx".to_owned().into()))?;
+            let tx_value = base64::decode(params.tx.clone())
+                .map_err(|_| handle_error("Failed to decode tx".to_owned().into()))?;
 
             let result = abci::get_abci_instance()
                 .map_err(handle_error)?

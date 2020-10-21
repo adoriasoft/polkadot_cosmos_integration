@@ -517,8 +517,8 @@ impl_runtime_apis! {
         fn broadcast_deliver_tx(data: &Vec<u8>) {
             let call = cosmos_abci::Call::deliver_tx(data.to_vec());
             let _ = SubmitTransaction::<Runtime, <Runtime as cosmos_abci::Trait>::Call>::submit_unsigned_transaction(call.into())
-            .map_err(|_| {
-                debug::error!("Failed to broadcast deliver_tx transaction");
+            .map_err(|e| {
+                debug::error!("Failed to broadcast deliver_tx transaction, error: {:?}", e);
                 "Failed to broadcast deliver_tx transaction"
             });
         }
