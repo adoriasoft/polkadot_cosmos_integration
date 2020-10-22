@@ -7,7 +7,7 @@ source ./testing_setup/test_utils.sh
 
 ## Run cosmos and substrate nodes
 ./testing_setup/basic_setup.sh &
-sleep 10s
+sleep 20s
 
 ## sync bug test
 

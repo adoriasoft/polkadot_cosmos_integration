@@ -256,7 +256,7 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
             let at = BlockId::<Block>::hash(best_hash);
             client
                 .runtime_api()
-                .broadcast_deliver_tx(&at, &tx_value)
+                .broadcast_abci_tx(&at, &tx_value)
                 .ok();
 
             let best_height: u32 = info.best_number.into();
