@@ -11,9 +11,26 @@ use std::sync::Arc;
 
 pub const DEFAULT_ABCI_RPC_URL: &str = "127.0.0.1:26657";
 pub const FAILED_SETUP_CONNECTION_MSG: &str = "Failed to get abci instance.";
+pub const FAILED_TO_DECODE_TX_MSG: &str = "Failde to decode tx.";
 
-pub fn start_server(client: Arc<crate::service::FullClient>) {
+pub fn start_server(
+    client_copy_commit: Arc<crate::service::FullClient>,
+    client_copy_sync: Arc<crate::service::FullClient>,
+    client_copy_async: Arc<crate::service::FullClient>,
+) {
     let mut io = IoHandler::new();
+
+    fn block_best_height(tx_value: Vec<u8>, client: Arc<crate::service::FullClient>) -> u32 {
+        let info = client.info();
+        let best_hash = info.best_hash;
+        let at = BlockId::<Block>::hash(best_hash);
+        client
+            .runtime_api()
+            .broadcast_deliver_tx(&at, &tx_value)
+            .ok();
+
+        info.best_number.into()
+    };
 
     // Handlers.
     fn handle_error(e: std::boxed::Box<dyn std::error::Error>) -> Error {
@@ -228,19 +245,6 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
         }
     }
 
-    fn abci_broadcast_tx_sync(params: Params) -> sc_service::Result<jsonrpc_core::Value, Error> {
-        async move {
-            let params: types::AbciTxCommitParams = params.parse()?;
-            let tx_value = base64::decode(params.tx)
-                .map_err(|_| handle_error("Failde to decode tx".to_owned().into()))?;
-
-            // todo
-            // Perform call.
-
-            Ok(json!({}))
-        }
-    }
-
     // IO methods mapping.
     io.add_method("abci_info", fetch_abci_info);
 
@@ -252,29 +256,62 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
 
     io.add_method("abci_check_tx", abci_check_tx);
 
-    io.add_method("broadcast_tx_sync", abci_broadcast_tx_sync);
-
-    io.add_method("broadcast_tx_commit", move |params: Params| {
-        let client = client.clone();
+    io.add_method("broadcast_tx_async", move |params: Params| {
+        let client = client_copy_async.clone();
         async move {
             let params: types::AbciTxCommitParams = params.parse()?;
             let tx_value = base64::decode(params.tx)
-                .map_err(|_| handle_error("Failde to decode tx".to_owned().into()))?;
+                .map_err(|_| handle_error(FAILED_TO_DECODE_TX_MSG.to_owned().into()))?;
+
+            block_best_height(tx_value, client);
+
+            Ok(json!({
+                "code": 0,
+                "data": "",
+                "log": "",
+                "codespace": "",
+                "hash": ""
+            }))
+        }
+    });
+
+    io.add_method("broadcast_tx_sync", move |params: Params| {
+        let client = client_copy_sync.clone();
+        async move {
+            let params: types::AbciTxCommitParams = params.parse()?;
+            let tx_value = base64::decode(params.tx)
+                .map_err(|_| handle_error(FAILED_TO_DECODE_TX_MSG.to_owned().into()))?;
 
             let result = abci::get_abci_instance()
                 .map_err(handle_error)?
                 .check_tx(tx_value.clone(), 0)
                 .map_err(handle_error)?;
 
-            let info = client.info();
-            let best_hash = info.best_hash;
-            let at = BlockId::<Block>::hash(best_hash);
-            client
-                .runtime_api()
-                .broadcast_deliver_tx(&at, &tx_value)
-                .ok();
+            block_best_height(tx_value, client);
 
-            let best_height: u32 = info.best_number.into();
+            Ok(json!({
+                "code": result.get_code(),
+                "data": format!("{}", base64::encode(result.get_data())),
+                "log": format!("{}", result.get_log()),
+                "codespace": "",
+                "hash": "",
+            }))
+        }
+    });
+
+    io.add_method("broadcast_tx_commit", move |params: Params| {
+        let client = client_copy_commit.clone();
+        async move {
+            let params: types::AbciTxCommitParams = params.parse()?;
+            let tx_value = base64::decode(params.tx)
+                .map_err(|_| handle_error(FAILED_TO_DECODE_TX_MSG.to_owned().into()))?;
+
+            let result = abci::get_abci_instance()
+                .map_err(handle_error)?
+                .check_tx(tx_value.clone(), 0)
+                .map_err(handle_error)?;
+
+            let best_height: u32 = block_best_height(tx_value, client);
 
             Ok(json!({
                 "height": (best_height + 1).to_string(),

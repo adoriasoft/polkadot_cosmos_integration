@@ -13,6 +13,12 @@ pub struct AbciTxCommitParams {
     pub tx: String,
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct AbciTxSimpleParams {
+    pub tx: String,
+    pub check_tx_type: i32,
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct AbciInfo {}
 
