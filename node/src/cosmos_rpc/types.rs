@@ -14,9 +14,8 @@ pub struct AbciTxCommitParams {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct AbciTxSimpleParams {
+pub struct AbciTxBroadcastParams {
     pub tx: String,
-    pub check_tx_type: i32,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

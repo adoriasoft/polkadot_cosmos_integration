@@ -179,9 +179,8 @@ pub trait AbciInterface {
             .map_err(|_| "failed to setup connection")?
             .check_tx(data, 0)
             .map_err(|_| "check_tx failed")?;
-        let dif = result.get_gas_wanted() - result.get_gas_used();
-        Ok(dif as u64)
-        /* if result.get_code() != 0 {
+
+        if result.get_code() != 0 {
             Err(sp_runtime::DispatchError::Module {
                 index: u8::MIN,
                 error: result.get_code() as u8,
@@ -190,7 +189,7 @@ pub trait AbciInterface {
         } else {
             let dif = result.get_gas_wanted() - result.get_gas_used();
             Ok(dif as u64)
-        } */
+        }
     }
 
     fn deliver_tx(data: Vec<u8>) -> DispatchResult {

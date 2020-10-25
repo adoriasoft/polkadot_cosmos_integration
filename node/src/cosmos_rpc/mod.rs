@@ -259,7 +259,7 @@ pub fn start_server(
     io.add_method("broadcast_tx_async", move |params: Params| {
         let client = client_copy_async.clone();
         async move {
-            let params: types::AbciTxCommitParams = params.parse()?;
+            let params: types::AbciTxBroadcastParams = params.parse()?;
             let tx_value = base64::decode(params.tx)
                 .map_err(|_| handle_error(FAILED_TO_DECODE_TX_MSG.to_owned().into()))?;
 
@@ -278,7 +278,7 @@ pub fn start_server(
     io.add_method("broadcast_tx_sync", move |params: Params| {
         let client = client_copy_sync.clone();
         async move {
-            let params: types::AbciTxCommitParams = params.parse()?;
+            let params: types::AbciTxBroadcastParams = params.parse()?;
             let tx_value = base64::decode(params.tx)
                 .map_err(|_| handle_error(FAILED_TO_DECODE_TX_MSG.to_owned().into()))?;
 
