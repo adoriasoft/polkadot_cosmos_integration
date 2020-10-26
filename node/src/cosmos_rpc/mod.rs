@@ -13,11 +13,7 @@ pub const DEFAULT_ABCI_RPC_URL: &str = "127.0.0.1:26657";
 pub const FAILED_SETUP_CONNECTION_MSG: &str = "Failed to get abci instance.";
 pub const FAILED_TO_DECODE_TX_MSG: &str = "Failde to decode tx.";
 
-pub fn start_server(
-    client_copy_commit: Arc<crate::service::FullClient>,
-    client_copy_sync: Arc<crate::service::FullClient>,
-    client_copy_async: Arc<crate::service::FullClient>,
-) {
+pub fn start_server(client: Arc<crate::service::FullClient>) {
     let mut io = IoHandler::new();
 
     fn block_best_height(tx_value: Vec<u8>, client: Arc<crate::service::FullClient>) -> u32 {
@@ -256,8 +252,9 @@ pub fn start_server(
 
     io.add_method("abci_check_tx", abci_check_tx);
 
+    let client_tx_async_copy = client.clone();
     io.add_method("broadcast_tx_async", move |params: Params| {
-        let client = client_copy_async.clone();
+        let client = client_tx_async_copy.clone();
         async move {
             let params: types::AbciTxBroadcastParams = params.parse()?;
             let tx_value = base64::decode(params.tx)
@@ -275,8 +272,9 @@ pub fn start_server(
         }
     });
 
+    let client_tx_sync_copy = client.clone();
     io.add_method("broadcast_tx_sync", move |params: Params| {
-        let client = client_copy_sync.clone();
+        let client = client_tx_sync_copy.clone();
         async move {
             let params: types::AbciTxBroadcastParams = params.parse()?;
             let tx_value = base64::decode(params.tx)
@@ -299,8 +297,9 @@ pub fn start_server(
         }
     });
 
+    let client_commit_copy = client.clone();
     io.add_method("broadcast_tx_commit", move |params: Params| {
-        let client = client_copy_commit.clone();
+        let client = client_commit_copy.clone();
         async move {
             let params: types::AbciTxCommitParams = params.parse()?;
             let tx_value = base64::decode(params.tx)
