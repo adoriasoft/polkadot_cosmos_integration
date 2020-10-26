@@ -12,6 +12,7 @@ pub struct AbciinterfaceGrpc {
     rt: Runtime,
     client: AbciClient,
     chain_id: String,
+    last_commit_hash: Vec<u8>,
 }
 
 impl AbciinterfaceGrpc {
@@ -27,6 +28,7 @@ impl AbciinterfaceGrpc {
             rt,
             client,
             chain_id: "default chain id".to_string(),
+            last_commit_hash: vec![],
         })
     }
 }
@@ -70,7 +72,6 @@ impl crate::AbciInterface for AbciinterfaceGrpc {
         max_age_duration: u64,
         app_state_bytes: Vec<u8>,
     ) -> crate::AbciResult<dyn crate::ResponseInitChain> {
-        //let time = SystemTime::now().into();
         let evidence = protos::EvidenceParams {
             max_age_num_blocks: max_age_num_blocks,
             max_age_duration: Some(Duration::from_micros(max_age_duration).into()),
@@ -111,9 +112,11 @@ impl crate::AbciInterface for AbciinterfaceGrpc {
         &mut self,
         height: i64,
         hash: Vec<u8>,
+        last_block_id: Vec<u8>,
         proposer_address: Vec<u8>,
     ) -> crate::AbciResult<dyn crate::ResponseBeginBlock> {
         let chain_id: String = self.chain_id.clone();
+        self.last_commit_hash = hash.clone();
 
         let request = tonic::Request::new(protos::RequestBeginBlock {
             hash,
@@ -122,7 +125,13 @@ impl crate::AbciInterface for AbciinterfaceGrpc {
                 chain_id,
                 height,
                 time: Some(SystemTime::now().into()),
-                last_block_id: None,
+                last_block_id: Some(protos::BlockId {
+                    hash: last_block_id.clone(),
+                    parts_header: Some(protos::PartSetHeader {
+                        total: 0,
+                        hash: last_block_id,
+                    }),
+                }),
                 last_commit_hash: vec![],
                 data_hash: vec![],
                 validators_hash: vec![],

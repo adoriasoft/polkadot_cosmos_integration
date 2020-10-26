@@ -151,6 +151,7 @@ pub trait AbciInterface {
         &mut self,
         height: i64,
         hash: Vec<u8>,
+        last_block_id: Vec<u8>,
         proposer_address: Vec<u8>,
     ) -> AbciResult<dyn ResponseBeginBlock>;
 

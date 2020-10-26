@@ -3542,6 +3542,7 @@ version = "2.0.0-rc6"
 dependencies = [
  "abci",
  "base64 0.12.3",
+ "frame-support",
  "frame-system",
  "futures 0.3.5",
  "hex",
