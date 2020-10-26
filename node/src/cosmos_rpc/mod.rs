@@ -16,7 +16,7 @@ pub const FAILED_TO_DECODE_TX_MSG: &str = "Failde to decode tx.";
 pub fn start_server(client: Arc<crate::service::FullClient>) {
     let mut io = IoHandler::new();
 
-    fn block_best_height(tx_value: Vec<u8>, client: Arc<crate::service::FullClient>) -> u32 {
+    fn broadcast_deliver_tx(tx_value: Vec<u8>, client: Arc<crate::service::FullClient>) -> u32 {
         let info = client.info();
         let best_hash = info.best_hash;
         let at = BlockId::<Block>::hash(best_hash);
@@ -260,7 +260,7 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
             let tx_value = base64::decode(params.tx)
                 .map_err(|_| handle_error(FAILED_TO_DECODE_TX_MSG.to_owned().into()))?;
 
-            block_best_height(tx_value, client);
+            broadcast_deliver_tx(tx_value, client);
 
             Ok(json!({
                 "code": 0,
@@ -285,7 +285,7 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
                 .check_tx(tx_value.clone(), 0)
                 .map_err(handle_error)?;
 
-            block_best_height(tx_value, client);
+            broadcast_deliver_tx(tx_value, client);
 
             Ok(json!({
                 "code": result.get_code(),
@@ -310,7 +310,7 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
                 .check_tx(tx_value.clone(), 0)
                 .map_err(handle_error)?;
 
-            let best_height: u32 = block_best_height(tx_value, client);
+            let best_height: u32 = broadcast_deliver_tx(tx_value, client);
 
             Ok(json!({
                 "height": (best_height + 1).to_string(),
