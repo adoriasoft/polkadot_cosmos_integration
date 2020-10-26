@@ -13,6 +13,11 @@ pub struct AbciTxCommitParams {
     pub tx: String,
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct AbciTxBroadcastParams {
+    pub tx: String,
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct AbciInfo {}
 
