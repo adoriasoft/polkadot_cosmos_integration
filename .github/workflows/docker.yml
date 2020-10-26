@@ -1,0 +1,24 @@
+name: Docker images
+
+on:
+  push:
+    paths:
+    - '.github/workflows/docker.yml'
+    - 'Dockerfile'
+    - '*.rs'
+
+jobs:
+
+  build-dockerfile:
+    name: Build Dockerfile
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - name: Build image
+      run: docker build -t docker.pkg.github.com/adoriasoft/polkadot_cosmos_integration/node .
+    - name: Publish docker image
+      uses: VaultVulp/gp-docker-action@1.0.1
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        image-name: node
+        extract-git-tag: true
