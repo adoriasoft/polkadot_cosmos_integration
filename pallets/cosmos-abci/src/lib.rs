@@ -17,7 +17,7 @@ use sp_runtime::{
     DispatchError,
 };
 use sp_runtime_interface::runtime_interface;
-use sp_std::prelude::*;
+use sp_std::{prelude::*, fmt, str};
 
 /// The type to sign and send transactions.
 pub const UNSIGNED_TXS_PRIORITY: u64 = 100;
@@ -25,6 +25,27 @@ pub const UNSIGNED_TXS_PRIORITY: u64 = 100;
 pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"abci");
 
 pub const DEFAULT_RETAIN_BLOCK_HEIGHT: i64 = 0;
+
+struct AbciCommitResponse {
+    pub height: i64,
+    pub hash: Vec<u8>,
+}
+
+trait AbciCommitResponseToVec {
+    fn owned_to_vec(&self, value: Vec<u8>) -> Vec<u8>;
+}
+
+impl AbciCommitResponseToVec for AbciCommitResponse {
+    fn owned_to_vec(&self, value: Vec<u8>) -> Vec<u8> {
+        [&value[..], &vec![101][..], &self.hash[..]].concat()
+    }
+}
+
+impl fmt::Display for AbciCommitResponse {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.height)
+    }
+}
 
 /// Based on the above `KeyTypeId` we need to generate a pallet-specific crypto type wrapper.
 /// We can utilize the supported crypto kinds (`sr25519`, `ed25519` and `ecdsa`) and augment
@@ -97,7 +118,7 @@ decl_module! {
 decl_storage! {
     trait PersistStorage for Module<T: Trait> as PersistStorage {
         pub LastMerkleRootHash get(fn get_last_merkle_root_hash): Vec<u8>;// crypto::merkle::Hash;
-        pub BlockRetainHeight get(fn get_retain_height): i64 = 0;
+        pub BlockRetainHeight get(fn get_retain_height): i64 = DEFAULT_RETAIN_BLOCK_HEIGHT;
     }
 }
 
@@ -152,12 +173,24 @@ impl<T: Trait> Module<T> {
                         panic!("Commit failed: {:?}", err);
                     }
                     Ok(response) => {
-                        <LastMerkleRootHash>::set(response);
-                        let last_merkle_root_hash = Self::get_last_merkle_root_hash();
+                        let sep_index = response.iter().position(|&r| r == 101).unwrap();
+                        let block_retain_height_as_bytes = &response[0..sep_index];
+                        let last_merkle_root_hash: Vec<u8> =
+                            response[sep_index + 1..response.len() - 1].to_vec();
+                        let block_retain_height = str::from_utf8(block_retain_height_as_bytes)
+                            .unwrap_or("")
+                            .parse::<i64>()
+                            .unwrap_or(0);
+                        // Save last received `data` and `height` values in Substrate storage of abci pallet.
+                        <LastMerkleRootHash>::set(last_merkle_root_hash);
+                        <BlockRetainHeight>::set(block_retain_height);
+                        let last_merkle_root_hash_saved = Self::get_last_merkle_root_hash();
+
                         debug::info!(
                             "Store last Merkle root hash that is {:?}",
-                            last_merkle_root_hash
+                            last_merkle_root_hash_saved
                         );
+
                         return true;
                     }
                 }
@@ -269,14 +302,17 @@ pub trait AbciInterface {
         Ok(())
     }
 
-    // AbciCommitResponse
     fn commit() -> Result<Vec<u8>, DispatchError> {
         let _result = abci::get_abci_instance()
             .map_err(|_| "failed to setup connection")?
             .commit()
             .map_err(|_| "commit failed")?;
-        // debug::info!("Result: {:?}", result);
-        Ok(_result.get_data())
+        let response = AbciCommitResponse {
+            height: _result.get_retain_height(),
+            hash: _result.get_data(),
+        };
+        let height = response.to_string();
+        Ok(response.owned_to_vec(height.as_bytes().to_vec()))
     }
 
     fn query(path: &str, data: Vec<u8>, height: i64, prove: bool) -> DispatchResult {
