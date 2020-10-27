@@ -85,7 +85,6 @@ decl_module! {
     pub struct Module<T: Trait> for enum Call where origin: T::Origin {
         /// Block initialization
         fn on_initialize(block_number: T::BlockNumber) -> Weight {
-            debug::info!("on_initialize(), block_number: {:?}", block_number);
             0
         }
 
@@ -154,7 +153,7 @@ impl<T: Trait> Module<T> {
             block_number.saturated_into() as i64,
             block_hash.as_ref().to_vec(),
             parent_hash.as_ref().to_vec(),
-            vec![],
+            extrinsics_root.as_ref().to_vec(),
         ) {
             // We have to panic, as if cosmos will not have some blocks - it will fail.
             panic!("Begin block failed: {:?}", err);

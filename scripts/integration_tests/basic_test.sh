@@ -12,9 +12,9 @@ sleep 20s
 
 ## basic test
 nscli tx nameservice buy-name jack.id 5nametoken --from jack --chain-id namechain -y
-sleep 20s
+sleep 10s
 nscli tx nameservice set-name jack.id hello_world --from jack --chain-id namechain -y
-sleep 20s
+sleep 10s
 
 value=$(nscli query nameservice resolve jack.id)
 assert_eq "$value" "value: hello_world"
