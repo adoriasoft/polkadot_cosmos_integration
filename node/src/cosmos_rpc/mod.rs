@@ -13,6 +13,13 @@ pub const DEFAULT_ABCI_RPC_URL: &str = "127.0.0.1:26657";
 pub const FAILED_SETUP_CONNECTION_MSG: &str = "Failed to get abci instance.";
 pub const FAILED_TO_DECODE_TX_MSG: &str = "Failde to decode tx.";
 
+pub fn get_abci_rpc_url() -> String {
+    match std::env::var("ABCI_RPC_SERVER_URL") {
+        Ok(val) => val,
+        Err(_) => DEFAULT_ABCI_RPC_URL.to_owned(),
+    }
+}
+
 pub fn start_server(client: Arc<crate::service::FullClient>) {
     let mut io = IoHandler::new();
 
@@ -330,7 +337,7 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
     std::thread::spawn(move || {
         let server = ServerBuilder::new(io)
             .threads(3)
-            .start_http(&DEFAULT_ABCI_RPC_URL.parse().unwrap())
+            .start_http(&get_abci_rpc_url().as_str().parse().unwrap())
             .unwrap();
         server.wait();
     });
