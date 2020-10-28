@@ -113,7 +113,7 @@ impl crate::AbciInterface for AbciinterfaceGrpc {
         height: i64,
         hash: Vec<u8>,
         last_block_id: Vec<u8>,
-        proposer_address: Vec<u8>,
+        data_hash: Vec<u8>,
     ) -> crate::AbciResult<dyn crate::ResponseBeginBlock> {
         let chain_id: String = self.chain_id.clone();
         self.last_commit_hash = hash.clone();
@@ -133,14 +133,14 @@ impl crate::AbciInterface for AbciinterfaceGrpc {
                     }),
                 }),
                 last_commit_hash: vec![],
-                data_hash: vec![],
+                data_hash: data_hash,
                 validators_hash: vec![],
                 next_validators_hash: vec![],
                 consensus_hash: vec![],
                 app_hash: vec![],
                 last_results_hash: vec![],
                 evidence_hash: vec![],
-                proposer_address,
+                proposer_address: vec![],
             }),
             last_commit_info: None,
             byzantine_validators: vec![],

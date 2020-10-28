@@ -1,6 +1,11 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #[warn(unused_must_use)]
-use frame_support::{debug, decl_module, dispatch::DispatchResult, dispatch::Vec, weights::Weight};
+use frame_support::{
+    codec::{Decode, Encode},
+    debug, decl_module, decl_storage,
+    dispatch::{DispatchResult, Vec},
+    weights::Weight,
+};
 use frame_system::{
     self as system, ensure_none,
     offchain::{AppCrypto, CreateSignedTransaction},
@@ -11,7 +16,7 @@ use sp_runtime::{
     transaction_validity::{
         InvalidTransaction, TransactionSource, TransactionValidity, ValidTransaction,
     },
-    DispatchError,
+    DispatchError, RuntimeDebug,
 };
 use sp_runtime_interface::runtime_interface;
 use sp_std::prelude::*;
@@ -63,52 +68,92 @@ pub trait Trait: CreateSignedTransaction<Call<Self>> {
     type Call: From<Call<Self>>;
 }
 
+#[derive(Encode, Decode, Clone, Default, RuntimeDebug)]
+pub struct ABCITxs {
+    data_array: Vec<Vec<u8>>,
+}
+
+decl_storage! {
+    trait Store for Module<T: Trait> as ABCITxStorage {
+        ABCITxStorage get(fn abci_tx): map hasher(blake2_128_concat) T::BlockNumber => ABCITxs
+    }
+}
+
 // The pallet's dispatchable functions.
 decl_module! {
     /// The module declaration.
     pub struct Module<T: Trait> for enum Call where origin: T::Origin {
         /// Block initialization
-        fn on_initialize(now: T::BlockNumber) -> Weight {
-            Self::call_on_initialize(now);
+        fn on_initialize(block_number: T::BlockNumber) -> Weight {
             0
         }
 
         /// Block finalization
-        fn on_finalize(now: T::BlockNumber) {
-           Self::call_on_finalize(now);
+        fn on_finalize(block_number: T::BlockNumber) {
         }
 
         #[weight = 0]
-        pub fn deliver_tx(origin, data: Vec<u8>) -> DispatchResult {
+        pub fn abci_transaction(origin, data: Vec<u8>) -> DispatchResult {
             let _ = ensure_none(origin)?;
-            debug::info!("Received deliver tx request");
-            <Self as CosmosAbci>::deliver_tx(data)?;
+
+            Self::call_abci_transaction(data)?;
             Ok(())
         }
+
+        fn offchain_worker(block_number: T::BlockNumber) {
+            if block_number.saturated_into() as i64 != 0 {
+                // hash of the current block
+                let block_hash = <system::Module<T>>::block_hash(block_number);
+                // hash of the previous block
+                let parent_hash = <system::Module<T>>::parent_hash();
+                // hash of the extrinsics root
+                let extrinsics_root = <system::Module<T>>::extrinsics_root();
+                Self::call_offchain_worker(block_number, block_hash, parent_hash, extrinsics_root);
+            }
+        }
+
     }
 }
 
 impl<T: Trait> Module<T> {
-    pub fn call_on_initialize(block_number: T::BlockNumber) -> bool {
-        // hash of the current block
-        let block_hash = <system::Module<T>>::block_hash(block_number);
-        // hash of the previous block
-        let parent_hash = <system::Module<T>>::parent_hash();
-        let extrinsics_root = <system::Module<T>>::extrinsics_root();
+    pub fn call_abci_transaction(data: Vec<u8>) -> DispatchResult {
+        let block_number = <system::Module<T>>::block_number();
+        let mut abci_txs: ABCITxs = <ABCITxStorage<T>>::get(block_number);
+        abci_txs.data_array.push(data.clone());
+        <ABCITxStorage<T>>::insert(block_number, abci_txs);
+        Ok(())
+    }
 
-        debug::info!(
-            "on_initialize() processing, block number: {:?}, block hash: {:?}, previous hash: {:?}, extrinsics root: {:?}",
-            block_number,
-            block_hash,
-            parent_hash,
-            extrinsics_root,
-        );
+    pub fn call_offchain_worker(
+        block_number: T::BlockNumber,
+        block_hash: T::Hash,
+        parent_hash: T::Hash,
+        extrinsics_root: T::Hash,
+    ) {
+        debug::info!("call_offchain_worker(), block_number: {:?}", block_number);
+        Self::call_on_initialize(block_number, block_hash, parent_hash, extrinsics_root);
 
+        let abci_txs: ABCITxs = <ABCITxStorage<T>>::get(block_number);
+        for abci_tx in abci_txs.data_array {
+            debug::info!("call_offchain_worker(), abci_tx: {:?}", abci_tx);
+            <Self as CosmosAbci>::deliver_tx(abci_tx)
+                .map_err(|e| debug::error!("deliver_tx() error: {:?}", e));
+        }
+
+        Self::call_on_finalize(block_number);
+    }
+
+    pub fn call_on_initialize(
+        block_number: T::BlockNumber,
+        block_hash: T::Hash,
+        parent_hash: T::Hash,
+        extrinsics_root: T::Hash,
+    ) -> bool {
         if let Err(err) = abci_interface::begin_block(
             block_number.saturated_into() as i64,
             block_hash.as_ref().to_vec(),
             parent_hash.as_ref().to_vec(),
-            vec![],
+            extrinsics_root.as_ref().to_vec(),
         ) {
             // We have to panic, as if cosmos will not have some blocks - it will fail.
             panic!("Begin block failed: {:?}", err);
@@ -117,20 +162,6 @@ impl<T: Trait> Module<T> {
     }
 
     pub fn call_on_finalize(block_number: T::BlockNumber) -> bool {
-        // hash of the current block
-        let block_hash = <system::Module<T>>::block_hash(block_number);
-        // hash of the previous block
-        let parent_hash = <system::Module<T>>::parent_hash();
-        let extrinsics_root = <system::Module<T>>::extrinsics_root();
-
-        debug::info!(
-            "on_finalize() processing, block number: {:?}, block hash: {:?}, previous hash: {:?}, extrinsics root: {:?}",
-            block_number,
-            block_hash,
-            parent_hash,
-            extrinsics_root,
-        );
-
         match abci_interface::end_block(block_number.saturated_into() as i64) {
             Ok(_) => {
                 match abci_interface::commit() {
@@ -163,7 +194,7 @@ impl<T: Trait> frame_support::unsigned::ValidateUnsigned for Module<T> {
         };
 
         match call {
-            Call::deliver_tx(_number) => valid_tx(b"submit_deliver_tx".to_vec()),
+            Call::abci_transaction(_number) => valid_tx(b"submit_abci_transaction".to_vec()),
             _ => InvalidTransaction::Call.into(),
         }
     }
@@ -185,7 +216,7 @@ impl<T: Trait> CosmosAbci for Module<T> {
 
 sp_api::decl_runtime_apis! {
     pub trait ExtrinsicConstructionApi {
-        fn broadcast_deliver_tx(data: &Vec<u8>);
+        fn broadcast_abci_tx(data: &Vec<u8>);
     }
 }
 
