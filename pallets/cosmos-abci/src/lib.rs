@@ -17,14 +17,12 @@ use sp_runtime::{
     DispatchError,
 };
 use sp_runtime_interface::runtime_interface;
-use sp_std::{prelude::*, fmt, str};
+use sp_std::{fmt, prelude::*, str};
 
 /// The type to sign and send transactions.
 pub const UNSIGNED_TXS_PRIORITY: u64 = 100;
 
 pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"abci");
-
-pub const DEFAULT_RETAIN_BLOCK_HEIGHT: i64 = 0;
 
 struct AbciCommitResponse {
     pub height: i64,
@@ -117,8 +115,8 @@ decl_module! {
 
 decl_storage! {
     trait PersistStorage for Module<T: Trait> as PersistStorage {
-        pub LastMerkleRootHash get(fn get_last_merkle_root_hash): Vec<u8>;// crypto::merkle::Hash;
-        pub BlockRetainHeight get(fn get_retain_height): i64 = DEFAULT_RETAIN_BLOCK_HEIGHT;
+        pub LastMerkleRootHash get(fn get_last_merkle_root_hash): Vec<u8>;
+        pub BlockRetainHeight get(fn get_retain_height): i64 = 0;
     }
 }
 
