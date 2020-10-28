@@ -10,16 +10,17 @@ RUN apt-get update && \
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
 ENV PATH=/root/.cargo/bin:$PATH
 
-COPY . .
+COPY rust-toolchain rust-toolchain
 
 RUN rustup toolchain install nightly && \
     rustup default nightly && \
-	rustup target add wasm32-unknown-unknown --toolchain nightly && \
-	rustup default stable
+	rustup target add wasm32-unknown-unknown --toolchain nightly
 
 ARG PROJECT=node-template
 ARG PROFILE=release
 WORKDIR /substrate
+
+COPY . .
 
 RUN cargo build --$PROFILE && \
 	mv ./target/$PROFILE/$PROJECT /app
