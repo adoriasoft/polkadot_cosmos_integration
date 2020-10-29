@@ -194,3 +194,16 @@ fn test_abci_set_option() {
         cosmos_response_log
     );
 }
+
+#[test]
+fn test_abci_flush() {
+    let mut abci_mock = MockAbciInterface::new();
+    abci_mock.expect_flush().returning(|| {
+        let ret = MockResponseFlush::new();
+        Ok(Box::new(ret))
+    });
+
+    set_abci_instance(Box::new(abci_mock)).unwrap();
+
+    assert_eq!(get_abci_instance().unwrap().flush().is_ok(), true);
+}
