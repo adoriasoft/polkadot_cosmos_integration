@@ -431,7 +431,7 @@ impl_runtime_apis! {
             tx: <Block as BlockT>::Extrinsic,
         ) -> TransactionValidity {
             let mut res = Executive::validate_transaction(source, tx.clone())?;
-            if let Some(&cosmos_abci::Call::deliver_tx(ref val)) = IsSubType::<CallableCallFor<CosmosAbci, Runtime>>::is_sub_type(&tx.function) {
+            if let Some(&cosmos_abci::Call::abci_transaction(ref val)) = IsSubType::<CallableCallFor<CosmosAbci, Runtime>>::is_sub_type(&tx.function) {
                 let diff = <CosmosAbci as cosmos_abci::CosmosAbci>::check_tx(val.clone()).map_err(|_e| {
                     match _e {
                         sp_runtime::DispatchError::Module { error, .. } => InvalidTransaction::Custom(error),
@@ -514,8 +514,8 @@ impl_runtime_apis! {
     }
 
     impl cosmos_abci::ExtrinsicConstructionApi<Block> for Runtime {
-        fn broadcast_deliver_tx(data: &Vec<u8>) {
-            let call = cosmos_abci::Call::deliver_tx(data.to_vec());
+        fn broadcast_abci_tx(data: &Vec<u8>) {
+            let call = cosmos_abci::Call::abci_transaction(data.to_vec());
             let _ = SubmitTransaction::<Runtime, <Runtime as cosmos_abci::Trait>::Call>::submit_unsigned_transaction(call.into())
             .map_err(|e| {
                 debug::error!("Failed to broadcast deliver_tx transaction, error: {:?}", e);
