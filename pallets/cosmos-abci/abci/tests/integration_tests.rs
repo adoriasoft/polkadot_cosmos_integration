@@ -63,4 +63,13 @@ fn test_abci_begin_block() {
         false,
     );
     assert!(result.is_ok(), "should successfully call query");
+
+    let flush_result = client.flush();
+    assert_eq!(flush_result.is_ok(), true);
+
+    let info_result = client.info();
+    assert_eq!(info_result.unwrap().get_data(), "SimApp");
+
+    let set_option_result = client.set_option("my_opt", "yes");
+    assert_eq!(set_option_result.unwrap().get_code(), 0);
 }
