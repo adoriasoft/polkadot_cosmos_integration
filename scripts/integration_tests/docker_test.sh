@@ -5,7 +5,8 @@ trap "kill 0" EXIT
 ##
 source ./testing_setup/test_utils.sh
 
-docker-compose -f ../../docker-compose.yml up
+docker-compose -f ../../docker-compose.yml up -d
+sleep 10s
 
 ## broadcast_tx_sync test (sync mode)
 nscli tx nameservice buy-name jack.id 5nametoken --from jack --chain-id namechain -y --broadcast-mode sync
