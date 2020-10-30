@@ -5,6 +5,8 @@ trap "kill 0" EXIT
 ##
 source ./testing_setup/test_utils.sh
 
+docker-compose -f ../../docker-compose.yml up
+
 ## broadcast_tx_sync test (sync mode)
 nscli tx nameservice buy-name jack.id 5nametoken --from jack --chain-id namechain -y --broadcast-mode sync
 sleep 10s
@@ -23,3 +25,5 @@ assert_eq "${jack_id}" "value: jack_my"
 assert_eq "${alice_id}" "value: alice_my"
 
 test_passed "broadcast_tx_sync"
+
+docker-compose -f ../../docker-compose.yml down -v
