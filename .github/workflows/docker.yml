@@ -34,7 +34,7 @@ jobs:
         rm Dockerfile
         cd cosmos-sdk/
         docker build -t docker.pkg.github.com/adoriasoft/polkadot_cosmos_integration/cosmos-node .
-    - name: Build and Publish docker Cosmos image
+    - name: Publish docker Cosmos image
       uses: VaultVulp/gp-docker-action@1.0.1
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
