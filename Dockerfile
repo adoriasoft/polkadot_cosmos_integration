@@ -10,18 +10,15 @@ RUN apt-get update && \
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
 ENV PATH=/root/.cargo/bin:$PATH
 
-RUN rustup toolchain install nightly && \
-    rustup default nightly && \
-	rustup target add wasm32-unknown-unknown --toolchain nightly && \
-	rustup default stable
+WORKDIR /substrate
 
+RUN rustup +nightly-2020-08-19 target add wasm32-unknown-unknown
 ARG PROJECT=node-template
 ARG PROFILE=release
-WORKDIR /substrate
 
 COPY . .
 
-RUN cargo build --$PROFILE && \
+RUN cargo +nightly-2020-08-19 build --$PROFILE && \
 	mv ./target/$PROFILE/$PROJECT /app
 
 FROM phusion/baseimage:0.10.2

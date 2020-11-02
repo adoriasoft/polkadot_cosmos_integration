@@ -1,17 +1,23 @@
 version: "3.2"
 services:
-  dev:
-    container_name: node-template
-    image: parity/rust-builder:latest
-    working_dir: /var/www/node-template
+  dev_substrate:
+    image: docker.pkg.github.com/adoriasoft/polkadot_cosmos_integration/node:latest
+    command: --dev
+    environment:
+      ABCI_RPC_SERVER_URL: 0.0.0.0:26657
+      ABCI_SERVER_URL: tcp://dev_cosmos:26658
+      ABCI_GENESIS_STATE_PATH: /genesis.json
+    volumes:
+      - ./.maintain/genesis.json:/genesis.json
     ports:
       - "9944:9944"
-    environment:
-      - CARGO_HOME=/var/www/node-template/.cargo
-      - ABCI_APP_STATE_PATH=/var/www/node-template/scripts/test_genesis.json
-    volumes:
-      - .:/var/www/node-template
-      - type: bind
-        source: ./.local
-        target: /root/.local
-    command: bash -c "cargo build --release && ./target/release/node-template --dev --ws-external"
+      - "26657:26657"
+    links:
+      - dev_cosmos
+
+  dev_cosmos:
+    image: andoriasoft/cosmos-node:latest
+    command: start --with-tendermint=false --transport=grpc
+    restart: on-failure
+    ports:
+      - "26658:26658"
