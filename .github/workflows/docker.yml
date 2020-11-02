@@ -9,15 +9,32 @@ on:
 
 jobs:
 
-  build-dockerfile:
-    name: Build Dockerfile
+  build-substrate-docker:
+    name: Build Substrate Dockerfile
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@master
     - name: Build image
-      run: docker build -t docker.pkg.github.com/adoriasoft/polkadot_cosmos_integration/node .
+      run: docker build -t docker.pkg.github.com/adoriasoft/polkadot_cosmos_integration/substrate-node .
     - name: Publish docker image
       uses: VaultVulp/gp-docker-action@1.0.1
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
-        image-name: node
+        image-name: substrate-node
+
+  build-cosmos-docker:
+    name: Build Cosmos Dockerfile
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - name: Init git submodule
+      run: git submodule update --init
+    - name: Build Cosmos image
+      run: |
+        cd cosmos-sdk/
+        docker build -t docker.pkg.github.com/adoriasoft/polkadot_cosmos_integration/cosmos-node .
+    - name: Publish docker image
+      uses: VaultVulp/gp-docker-action@1.0.1
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        image-name: cosmos-node
