@@ -1,18 +1,19 @@
 use testcontainers::*;
 
+const STDOUT_MESSAGE: &str = "starting ABCI";
+const DOCKER_IMAGE: &str = "andoriasoft/cosmos-node:latest";
+
 #[test]
 fn test_abci_begin_block() {
     let docker = clients::Cli::default();
-    let cosmos = images::generic::GenericImage::new("andoriasoft/cosmos-node:latest")
+    let cosmos = images::generic::GenericImage::new(DOCKER_IMAGE)
         .with_args(vec![
             "start".to_owned(),
             "--with-tendermint=false".to_owned(),
             "--transport=grpc".to_owned(),
         ])
-        .with_wait_for(images::generic::WaitFor::message_on_stdout("starting ABCI"));
+        .with_wait_for(images::generic::WaitFor::message_on_stdout(STDOUT_MESSAGE));
     let node = docker.run(cosmos);
-
-    // Init ABCI instance
     let url = format!("tcp://localhost:{}", node.get_host_port(26658).unwrap());
     abci::set_abci_instance(Box::new(
         abci::grpc::AbciinterfaceGrpc::connect(&url)
@@ -63,13 +64,82 @@ fn test_abci_begin_block() {
         false,
     );
     assert!(result.is_ok(), "should successfully call query");
+}
 
+#[test]
+fn test_abci_flush() {
+    let docker = clients::Cli::default();
+    let cosmos = images::generic::GenericImage::new(DOCKER_IMAGE)
+        .with_args(vec![
+            "start".to_owned(),
+            "--with-tendermint=false".to_owned(),
+            "--transport=grpc".to_owned(),
+        ])
+        .with_wait_for(images::generic::WaitFor::message_on_stdout(STDOUT_MESSAGE));
+    let node = docker.run(cosmos);
+    let url = format!("tcp://localhost:{}", node.get_host_port(26658).unwrap());
+    abci::set_abci_instance(Box::new(
+        abci::grpc::AbciinterfaceGrpc::connect(&url)
+            .map_err(|_| "failed to connect")
+            .unwrap(),
+    ))
+    .map_err(|_| "failed to set abci instance")
+    .unwrap();
+
+    let mut client = abci::get_abci_instance().unwrap();
     let flush_result = client.flush();
+
     assert_eq!(flush_result.is_ok(), true);
+}
 
+#[test]
+fn test_abci_info() {
+    let docker = clients::Cli::default();
+    let cosmos = images::generic::GenericImage::new(DOCKER_IMAGE)
+        .with_args(vec![
+            "start".to_owned(),
+            "--with-tendermint=false".to_owned(),
+            "--transport=grpc".to_owned(),
+        ])
+        .with_wait_for(images::generic::WaitFor::message_on_stdout(STDOUT_MESSAGE));
+    let node = docker.run(cosmos);
+    let url = format!("tcp://localhost:{}", node.get_host_port(26658).unwrap());
+    abci::set_abci_instance(Box::new(
+        abci::grpc::AbciinterfaceGrpc::connect(&url)
+            .map_err(|_| "failed to connect")
+            .unwrap(),
+    ))
+    .map_err(|_| "failed to set abci instance")
+    .unwrap();
+
+    let mut client = abci::get_abci_instance().unwrap();
     let info_result = client.info();
-    assert_eq!(info_result.unwrap().get_data(), "SimApp");
 
+    assert_eq!(info_result.unwrap().get_data(), "SimApp");
+}
+
+#[test]
+fn test_abci_set_option() {
+    let docker = clients::Cli::default();
+    let cosmos = images::generic::GenericImage::new(DOCKER_IMAGE)
+        .with_args(vec![
+            "start".to_owned(),
+            "--with-tendermint=false".to_owned(),
+            "--transport=grpc".to_owned(),
+        ])
+        .with_wait_for(images::generic::WaitFor::message_on_stdout(STDOUT_MESSAGE));
+    let node = docker.run(cosmos);
+    let url = format!("tcp://localhost:{}", node.get_host_port(26658).unwrap());
+    abci::set_abci_instance(Box::new(
+        abci::grpc::AbciinterfaceGrpc::connect(&url)
+            .map_err(|_| "failed to connect")
+            .unwrap(),
+    ))
+    .map_err(|_| "failed to set abci instance")
+    .unwrap();
+
+    let mut client = abci::get_abci_instance().unwrap();
     let set_option_result = client.set_option("my_opt", "yes");
+
     assert_eq!(set_option_result.unwrap().get_code(), 0);
 }
