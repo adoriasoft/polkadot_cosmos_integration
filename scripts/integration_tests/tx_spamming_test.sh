@@ -2,11 +2,12 @@
 trap "exit" INT TERM ERR
 trap "kill 0" EXIT
 
-##
+## import
 source ./testing_setup/test_utils.sh
+source ./testing_setup/basic_setup.sh
 
 ## Run cosmos and substrate nodes
-./testing_setup/basic_setup.sh &
+start_all
 sleep 20s
 
 ## sync bug test
@@ -20,6 +21,7 @@ for i in {1..200}
 do
     nscli tx nameservice set-name jack.id hello_world --from jack --chain-id namechain -y
 done
+sleep 20s
 
 value=$(nscli query nameservice resolve jack.id)
 assert_eq "$value" "value: hello_world"

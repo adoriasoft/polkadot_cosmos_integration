@@ -19,15 +19,12 @@ use sp_runtime::{
     DispatchError, RuntimeDebug,
 };
 use sp_runtime_interface::runtime_interface;
-use sp_std::{prelude::*, str};
-mod utils;
-use crate::utils::AbciCommitResponseToVec;
+use sp_std::prelude::*;
 
 /// The type to sign and send transactions.
 pub const UNSIGNED_TXS_PRIORITY: u64 = 100;
 
 pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"abci");
-
 /// Based on the above `KeyTypeId` we need to generate a pallet-specific crypto type wrapper.
 /// We can utilize the supported crypto kinds (`sr25519`, `ed25519` and `ecdsa`) and augment
 /// them with the pallet-specific identifier.
@@ -78,9 +75,7 @@ pub struct ABCITxs {
 
 decl_storage! {
     trait Store for Module<T: Trait> as ABCITxStorage {
-        ABCITxStorage get(fn abci_tx): map hasher(blake2_128_concat) T::BlockNumber => ABCITxs;
-        pub LastMerkleRootHash get(fn get_last_merkle_root_hash): Vec<u8>;
-        pub BlockRetainHeight get(fn get_retain_height): i64 = 0;
+        ABCITxStorage get(fn abci_tx): map hasher(blake2_128_concat) T::BlockNumber => ABCITxs
     }
 }
 
@@ -141,15 +136,8 @@ impl<T: Trait> Module<T> {
         let abci_txs: ABCITxs = <ABCITxStorage<T>>::get(block_number);
         for abci_tx in abci_txs.data_array {
             debug::info!("call_offchain_worker(), abci_tx: {:?}", abci_tx);
-            let result = <Self as CosmosAbci>::deliver_tx(abci_tx);
-            match result {
-                Ok(res) => {
-                    debug::info!("deliver_tx() success from offchain worker: {:?}", res);
-                }
-                Err(err) => {
-                    debug::info!("deliver_tx() error: {:?}", err);
-                }
-            }
+            <Self as CosmosAbci>::deliver_tx(abci_tx)
+                .map_err(|e| debug::error!("deliver_tx() error: {:?}", e));
         }
 
         Self::call_on_finalize(block_number);
@@ -181,27 +169,7 @@ impl<T: Trait> Module<T> {
                         // We have to panic, as if cosmos will not have some blocks - it will fail.
                         panic!("Commit failed: {:?}", err);
                     }
-                    Ok(response) => {
-                        let sep_index = response.iter().position(|&r| r == 101).unwrap();
-                        let block_retain_height_as_bytes = &response[0..sep_index];
-                        let last_merkle_root_hash: Vec<u8> =
-                            response[sep_index + 1..response.len() - 1].to_vec();
-                        let block_retain_height = str::from_utf8(block_retain_height_as_bytes)
-                            .unwrap_or("")
-                            .parse::<i64>()
-                            .unwrap_or(0);
-                        // Save last received `data` and `height` values in Substrate storage of abci pallet.
-                        <LastMerkleRootHash>::set(last_merkle_root_hash);
-                        <BlockRetainHeight>::set(block_retain_height);
-                        let last_merkle_root_hash_saved = Self::get_last_merkle_root_hash();
-
-                        debug::info!(
-                            "Store last Merkle root hash that is {:?}",
-                            last_merkle_root_hash_saved
-                        );
-
-                        return true;
-                    }
+                    _ => true,
                 }
             }
             Err(err) => {
@@ -269,16 +237,21 @@ pub trait AbciInterface {
             .check_tx(data, 0)
             .map_err(|_| "check_tx failed")?;
 
-        if result.get_code() != 0 {
-            Err(sp_runtime::DispatchError::Module {
-                index: u8::MIN,
-                error: result.get_code() as u8,
-                message: Some("Invalid tx data."),
-            })
-        } else {
-            let dif = result.get_gas_wanted() - result.get_gas_used();
-            Ok(dif as u64)
-        }
+        // TODO remove it after fix
+        let dif = result.get_gas_wanted() - result.get_gas_used();
+        Ok(dif as u64)
+
+        // TODO uncomment after fix
+        // if result.get_code() != 0 {
+        //     Err(sp_runtime::DispatchError::Module {
+        //         index: u8::MIN,
+        //         error: result.get_code() as u8,
+        //         message: Some("Invalid tx data."),
+        //     })
+        // } else {
+        //     let dif = result.get_gas_wanted() - result.get_gas_used();
+        //     Ok(dif as u64)
+        // }
     }
 
     fn deliver_tx(data: Vec<u8>) -> DispatchResult {
@@ -311,17 +284,13 @@ pub trait AbciInterface {
         Ok(())
     }
 
-    fn commit() -> Result<Vec<u8>, DispatchError> {
-        let result = abci::get_abci_instance()
+    fn commit() -> DispatchResult {
+        let _result = abci::get_abci_instance()
             .map_err(|_| "failed to setup connection")?
             .commit()
             .map_err(|_| "commit failed")?;
-        let response = utils::AbciCommitResponse {
-            height: result.get_retain_height(),
-            hash: result.get_data(),
-        };
-        let height = response.to_string();
-        Ok(response.owned_to_vec(height.as_bytes().to_vec()))
+        // debug::info!("Result: {:?}", result);
+        Ok(())
     }
 
     fn query(path: &str, data: Vec<u8>, height: i64, prove: bool) -> DispatchResult {
