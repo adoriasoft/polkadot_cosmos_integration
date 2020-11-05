@@ -1,5 +1,1 @@
-Dockerfile
-Jenkinsfile
-.git
-.github
-README.md
+target/

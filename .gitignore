@@ -23,8 +23,9 @@ target
 
 node_modules
 
+scripts/integration_tests/tmp
+
 # *pb.*
-token_data
-test*
+token_datas
 
 .maintain/res

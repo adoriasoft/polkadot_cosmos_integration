@@ -1,0 +1,3 @@
+[submodule "cosmos-sdk"]
+	path = cosmos-sdk
+	url = https://github.com/adoriasoft/cosmos-sdk.git

@@ -4,15 +4,11 @@ on:
   push:
     branches:
       - master
-    paths:
-      - 'substrate/*'
-      - 'substrate/**/*'
+      - develop
   pull_request:
     branches:
       - master
-    paths:
-      - 'substrate/*'
-      - 'substrate/**/*'
+      - develop
 
 jobs:
   build_and_test_substrate:
@@ -20,21 +16,16 @@ jobs:
     
     steps:
       - uses: actions/checkout@v1
-      - name: setup
+      - name: rust-setup
         run: | 
             curl https://getsubstrate.io -sSf | bash -s -- --fast
             source ~/.cargo/env
-            rustup default stable
-            rustup update nightly
-            rustup update stable
-            rustup target add wasm32-unknown-unknown --toolchain nightly
+            rustup default nightly
+            rustup target add wasm32-unknown-unknown
+            rustup component add rustfmt
             rustup update
       - name: build
-        run: | 
-            cd substrate
-            cargo clean
-            cargo build --release
+        run: cargo build
       - name: test
-        run: |
-            cd substrate
-            cargo test --all
+        run: cargo test --all
+
