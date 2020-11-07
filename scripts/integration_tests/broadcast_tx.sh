@@ -7,7 +7,7 @@ source ./testing_setup/test_utils.sh
 
 ## Run cosmos and substrate nodes
 ./testing_setup/basic_setup.sh &
-sleep 10s
+sleep 20s
 
 ## broadcast_tx_sync test (sync mode)
 nscli tx nameservice buy-name jack.id 5nametoken --from jack --chain-id namechain -y --broadcast-mode sync
