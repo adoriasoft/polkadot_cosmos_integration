@@ -55,8 +55,7 @@ cargo test --test abci_unit_test
 
 #### Bash integration tests
 
-cd ./scripts/integration_tests &&
-./batch_tests.sh
+cd ./scripts/integration_tests && ./batch_tests.sh
 
 ### Single Node Development Chain
 
