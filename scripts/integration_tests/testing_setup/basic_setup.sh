@@ -15,19 +15,37 @@ function substrate_start() {
     ./../../target/debug/node-template purge-chain --dev -y
     echo "Run Substrate"
     ./../../target/debug/node-template --dev &> tmp/substrate_log.log &
+    SUBSTRATE_PID=$!
+    echo "$SUBSTRATE_PID"
 }
 
 function comsos_start() {
     echo "Setup cosmos application"
     nsd unsafe-reset-all
     nsd start --with-tendermint=false --transport=grpc &> tmp/cosmos_log.log &
+    COSMOS_PID=$!
+    echo "$COSMOS_PID"
 }
 
+function stop_substrate() {
+    echo "$SUBSTRATE_PID"
+    kill $SUBSTRATE_PID
+}
 
-clean
-comsos_start
-sleep 1s
-substrate_start
+function stop_cosmos() {
+    echo "$COSMOS_PID"
+    kill $COSMOS_PID
+}
 
-wait
+function start_all() {
+    clean
+    comsos_start
+    sleep 1s
+    substrate_start
+}
+
+function stop_all() {
+    stop_substrate
+    stop_cosmos
+}
 

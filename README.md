@@ -24,6 +24,8 @@ cargo build
 
 ## Run
 
+Before running substrate node, you should build and start cosmos node. Go to the our fork of the [cosmos-sdk](https://github.com/adoriasoft/cosmos-sdk/tree/master), switch to the branch [feature/add_nameservice](https://github.com/adoriasoft/cosmos-sdk/tree/feature/add_nameservice), then just follow [instractions](https://github.com/adoriasoft/cosmos-sdk/tree/feature/add_nameservice/simapp).
+
 To run node locally you will need to specify the environment variables for cosmos-abci pallet.
 
 ```bash
