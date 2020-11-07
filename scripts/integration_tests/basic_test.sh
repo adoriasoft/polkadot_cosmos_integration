@@ -2,11 +2,12 @@
 trap "exit" INT TERM ERR
 trap "kill 0" EXIT
 
-##
+## import
 source ./testing_setup/test_utils.sh
+source ./testing_setup/basic_setup.sh
 
 ## Run cosmos and substrate nodes
-./testing_setup/basic_setup.sh &
+start_all
 sleep 20s
 
 

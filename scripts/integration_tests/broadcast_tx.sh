@@ -2,24 +2,25 @@
 trap "exit" INT TERM ERR
 trap "kill 0" EXIT
 
-##
+## import
 source ./testing_setup/test_utils.sh
+source ./testing_setup/basic_setup.sh
 
 ## Run cosmos and substrate nodes
-./testing_setup/basic_setup.sh &
+start_all
 sleep 20s
 
 ## broadcast_tx_sync test (sync mode)
 nscli tx nameservice buy-name jack.id 5nametoken --from jack --chain-id namechain -y --broadcast-mode sync
-sleep 10s
+sleep 20s
 nscli tx nameservice set-name jack.id jack_my --from jack --chain-id namechain -y --broadcast-mode sync
-sleep 10s
+sleep 20s
 
 ## broadcast_tx_async test (async mode)
 nscli tx nameservice buy-name alice.id 5nametoken --from alice --chain-id namechain -y --broadcast-mode async
-sleep 10s
+sleep 20s
 nscli tx nameservice set-name alice.id alice_my --from alice --chain-id namechain -y --broadcast-mode async
-sleep 10s
+sleep 20s
 
 jack_id=$(nscli query nameservice resolve jack.id)
 alice_id=$(nscli query nameservice resolve alice.id)

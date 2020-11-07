@@ -2,7 +2,7 @@
 trap "exit" INT TERM ERR
 trap "kill 0" EXIT
 
-##
+## import
 source ./testing_setup/test_utils.sh
 
 docker-compose -f ../../docker-compose.yml up -d
