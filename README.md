@@ -43,14 +43,21 @@ export ABCI_GENESIS_STATE=$(cat $HOME/.nsd/config/genesis.json)
 
 ### Tests
 
+#### Pallets tests
+
 To run tests from local use commands:
 
 ```sh
 # pallet-cosmos-abci
 cargo test --test pallet_abci_test
 # abci
-cargo test --test abci_test
+cargo test --test abci_integration_test
+cargo test --test abci_unit_test
 ```
+
+#### Bash integration tests
+
+Follow to the scripts/integration_tests directory
 
 ### Single Node Development Chain
 
