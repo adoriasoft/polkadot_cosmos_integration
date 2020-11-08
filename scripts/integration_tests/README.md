@@ -5,7 +5,6 @@ For these just follow the instructions from the root directory of this project.\
 You can run each tests separetelly:
 ```sh
 ./basic_test.sh
-./batch_tests.sh
 ./broadcast_tx.sh
 ./docker_test.sh
 ./stoping_nodes_test.sh
