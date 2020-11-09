@@ -18,7 +18,7 @@ native_executor_instance!(
     pub Executor,
     node_template_runtime::api::dispatch,
     node_template_runtime::native_version,
-    node_template_runtime::cosmos_abci::abci_interface::HostFunctions,
+    node_template_runtime::pallet_cosmos_abci::abci_interface::HostFunctions,
 );
 
 /// Client type that include Block, RuntimeApi and Executor.

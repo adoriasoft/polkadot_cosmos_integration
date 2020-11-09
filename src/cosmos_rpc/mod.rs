@@ -5,7 +5,7 @@ mod types;
 
 use jsonrpc_http_server::jsonrpc_core::{serde_json::json, Error, ErrorCode, IoHandler, Params};
 use jsonrpc_http_server::ServerBuilder;
-use node_template_runtime::cosmos_abci::ExtrinsicConstructionApi;
+use node_template_runtime::pallet_cosmos_abci::ExtrinsicConstructionApi;
 use node_template_runtime::opaque::Block;
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
@@ -59,7 +59,7 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
 
     /** Substrate RPC info() method. */
     async fn fetch_abci_info(_: Params) -> sc_service::Result<jsonrpc_core::Value, Error> {
-        let result = abci::get_abci_instance()
+        let result = pallet_abci::get_abci_instance()
             .map_err(handle_error)?
             .info()
             .map_err(handle_error)?;
@@ -80,7 +80,7 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
         let query_params: types::AbciSetOption = params.parse()?;
         let key: &str = &query_params.key;
         let value: &str = &query_params.value;
-        let abci_instance_res = abci::get_abci_instance()
+        let abci_instance_res = pallet_abci::get_abci_instance()
             .ok()
             .ok_or(FAILED_SETUP_CONNECTION_MSG);
 
@@ -109,7 +109,7 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
     /** Substrate RPC query() method. */
     async fn fetch_abci_query(params: Params) -> sc_service::Result<jsonrpc_core::Value, Error> {
         let query_params: types::AbciQueryParams = params.parse()?;
-        let abci_instance_res = abci::get_abci_instance()
+        let abci_instance_res = pallet_abci::get_abci_instance()
             .ok()
             .ok_or(FAILED_SETUP_CONNECTION_MSG);
 
@@ -188,7 +188,7 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
 
     /** Substrate RPC flush() method. */
     async fn fetch_abci_flush(_: Params) -> sc_service::Result<jsonrpc_core::Value, Error> {
-        let abci_instance_res = abci::get_abci_instance()
+        let abci_instance_res = pallet_abci::get_abci_instance()
             .ok()
             .ok_or(FAILED_SETUP_CONNECTION_MSG);
 
@@ -296,7 +296,7 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
             let tx_value = base64::decode(params.tx)
                 .map_err(|_| handle_error(FAILED_TO_DECODE_TX_MSG.to_owned().into()))?;
 
-            let result = abci::get_abci_instance()
+            let result = pallet_abci::get_abci_instance()
                 .map_err(handle_error)?
                 .check_tx(tx_value.clone())
                 .map_err(handle_error)?;
@@ -321,7 +321,7 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
             let tx_value = base64::decode(params.tx)
                 .map_err(|_| handle_error(FAILED_TO_DECODE_TX_MSG.to_owned().into()))?;
 
-            let result = abci::get_abci_instance()
+            let result = pallet_abci::get_abci_instance()
                 .map_err(handle_error)?
                 .check_tx(tx_value.clone())
                 .map_err(handle_error)?;

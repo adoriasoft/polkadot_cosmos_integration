@@ -1,10 +1,77 @@
+[package]
+name = 'node-template'
+authors = ['Substrate DevHub <https://github.com/substrate-developer-hub>']
+build = 'build.rs'
+description = 'A fresh FRAME-based Substrate node, ready for hacking.'
+edition = '2018'
+homepage = 'https://substrate.dev'
+license = 'Unlicense'
+repository = 'https://github.com/substrate-developer-hub/substrate-node-template/'
+version = '2.0.0'
+
 [profile.release]
 panic = 'unwind'
 
 [workspace]
 members = [
-    'node',
-    'pallets/cosmos-abci',
-    'pallets/cosmos-abci/abci',
+    'cosmos-abci',
+    'cosmos-abci/abci',
     'runtime',
 ]
+
+[package.metadata.docs.rs]
+targets = ['x86_64-unknown-linux-gnu']
+
+[[bin]]
+name = 'node-template'
+
+[dependencies]
+# jsonrpc-http-server = '15.1.0'
+jsonrpc-http-server = { git = "https://github.com/enfipy/jsonrpc", rev = "4bca2c5186a873488d5fb989b28cb9c7225ec9c6" }
+jsonrpc-core = '15.0.0'
+structopt = '0.3.8'
+serde = '1.0.41'
+serde_derive = '1.0.41'
+serde_json = '1.0.41'
+futures = { version = "0.3.1", features = ["compat"] }
+base64 = '0.12.3'
+hex = '0.4.2'
+
+# local dependencies
+node-template-runtime = { path = 'runtime', version = '2.0.0' }
+pallet-cosmos-abci = { path = 'cosmos-abci', version = '2.0.0' }
+pallet-abci = { path = 'cosmos-abci/abci', version = '0.1.0' }
+
+# Substrate dependencies
+frame-benchmarking = '2.0.0'
+frame-benchmarking-cli = '2.0.0'
+pallet-transaction-payment-rpc = '2.0.0'
+sc-basic-authorship = '0.8.0'
+sc-cli = { features = ['wasmtime'], version = '0.8.0' }
+sc-client-api = '2.0.0'
+sc-consensus = '0.8.0'
+sc-consensus-aura = '0.8.0'
+sc-executor = { features = ['wasmtime'], version = '0.8.0' }
+sc-finality-grandpa = '0.8.0'
+sc-rpc = '2.0.0'
+sc-rpc-api = '0.8.0'
+sc-service = { features = ['wasmtime'], version = '0.8.0' }
+sc-transaction-pool = '2.0.0'
+sp-api = '2.0.0'
+sp-block-builder = '2.0.0'
+sp-blockchain = '2.0.0'
+sp-consensus = '0.8.0'
+sp-consensus-aura = '0.8.0'
+sp-core = '2.0.0'
+sp-finality-grandpa = '2.0.0'
+sp-inherents = '2.0.0'
+sp-runtime = '2.0.0'
+sp-transaction-pool = '2.0.0'
+substrate-frame-rpc-system = '2.0.0'
+
+[build-dependencies]
+substrate-build-script-utils = '2.0.0'
+
+[features]
+default = []
+runtime-benchmarks = ['node-template-runtime/runtime-benchmarks']
