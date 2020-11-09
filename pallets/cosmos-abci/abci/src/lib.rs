@@ -20,9 +20,11 @@ lazy_static! {
 
 type AbciResult<T> = Result<Box<T>, Box<dyn std::error::Error>>;
 
+/// Trait that specify fields of ResponseFlush.
 #[automock]
 pub trait ResponseFlush {}
 
+/// Trait that specify fields of ResponseEcho.
 #[automock]
 pub trait ResponseEcho {
     fn get_message(&self) -> String;
@@ -30,6 +32,7 @@ pub trait ResponseEcho {
     fn set_message(&mut self, v: String);
 }
 
+/// Trait that specify fields of ResponseCheckTx.
 #[automock]
 pub trait ResponseCheckTx {
     fn get_code(&self) -> u32;
@@ -49,6 +52,7 @@ pub trait ResponseCheckTx {
     fn set_codespace(&mut self, v: String);
 }
 
+/// Trait that specify fields of ResponseDeliverTx.
 #[automock]
 pub trait ResponseDeliverTx {
     fn get_code(&self) -> u32;
@@ -68,9 +72,11 @@ pub trait ResponseDeliverTx {
     fn set_codespace(&mut self, v: String);
 }
 
+/// Trait that specify fields of ResponseInitChain.
 #[automock]
 pub trait ResponseInitChain {}
 
+/// Trait that specify fields for ResponseSetOption.
 #[automock]
 pub trait ResponseSetOption {
     fn get_code(&self) -> u32;
@@ -78,12 +84,15 @@ pub trait ResponseSetOption {
     fn get_info(&self) -> String;
 }
 
+/// Trait that specify fields for ResponseBeginBlock.
 #[automock]
 pub trait ResponseBeginBlock {}
 
+/// Trait that specify fields for ResponseEndBlock.
 #[automock]
 pub trait ResponseEndBlock {}
 
+/// Trait that specify fields for ResponseCommit.
 #[automock]
 pub trait ResponseCommit {
     fn get_data(&self) -> Vec<u8>;
@@ -93,6 +102,7 @@ pub trait ResponseCommit {
     fn set_retain_height(&mut self, v: i64);
 }
 
+/// Trait that specify fields for ResponseInfo.
 #[automock]
 pub trait ResponseInfo {
     fn get_version(&self) -> String;
@@ -102,6 +112,7 @@ pub trait ResponseInfo {
     fn get_last_block_app_hash(&self) -> Vec<u8>;
 }
 
+/// Trait that specify fields for ResponseQuery.
 #[automock]
 pub trait ResponseQuery {
     fn get_code(&self) -> u32;
@@ -124,6 +135,7 @@ pub trait ResponseQuery {
     fn set_codespace(&mut self, v: String);
 }
 
+/// AbciInterface trait that define abci methods.
 #[automock]
 pub trait AbciInterface {
     fn echo(&mut self, message: String) -> AbciResult<dyn ResponseEcho>;
@@ -172,6 +184,7 @@ pub trait AbciInterface {
     fn flush(&mut self) -> AbciResult<dyn ResponseFlush>;
 }
 
+/// Method that set abci instance.
 pub fn set_abci_instance<'ret>(
     new_instance: Box<dyn AbciInterface + Send>,
 ) -> Result<
@@ -186,6 +199,7 @@ pub fn set_abci_instance<'ret>(
     Ok(res)
 }
 
+/// Method that allow to get abci instance.
 pub fn get_abci_instance<'ret>() -> Result<
     MutexGuardRefMut<'ret, Option<Box<dyn AbciInterface + Send>>, Box<dyn AbciInterface + Send>>,
     Box<dyn std::error::Error>,

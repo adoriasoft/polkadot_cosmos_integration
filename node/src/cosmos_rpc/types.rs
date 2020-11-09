@@ -1,5 +1,8 @@
+//! types module that map Substrate RPC responses.
+
 use serde_derive::{Deserialize, Serialize};
 
+/// AbciQueryParams RPC response.
 #[derive(Serialize, Deserialize)]
 pub struct AbciQueryParams {
     pub path: String,
@@ -8,11 +11,13 @@ pub struct AbciQueryParams {
     pub prove: bool,
 }
 
+/// AbciTxCommitParams RPC response.
 #[derive(Serialize, Deserialize)]
 pub struct AbciTxCommitParams {
     pub tx: String,
 }
 
+// AbciTxBroadcastParams RPC response.
 #[derive(Serialize, Deserialize)]
 pub struct AbciTxBroadcastParams {
     pub tx: String,
