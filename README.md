@@ -2,6 +2,10 @@
 
 A new FRAME-based Substrate node with Cosmos ABCI.
 
+## Documentation
+
+Documentation for this project is [here](https://github.com/adoriasoft/polkadot-cosmos-docs)
+
 ## Build
 
 Install Rust:
