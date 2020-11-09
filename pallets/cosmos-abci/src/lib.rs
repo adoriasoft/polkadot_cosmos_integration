@@ -23,7 +23,7 @@ use sp_runtime::{
 use sp_runtime_interface::runtime_interface;
 use sp_std::prelude::*;
 
-/// The type to sign and send transactions.
+/// Priority for unsigned transaction.
 pub const UNSIGNED_TXS_PRIORITY: u64 = 100;
 
 /// The KeyType ID.
