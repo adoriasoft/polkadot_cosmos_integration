@@ -2,6 +2,7 @@ use testcontainers::*;
 
 const STDOUT_MESSAGE: &str = "starting ABCI";
 const DOCKER_IMAGE: &str = "andoriasoft/cosmos-node:latest";
+const DOCKER_PORT: u16 = 26658;
 
 #[test]
 fn test_abci_begin_block() {
@@ -14,7 +15,10 @@ fn test_abci_begin_block() {
         ])
         .with_wait_for(images::generic::WaitFor::message_on_stdout(STDOUT_MESSAGE));
     let node = docker.run(cosmos);
-    let url = format!("tcp://localhost:{}", node.get_host_port(26658).unwrap());
+    let url = format!(
+        "tcp://localhost:{}",
+        node.get_host_port(DOCKER_PORT).unwrap_or(DOCKER_PORT)
+    );
     abci::set_abci_instance(Box::new(
         abci::grpc::AbciinterfaceGrpc::connect(&url)
             .map_err(|_| "failed to connect")
@@ -77,7 +81,10 @@ fn test_abci_flush() {
         ])
         .with_wait_for(images::generic::WaitFor::message_on_stdout(STDOUT_MESSAGE));
     let node = docker.run(cosmos);
-    let url = format!("tcp://localhost:{}", node.get_host_port(26658).unwrap());
+    let url = format!(
+        "tcp://localhost:{}",
+        node.get_host_port(DOCKER_PORT).unwrap_or(DOCKER_PORT)
+    );
     abci::set_abci_instance(Box::new(
         abci::grpc::AbciinterfaceGrpc::connect(&url)
             .map_err(|_| "failed to connect")
@@ -103,7 +110,10 @@ fn test_abci_info() {
         ])
         .with_wait_for(images::generic::WaitFor::message_on_stdout(STDOUT_MESSAGE));
     let node = docker.run(cosmos);
-    let url = format!("tcp://localhost:{}", node.get_host_port(26658).unwrap());
+    let url = format!(
+        "tcp://localhost:{}",
+        node.get_host_port(DOCKER_PORT).unwrap_or(DOCKER_PORT)
+    );
     abci::set_abci_instance(Box::new(
         abci::grpc::AbciinterfaceGrpc::connect(&url)
             .map_err(|_| "failed to connect")
@@ -129,7 +139,10 @@ fn test_abci_set_option() {
         ])
         .with_wait_for(images::generic::WaitFor::message_on_stdout(STDOUT_MESSAGE));
     let node = docker.run(cosmos);
-    let url = format!("tcp://localhost:{}", node.get_host_port(26658).unwrap());
+    let url = format!(
+        "tcp://localhost:{}",
+        node.get_host_port(DOCKER_PORT).unwrap_or(DOCKER_PORT)
+    );
     abci::set_abci_instance(Box::new(
         abci::grpc::AbciinterfaceGrpc::connect(&url)
             .map_err(|_| "failed to connect")
