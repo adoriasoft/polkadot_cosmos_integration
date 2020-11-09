@@ -384,7 +384,6 @@ pub type Executive = frame_executive::Executive<
     AllModules,
 >;
 
-/// Implement extrinsics for interact with Substrate runtime.
 impl_runtime_apis! {
     impl sp_api::Core<Block> for Runtime {
         fn version() -> RuntimeVersion {
