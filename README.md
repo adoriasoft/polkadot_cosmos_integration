@@ -2,6 +2,10 @@
 
 A new FRAME-based Substrate node with Cosmos ABCI.
 
+## Documentation
+
+Documentation for this project is [here](https://github.com/adoriasoft/polkadot-cosmos-docs)
+
 ## Build
 
 Install Rust:
@@ -51,6 +55,10 @@ cargo test --test pallet_abci_test
 # abci
 cargo test --test abci_test
 ```
+
+#### Bash integration tests
+
+Follow to the scripts/integration_tests directory
 
 ### Single Node Development Chain
 
