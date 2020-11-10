@@ -8,12 +8,12 @@ source ./testing_setup/basic_setup.sh
 
 ## Run cosmos and substrate nodes
 start_all
-sleep 25s
+sleep 20s
 
 ## stoping nodes test
 
 stop_all
-sleep 25s
+sleep 20s
 
 
 test_passed "stoping nodes test"
