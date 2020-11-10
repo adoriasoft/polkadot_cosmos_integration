@@ -199,7 +199,6 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
     async fn abci_check_tx(params: Params) -> sc_service::Result<jsonrpc_core::Value, Error> {
         let query_params: types::AbciCheckTx = params.parse().unwrap();
         let tx = hex::decode(query_params.tx).unwrap_or(vec![]);
-        let check_tx_type = query_params.check_tx_type;
         let abci_instance_res = abci::get_abci_instance()
             .ok()
             .ok_or(FAILED_SETUP_CONNECTION_MSG);
@@ -207,7 +206,7 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
         match abci_instance_res {
             Ok(mut abci_instance_res_ok) => {
                 let abci_check_tx_res = abci_instance_res_ok
-                    .check_tx(tx, check_tx_type)
+                    .check_tx(tx)
                     .ok()
                     .ok_or("Failed to CheckTx().");
 
@@ -286,7 +285,7 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
 
             let result = abci::get_abci_instance()
                 .map_err(handle_error)?
-                .check_tx(tx_value.clone(), 0)
+                .check_tx(tx_value.clone())
                 .map_err(handle_error)?;
 
             broadcast_abci_tx(tx_value, client);
@@ -311,7 +310,7 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
 
             let result = abci::get_abci_instance()
                 .map_err(handle_error)?
-                .check_tx(tx_value.clone(), 0)
+                .check_tx(tx_value.clone())
                 .map_err(handle_error)?;
 
             let best_height: u32 = broadcast_abci_tx(tx_value, client);

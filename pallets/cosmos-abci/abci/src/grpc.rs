@@ -43,21 +43,21 @@ impl crate::AbciInterface for AbciinterfaceGrpc {
         Ok(Box::new(response.into_inner()))
     }
 
-    /// Type: 0 - New, 1 - Recheck
     fn check_tx(
         &mut self,
         tx: Vec<u8>,
-        tx_type: i32,
+        // tx_type: i32,
     ) -> crate::AbciResult<dyn crate::ResponseCheckTx> {
         let is_tx_exists = self.tx_chain.contains(&tx);
+        println!("check_tx() {}", is_tx_exists);
         self.tx_chain.push(tx.clone());
-        let mut tx_type_mut = tx_type;
+        let mut tx_type = 0;
         if is_tx_exists {
-            tx_type_mut = 1;
+            tx_type = 1;
         }
         let request = tonic::Request::new(protos::RequestCheckTx {
             tx,
-            r#type: tx_type_mut,
+            r#type: tx_type,
         });
         let future = self.client.check_tx(request);
         let response = wait(&self.rt, future)?;
