@@ -66,9 +66,7 @@ pub trait CosmosAbci {
 
 /// The pallet configuration trait.
 pub trait Trait: CreateSignedTransaction<Call<Self>> {
-    /// The identifier type for an offchain worker.
     type AuthorityId: AppCrypto<Self::Public, Self::Signature>;
-    /// The overarching dispatch call type.
     type Call: From<Call<Self>>;
 }
 
@@ -78,27 +76,24 @@ pub struct ABCITxs {
     data_array: Vec<Vec<u8>>,
 }
 
-/// The pallet storage.
 decl_storage! {
     trait Store for Module<T: Trait> as ABCITxStorage {
         ABCITxStorage get(fn abci_tx): map hasher(blake2_128_concat) T::BlockNumber => ABCITxs
     }
 }
 
-/// The pallet module methods.
 decl_module! {
-    /// The module declaration.
     pub struct Module<T: Trait> for enum Call where origin: T::Origin {
-        /// Block initialization.
+        // Block initialization.
         fn on_initialize(block_number: T::BlockNumber) -> Weight {
             0
         }
 
-        /// Block finalization.
+        // Block finalization.
         fn on_finalize(block_number: T::BlockNumber) {
         }
 
-        /// Transaction dispatch.
+        // Transaction dispatch.
         #[weight = 0]
         pub fn abci_transaction(origin, data: Vec<u8>) -> DispatchResult {
             let _ = ensure_none(origin)?;
@@ -107,7 +102,7 @@ decl_module! {
             Ok(())
         }
 
-        /// Offchain worker logic.
+        // Offchain worker logic.
         fn offchain_worker(block_number: T::BlockNumber) {
             if block_number.saturated_into() as i64 != 0 {
                 // hash of the current block
@@ -125,7 +120,7 @@ decl_module! {
 
 /// Implementation of additional methods for pallet configuration trait.
 impl<T: Trait> Module<T> {
-    /// The abci transaction call.
+    // The abci transaction call.
     pub fn call_abci_transaction(data: Vec<u8>) -> DispatchResult {
         let block_number = <system::Module<T>>::block_number();
         let mut abci_txs: ABCITxs = <ABCITxStorage<T>>::get(block_number);
@@ -134,7 +129,7 @@ impl<T: Trait> Module<T> {
         Ok(())
     }
 
-    /// The abci offchain worker call.
+    // Called on offchain worker executive.
     pub fn call_offchain_worker(
         block_number: T::BlockNumber,
         block_hash: T::Hash,
@@ -150,11 +145,10 @@ impl<T: Trait> Module<T> {
             <Self as CosmosAbci>::deliver_tx(abci_tx)
                 .map_err(|e| debug::error!("deliver_tx() error: {:?}", e));
         }
-
         Self::call_on_finalize(block_number);
     }
 
-    /// Logic that called then block initialize.
+    // Called on block initialize.
     pub fn call_on_initialize(
         block_number: T::BlockNumber,
         block_hash: T::Hash,
@@ -172,7 +166,7 @@ impl<T: Trait> Module<T> {
         return true;
     }
 
-    /// Logic that called then block finalize.
+    /// Called on block finalize.
     pub fn call_on_finalize(block_number: T::BlockNumber) -> bool {
         match abci_interface::end_block(block_number.saturated_into() as i64) {
             Ok(_) => match abci_interface::commit() {

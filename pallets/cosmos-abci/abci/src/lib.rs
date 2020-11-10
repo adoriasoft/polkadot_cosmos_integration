@@ -199,7 +199,7 @@ pub fn set_abci_instance<'ret>(
     Ok(res)
 }
 
-/// Method that allow to get abci instance.
+/// Method that return abci instance.
 pub fn get_abci_instance<'ret>() -> Result<
     MutexGuardRefMut<'ret, Option<Box<dyn AbciInterface + Send>>, Box<dyn AbciInterface + Send>>,
     Box<dyn std::error::Error>,

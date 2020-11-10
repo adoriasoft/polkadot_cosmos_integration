@@ -21,10 +21,14 @@ native_executor_instance!(
     node_template_runtime::cosmos_abci::abci_interface::HostFunctions,
 );
 
+/// Client type that include Block, RuntimeApi and Executor.
 pub type FullClient = sc_service::TFullClient<Block, RuntimeApi, Executor>;
+/// Backend type include Block.
 type FullBackend = sc_service::TFullBackend<Block>;
+/// Longest selected chain type include FullBackend, Block.
 type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
 
+/// Returns a new patrial.
 pub fn new_partial(
     config: &Configuration,
 ) -> Result<

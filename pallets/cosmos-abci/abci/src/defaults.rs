@@ -6,7 +6,7 @@ pub fn get_server_url() -> String {
     }
 }
 
-/// Default abci url.
+/// Default ABCI RPC url.
 pub const DEFAULT_ABCI_URL: &str = "tcp://localhost:26658";
 
 /// Genesis initial state.
