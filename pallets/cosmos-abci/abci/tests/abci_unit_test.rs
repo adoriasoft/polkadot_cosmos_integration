@@ -12,6 +12,7 @@ fn test_abci_echo() {
         Ok(Box::new(ret))
     });
 
+    //
     set_abci_instance(Box::new(abci_mock)).unwrap();
 
     assert_eq!(
@@ -66,7 +67,7 @@ fn test_abci_check_tx() {
     assert_ne!(
         get_abci_instance()
             .unwrap()
-            .check_tx(vec![1, 2, 4])
+            .check_tx(vec![1, 2, 3])
             .unwrap()
             .get_data(),
         vec![1, 2, 4]

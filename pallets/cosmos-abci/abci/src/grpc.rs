@@ -43,11 +43,7 @@ impl crate::AbciInterface for AbciinterfaceGrpc {
         Ok(Box::new(response.into_inner()))
     }
 
-    fn check_tx(
-        &mut self,
-        tx: Vec<u8>,
-        // tx_type: i32,
-    ) -> crate::AbciResult<dyn crate::ResponseCheckTx> {
+    fn check_tx(&mut self, tx: Vec<u8>) -> crate::AbciResult<dyn crate::ResponseCheckTx> {
         let is_tx_exists = self.tx_chain.contains(&tx);
         println!("check_tx() {}", is_tx_exists);
         self.tx_chain.push(tx.clone());

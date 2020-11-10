@@ -138,7 +138,6 @@ impl<T: Trait> Module<T> {
             debug::info!("call_offchain_worker(), abci_tx: {:?}", abci_tx);
             let result = <Self as CosmosAbci>::deliver_tx(abci_tx)
                 .map_err(|e| debug::error!("deliver_tx() error: {:?}", e));
-            // debug::info("deliver_tx() result code {}", result.unwrap());
         }
 
         Self::call_on_finalize(block_number);
