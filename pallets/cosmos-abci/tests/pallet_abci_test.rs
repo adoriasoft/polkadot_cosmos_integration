@@ -106,8 +106,10 @@ fn should_begin_block_on_initialize() {
         .with_wait_for(images::generic::WaitFor::message_on_stdout("starting ABCI"));
     let node = docker.run(cosmos);
 
-    // Init ABCI instance
-    let url = format!("tcp://localhost:{}", node.get_host_port(26658).unwrap());
+    let url = format!(
+        "tcp://localhost:{}",
+        node.get_host_port(26658).unwrap_or(26658)
+    );
     abci::set_abci_instance(Box::new(
         abci::grpc::AbciinterfaceGrpc::connect(&url)
             .map_err(|_| "failed to connect")

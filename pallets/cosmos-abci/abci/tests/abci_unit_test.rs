@@ -12,6 +12,7 @@ fn test_abci_echo() {
         Ok(Box::new(ret))
     });
 
+    //
     set_abci_instance(Box::new(abci_mock)).unwrap();
 
     assert_eq!(
@@ -45,21 +46,19 @@ fn test_abci_echo() {
 #[test]
 fn test_abci_check_tx() {
     let mut abci_mock = MockAbciInterface::new();
-    abci_mock
-        .expect_check_tx()
-        .returning(|v: Vec<u8>, r#_type: i32| {
-            let mut ret = MockResponseCheckTx::new();
-            ret.expect_get_data()
-                .returning(move || -> Vec<u8> { v.clone() });
-            Ok(Box::new(ret))
-        });
+    abci_mock.expect_check_tx().returning(|v: Vec<u8>| {
+        let mut ret = MockResponseCheckTx::new();
+        ret.expect_get_data()
+            .returning(move || -> Vec<u8> { v.clone() });
+        Ok(Box::new(ret))
+    });
 
     set_abci_instance(Box::new(abci_mock)).unwrap();
 
     assert_eq!(
         get_abci_instance()
             .unwrap()
-            .check_tx(vec![1, 2, 3], 0)
+            .check_tx(vec![1, 2, 3])
             .unwrap()
             .get_data(),
         vec![1, 2, 3]
@@ -68,7 +67,7 @@ fn test_abci_check_tx() {
     assert_ne!(
         get_abci_instance()
             .unwrap()
-            .check_tx(vec![1, 2, 3], 0)
+            .check_tx(vec![1, 2, 3])
             .unwrap()
             .get_data(),
         vec![1, 2, 4]

@@ -128,7 +128,7 @@ pub trait ResponseQuery {
 pub trait AbciInterface {
     fn echo(&mut self, message: String) -> AbciResult<dyn ResponseEcho>;
 
-    fn check_tx(&mut self, tx: Vec<u8>, r#type: i32) -> AbciResult<dyn ResponseCheckTx>;
+    fn check_tx(&mut self, tx: Vec<u8>) -> AbciResult<dyn ResponseCheckTx>;
 
     fn deliver_tx(&mut self, tx: Vec<u8>) -> AbciResult<dyn ResponseDeliverTx>;
 

@@ -136,7 +136,7 @@ impl<T: Trait> Module<T> {
         let abci_txs: ABCITxs = <ABCITxStorage<T>>::get(block_number);
         for abci_tx in abci_txs.data_array {
             debug::info!("call_offchain_worker(), abci_tx: {:?}", abci_tx);
-            <Self as CosmosAbci>::deliver_tx(abci_tx)
+            let result = <Self as CosmosAbci>::deliver_tx(abci_tx)
                 .map_err(|e| debug::error!("deliver_tx() error: {:?}", e));
         }
 
@@ -234,24 +234,19 @@ pub trait AbciInterface {
     fn check_tx(data: Vec<u8>) -> Result<u64, DispatchError> {
         let result = abci::get_abci_instance()
             .map_err(|_| "failed to setup connection")?
-            .check_tx(data, 0)
+            .check_tx(data)
             .map_err(|_| "check_tx failed")?;
 
-        // TODO remove it after fix
-        let dif = result.get_gas_wanted() - result.get_gas_used();
-        Ok(dif as u64)
-
-        // TODO uncomment after fix
-        // if result.get_code() != 0 {
-        //     Err(sp_runtime::DispatchError::Module {
-        //         index: u8::MIN,
-        //         error: result.get_code() as u8,
-        //         message: Some("Invalid tx data."),
-        //     })
-        // } else {
-        //     let dif = result.get_gas_wanted() - result.get_gas_used();
-        //     Ok(dif as u64)
-        // }
+        if result.get_code() != 0 {
+            Err(sp_runtime::DispatchError::Module {
+                index: u8::MIN,
+                error: result.get_code() as u8,
+                message: Some("Invalid tx data."),
+            })
+        } else {
+            let dif = result.get_gas_wanted() - result.get_gas_used();
+            Ok(dif as u64)
+        }
     }
 
     fn deliver_tx(data: Vec<u8>) -> DispatchResult {
