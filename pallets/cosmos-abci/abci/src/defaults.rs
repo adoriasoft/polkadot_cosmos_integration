@@ -1,3 +1,4 @@
+/// Method for getting RPC url form active env.
 pub fn get_server_url() -> String {
     match std::env::var("ABCI_SERVER_URL") {
         Ok(val) => val,
@@ -5,8 +6,10 @@ pub fn get_server_url() -> String {
     }
 }
 
+/// Default ABCI RPC url.
 pub const DEFAULT_ABCI_URL: &str = "tcp://localhost:26658";
 
+/// Genesis initial state.
 pub const TEST_GENESIS: &str = r#"
 {
     "genesis_time": "2020-09-10T18:03:56.233701Z",
@@ -255,16 +258,21 @@ pub const TEST_GENESIS: &str = r#"
     }
 }"#;
 
+/// App version type.
 pub type AppVersion = String;
+/// App block version type.
 pub type BlockVersion = u64;
+/// App P2P version type.
 pub type P2PVersion = u64;
 
+/// VersionConfigs struct that represent app version confuration.
 pub struct VersionConfigs {
     pub app_version: String,
     pub block_version: u64,
     pub p2p_version: u64,
 }
 
+/// Implementation for VersionConfigs struct.
 impl VersionConfigs {
     fn log_info(&self) {
         println!("BlockVersion is {}", self.block_version);
@@ -273,6 +281,7 @@ impl VersionConfigs {
     }
 }
 
+/// Method for getting app version configs.
 pub fn get_app_configs() -> VersionConfigs {
     let version_configs = VersionConfigs {
         app_version: "0.1.0".to_string(), // version specified at Cargo.toml of `abci` pallet.

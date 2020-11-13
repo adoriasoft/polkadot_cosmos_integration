@@ -1,3 +1,5 @@
+//! The pallet for interact with cosmos abci interface.
+
 #![cfg_attr(not(feature = "std"), no_std)]
 #[warn(unused_must_use)]
 use frame_support::{
@@ -21,9 +23,10 @@ use sp_runtime::{
 use sp_runtime_interface::runtime_interface;
 use sp_std::prelude::*;
 
-/// The type to sign and send transactions.
+/// Priority for unsigned transaction.
 pub const UNSIGNED_TXS_PRIORITY: u64 = 100;
 
+/// The KeyType ID.
 pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"abci");
 /// Based on the above `KeyTypeId` we need to generate a pallet-specific crypto type wrapper.
 /// We can utilize the supported crypto kinds (`sr25519`, `ed25519` and `ecdsa`) and augment
@@ -37,14 +40,14 @@ pub mod crypto {
     app_crypto!(sr25519, KEY_TYPE);
 
     pub struct ABCIAuthId;
-    // implemented for ocw-runtime
+    /// Implemented for ocw-runtime.
     impl frame_system::offchain::AppCrypto<MultiSigner, MultiSignature> for ABCIAuthId {
         type RuntimeAppPublic = Public;
         type GenericSignature = sp_core::sr25519::Signature;
         type GenericPublic = sp_core::sr25519::Public;
     }
 
-    // implemented for mock runtime in test
+    /// Implemented for mock runtime in test.
     impl frame_system::offchain::AppCrypto<<Sr25519Signature as Verify>::Signer, Sr25519Signature>
         for ABCIAuthId
     {
@@ -54,20 +57,20 @@ pub mod crypto {
     }
 }
 
+/// The CosmosAbci trait.
 pub trait CosmosAbci {
     fn check_tx(data: Vec<u8>) -> Result<u64, DispatchError>;
     fn deliver_tx(data: Vec<u8>) -> DispatchResult;
     fn query(path: &str, data: Vec<u8>, height: i64, prove: bool) -> DispatchResult;
 }
 
-/// The pallet's configuration trait.
+/// The pallet configuration trait.
 pub trait Trait: CreateSignedTransaction<Call<Self>> {
-    /// The identifier type for an offchain worker.
     type AuthorityId: AppCrypto<Self::Public, Self::Signature>;
-    /// The overarching dispatch call type.
     type Call: From<Call<Self>>;
 }
 
+/// The ABCITxs struct that keept map of txs.
 #[derive(Encode, Decode, Clone, Default, RuntimeDebug)]
 pub struct ABCITxs {
     data_array: Vec<Vec<u8>>,
@@ -79,19 +82,18 @@ decl_storage! {
     }
 }
 
-// The pallet's dispatchable functions.
 decl_module! {
-    /// The module declaration.
     pub struct Module<T: Trait> for enum Call where origin: T::Origin {
-        /// Block initialization
+        // Block initialization.
         fn on_initialize(block_number: T::BlockNumber) -> Weight {
             0
         }
 
-        /// Block finalization
+        // Block finalization.
         fn on_finalize(block_number: T::BlockNumber) {
         }
 
+        // Transaction dispatch.
         #[weight = 0]
         pub fn abci_transaction(origin, data: Vec<u8>) -> DispatchResult {
             let _ = ensure_none(origin)?;
@@ -100,6 +102,7 @@ decl_module! {
             Ok(())
         }
 
+        // Offchain worker logic.
         fn offchain_worker(block_number: T::BlockNumber) {
             if block_number.saturated_into() as i64 != 0 {
                 // hash of the current block
@@ -115,7 +118,9 @@ decl_module! {
     }
 }
 
+/// Implementation of additional methods for pallet configuration trait.
 impl<T: Trait> Module<T> {
+    // The abci transaction call.
     pub fn call_abci_transaction(data: Vec<u8>) -> DispatchResult {
         let block_number = <system::Module<T>>::block_number();
         let mut abci_txs: ABCITxs = <ABCITxStorage<T>>::get(block_number);
@@ -124,6 +129,7 @@ impl<T: Trait> Module<T> {
         Ok(())
     }
 
+    // Called on offchain worker executive.
     pub fn call_offchain_worker(
         block_number: T::BlockNumber,
         block_hash: T::Hash,
@@ -139,10 +145,10 @@ impl<T: Trait> Module<T> {
             let result = <Self as CosmosAbci>::deliver_tx(abci_tx)
                 .map_err(|e| debug::error!("deliver_tx() error: {:?}", e));
         }
-
         Self::call_on_finalize(block_number);
     }
 
+    // Called on block initialize.
     pub fn call_on_initialize(
         block_number: T::BlockNumber,
         block_hash: T::Hash,
@@ -155,31 +161,28 @@ impl<T: Trait> Module<T> {
             parent_hash.as_ref().to_vec(),
             extrinsics_root.as_ref().to_vec(),
         ) {
-            // We have to panic, as if cosmos will not have some blocks - it will fail.
             panic!("Begin block failed: {:?}", err);
         }
         return true;
     }
 
+    /// Called on block finalize.
     pub fn call_on_finalize(block_number: T::BlockNumber) -> bool {
         match abci_interface::end_block(block_number.saturated_into() as i64) {
-            Ok(_) => {
-                match abci_interface::commit() {
-                    Err(err) => {
-                        // We have to panic, as if cosmos will not have some blocks - it will fail.
-                        panic!("Commit failed: {:?}", err);
-                    }
-                    _ => true,
+            Ok(_) => match abci_interface::commit() {
+                Err(err) => {
+                    panic!("Commit failed: {:?}", err);
                 }
-            }
+                _ => true,
+            },
             Err(err) => {
-                // We have to panic, as if cosmos will not have some blocks - it will fail.
                 panic!("End block failed: {:?}", err);
             }
         }
     }
 }
 
+/// The implementation of ValidateUnsigned trait for module.
 impl<T: Trait> frame_support::unsigned::ValidateUnsigned for Module<T> {
     type Call = Call<T>;
 
@@ -200,6 +203,7 @@ impl<T: Trait> frame_support::unsigned::ValidateUnsigned for Module<T> {
     }
 }
 
+/// The implementation for CosmosAbci trait for module.
 impl<T: Trait> CosmosAbci for Module<T> {
     fn check_tx(data: Vec<u8>) -> Result<u64, DispatchError> {
         abci_interface::check_tx(data)
@@ -215,11 +219,13 @@ impl<T: Trait> CosmosAbci for Module<T> {
 }
 
 sp_api::decl_runtime_apis! {
+    /// ExtrinsicConstructionApi trait for define broadcast_abci_tx method.
     pub trait ExtrinsicConstructionApi {
         fn broadcast_abci_tx(data: &Vec<u8>);
     }
 }
 
+/// AbciInterface trait with runtime_interface macro.
 #[runtime_interface]
 pub trait AbciInterface {
     fn echo(msg: &str) -> DispatchResult {
