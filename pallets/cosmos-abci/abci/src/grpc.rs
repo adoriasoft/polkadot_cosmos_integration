@@ -13,6 +13,7 @@ pub struct AbciinterfaceGrpc {
     client: AbciClient,
     chain_id: String,
     last_commit_hash: Vec<u8>,
+    tx_chain: Vec<Vec<u8>>,
 }
 
 impl AbciinterfaceGrpc {
@@ -29,6 +30,7 @@ impl AbciinterfaceGrpc {
             client,
             chain_id: "default chain id".to_string(),
             last_commit_hash: vec![],
+            tx_chain: vec![],
         })
     }
 }
@@ -41,13 +43,18 @@ impl crate::AbciInterface for AbciinterfaceGrpc {
         Ok(Box::new(response.into_inner()))
     }
 
-    /// Type: 0 - New, 1 - Recheck
-    fn check_tx(
-        &mut self,
-        tx: Vec<u8>,
-        r#type: i32,
-    ) -> crate::AbciResult<dyn crate::ResponseCheckTx> {
-        let request = tonic::Request::new(protos::RequestCheckTx { tx, r#type });
+    fn check_tx(&mut self, tx: Vec<u8>) -> crate::AbciResult<dyn crate::ResponseCheckTx> {
+        let is_tx_exists = self.tx_chain.contains(&tx);
+        println!("check_tx() {}", is_tx_exists);
+        self.tx_chain.push(tx.clone());
+        let mut tx_type = 0;
+        if is_tx_exists {
+            tx_type = 1;
+        }
+        let request = tonic::Request::new(protos::RequestCheckTx {
+            tx,
+            r#type: tx_type,
+        });
         let future = self.client.check_tx(request);
         let response = wait(&self.rt, future)?;
         Ok(Box::new(response.into_inner()))

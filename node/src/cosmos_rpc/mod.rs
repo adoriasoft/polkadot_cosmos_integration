@@ -1,3 +1,6 @@
+//! A module that expose start_server() method for running Substrate RPC server from node.
+
+/// Declare types module.
 mod types;
 
 use jsonrpc_http_server::jsonrpc_core::{serde_json::json, Error, ErrorCode, IoHandler, Params};
@@ -9,10 +12,14 @@ use sp_blockchain::HeaderBackend;
 use sp_runtime::generic::BlockId;
 use std::sync::Arc;
 
+/// Default ABCI RPC url.
 pub const DEFAULT_ABCI_RPC_URL: &str = "127.0.0.1:26657";
+/// Error message for failed connection.
 pub const FAILED_SETUP_CONNECTION_MSG: &str = "Failed to get abci instance.";
+/// Error message for decode tx failed.
 pub const FAILED_TO_DECODE_TX_MSG: &str = "Failde to decode tx.";
 
+/// Method for getting RPC server url form active env.
 pub fn get_abci_rpc_url() -> String {
     match std::env::var("ABCI_RPC_SERVER_URL") {
         Ok(val) => val,
@@ -20,9 +27,11 @@ pub fn get_abci_rpc_url() -> String {
     }
 }
 
+/// Method for start RPC server.
 pub fn start_server(client: Arc<crate::service::FullClient>) {
     let mut io = IoHandler::new();
 
+    /** Method for broadcasting abci tx value and return block best_number. */
     fn broadcast_abci_tx(tx_value: Vec<u8>, client: Arc<crate::service::FullClient>) -> u32 {
         let info = client.info();
         let best_hash = info.best_hash;
@@ -32,7 +41,7 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
         info.best_number.into()
     };
 
-    // Handlers.
+    /** Handle and map RPC server error. */
     fn handle_error(e: std::boxed::Box<dyn std::error::Error>) -> Error {
         Error {
             code: ErrorCode::ServerError(1),
@@ -41,13 +50,14 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
         }
     }
 
+    /** Handle and dispatch not critical RPC server error. */
     fn handle_ok_error(e: &str) -> sc_service::Result<jsonrpc_core::Value, Error> {
         Ok(json!({
             "error": e.to_string()
         }))
     }
 
-    // Methods implementation.
+    /** Substrate RPC info() method. */
     async fn fetch_abci_info(_: Params) -> sc_service::Result<jsonrpc_core::Value, Error> {
         let result = abci::get_abci_instance()
             .map_err(handle_error)?
@@ -63,6 +73,7 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
         }))
     }
 
+    /** Substrate RPC set_option() method. */
     async fn fetch_abci_set_option(
         params: Params,
     ) -> sc_service::Result<jsonrpc_core::Value, Error> {
@@ -95,6 +106,7 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
         }
     }
 
+    /** Substrate RPC query() method. */
     async fn fetch_abci_query(params: Params) -> sc_service::Result<jsonrpc_core::Value, Error> {
         let query_params: types::AbciQueryParams = params.parse()?;
         let abci_instance_res = abci::get_abci_instance()
@@ -174,6 +186,7 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
         }
     }
 
+    /** Substrate RPC flush() method. */
     async fn fetch_abci_flush(_: Params) -> sc_service::Result<jsonrpc_core::Value, Error> {
         let abci_instance_res = abci::get_abci_instance()
             .ok()
@@ -196,10 +209,10 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
         }
     }
 
+    /** Substrate RPC check_tx() method. */
     async fn abci_check_tx(params: Params) -> sc_service::Result<jsonrpc_core::Value, Error> {
         let query_params: types::AbciCheckTx = params.parse().unwrap();
         let tx = hex::decode(query_params.tx).unwrap_or(vec![]);
-        let check_tx_type = query_params.check_tx_type;
         let abci_instance_res = abci::get_abci_instance()
             .ok()
             .ok_or(FAILED_SETUP_CONNECTION_MSG);
@@ -207,7 +220,7 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
         match abci_instance_res {
             Ok(mut abci_instance_res_ok) => {
                 let abci_check_tx_res = abci_instance_res_ok
-                    .check_tx(tx, check_tx_type)
+                    .check_tx(tx)
                     .ok()
                     .ok_or("Failed to CheckTx().");
 
@@ -245,7 +258,6 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
         }
     }
 
-    // IO methods mapping.
     io.add_method("abci_info", fetch_abci_info);
 
     io.add_method("abci_set_option", fetch_abci_set_option);
@@ -286,7 +298,7 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
 
             let result = abci::get_abci_instance()
                 .map_err(handle_error)?
-                .check_tx(tx_value.clone(), 0)
+                .check_tx(tx_value.clone())
                 .map_err(handle_error)?;
 
             broadcast_abci_tx(tx_value, client);
@@ -311,7 +323,7 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
 
             let result = abci::get_abci_instance()
                 .map_err(handle_error)?
-                .check_tx(tx_value.clone(), 0)
+                .check_tx(tx_value.clone())
                 .map_err(handle_error)?;
 
             let best_height: u32 = broadcast_abci_tx(tx_value, client);
@@ -333,7 +345,6 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
         }
     });
 
-    // Running.
     std::thread::spawn(move || {
         let server = ServerBuilder::new(io)
             .threads(3)
