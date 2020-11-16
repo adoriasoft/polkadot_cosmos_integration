@@ -164,7 +164,14 @@ impl crate::ResponseInitChain for ResponseInitChain {}
 
 impl crate::ResponseBeginBlock for ResponseBeginBlock {}
 
-impl crate::ResponseEndBlock for ResponseEndBlock {}
+impl crate::ResponseEndBlock for ResponseEndBlock {
+    fn get_validator_updates(&self) -> Vec<ValidatorUpdate> {
+        self.validator_updates.clone()
+    }
+    fn get_events(&self) -> Vec<Event> {
+        self.events.clone()
+    }
+}
 
 impl crate::ResponseCommit for ResponseCommit {
     fn get_data(&self) -> Vec<u8> {

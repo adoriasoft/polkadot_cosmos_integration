@@ -12,6 +12,7 @@ use frame_system::{
     self as system, ensure_none,
     offchain::{AppCrypto, CreateSignedTransaction},
 };
+use pallet_session as session;
 use sp_core::crypto::KeyTypeId;
 use sp_runtime::{
     traits::SaturatedConversion,
@@ -35,7 +36,8 @@ pub mod crypto {
     use crate::KEY_TYPE;
     use sp_core::sr25519::Signature as Sr25519Signature;
     use sp_runtime::app_crypto::{app_crypto, sr25519};
-    use sp_runtime::{traits::Verify, MultiSignature, MultiSigner};
+    use sp_runtime::traits::Verify;
+    use sp_runtime::{MultiSignature, MultiSigner};
 
     app_crypto!(sr25519, KEY_TYPE);
 
@@ -65,9 +67,17 @@ pub trait CosmosAbci {
 }
 
 /// The pallet configuration trait.
-pub trait Trait: CreateSignedTransaction<Call<Self>> {
+pub trait Trait: CreateSignedTransaction<Call<Self>> + pallet_session::Trait {
     type AuthorityId: AppCrypto<Self::Public, Self::Signature>;
+    // + Member
+    // + Parameter
+    // + RuntimeAppPublic
+    // + Default;
     type Call: From<Call<Self>>;
+}
+
+impl<T: Trait> sp_runtime::BoundToRuntimeAppPublic for Module<T> where <T as Trait>::AuthorityId: sp_runtime::RuntimeAppPublic {
+    type Public = T::AuthorityId;
 }
 
 /// The ABCITxs struct that keept map of txs.
@@ -114,7 +124,6 @@ decl_module! {
                 Self::call_offchain_worker(block_number, block_hash, parent_hash, extrinsics_root);
             }
         }
-
     }
 }
 
@@ -169,12 +178,16 @@ impl<T: Trait> Module<T> {
     /// Called on block finalize.
     pub fn call_on_finalize(block_number: T::BlockNumber) -> bool {
         match abci_interface::end_block(block_number.saturated_into() as i64) {
-            Ok(_) => match abci_interface::commit() {
-                Err(err) => {
-                    panic!("Commit failed: {:?}", err);
+            Ok(_) => {
+                let substrate_validators = <session::Module<T>>::validators();
+                debug::info!("Substrate validators: {:?}", substrate_validators);
+                match abci_interface::commit() {
+                    Err(err) => {
+                        panic!("Commit failed: {:?}", err);
+                    }
+                    _ => true,
                 }
-                _ => true,
-            },
+            }
             Err(err) => {
                 panic!("End block failed: {:?}", err);
             }
@@ -203,7 +216,7 @@ impl<T: Trait> frame_support::unsigned::ValidateUnsigned for Module<T> {
     }
 }
 
-/// The implementation for CosmosAbci trait for module.
+/// The implementation for CosmosAbci trait for pallet.
 impl<T: Trait> CosmosAbci for Module<T> {
     fn check_tx(data: Vec<u8>) -> Result<u64, DispatchError> {
         abci_interface::check_tx(data)
@@ -282,6 +295,9 @@ pub trait AbciInterface {
             .end_block(height)
             .map_err(|_| "end_block failed")?;
         // debug::info!("Result: {:?}", result);
+        let validator_updates = _result.get_validator_updates();
+        debug::info!("Cosmos validators: {:?}", validator_updates);
+
         Ok(())
     }
 

@@ -2,7 +2,8 @@ mod defaults;
 pub mod grpc;
 pub mod utils;
 
-use protos::crypto;
+// use protos::{crypto};
+use protos;
 
 pub use defaults::*;
 pub use grpc::*;
@@ -90,7 +91,10 @@ pub trait ResponseBeginBlock {}
 
 /// Trait that specify fields for ResponseEndBlock.
 #[automock]
-pub trait ResponseEndBlock {}
+pub trait ResponseEndBlock {
+    fn get_validator_updates(&self) -> Vec<protos::ValidatorUpdate>;
+    fn get_events(&self) -> Vec<protos::Event>;
+}
 
 /// Trait that specify fields for ResponseCommit.
 #[automock]
@@ -123,7 +127,7 @@ pub trait ResponseQuery {
     fn get_value(&self) -> Vec<u8>;
     fn get_height(&self) -> i64;
     fn get_codespace(&self) -> String;
-    fn get_proof(&self) -> Option<crypto::merkle::Proof>;
+    fn get_proof(&self) -> Option<protos::crypto::merkle::Proof>;
 
     fn set_code(&mut self, v: u32);
     fn set_log(&mut self, v: String);

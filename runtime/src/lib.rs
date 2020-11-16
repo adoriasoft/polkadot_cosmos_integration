@@ -12,14 +12,15 @@ use pallet_grandpa::{AuthorityId as GrandpaId, AuthorityList as GrandpaAuthority
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
-use sp_runtime::generic::Era;
+use sp_runtime::{generic::Era};
 use sp_runtime::traits::{
-    BlakeTwo256, Block as BlockT, IdentifyAccount, IdentityLookup, NumberFor, Saturating, Verify,
+    ConvertInto,
+    BlakeTwo256, Block as BlockT, IdentifyAccount, IdentityLookup, NumberFor, Saturating, Verify, OpaqueKeys
 };
 use sp_runtime::{
     create_runtime_str, generic, impl_opaque_keys,
     transaction_validity::{InvalidTransaction, TransactionSource, TransactionValidity},
-    ApplyExtrinsicResult, MultiSignature,
+    ApplyExtrinsicResult, MultiSignature, Perbill,
 };
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
@@ -43,7 +44,6 @@ pub use pallet_balances::Call as BalancesCall;
 pub use pallet_timestamp::Call as TimestampCall;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
-pub use sp_runtime::{Perbill, Permill};
 
 pub use cosmos_abci;
 
@@ -258,6 +258,36 @@ impl pallet_transaction_payment::Trait for Runtime {
     type FeeMultiplierUpdate = ();
 }
 
+parameter_types! {
+    pub const DisabledValidatorsThreshold: Perbill = Perbill::from_percent(33);
+    pub const Period: u32 = 1;
+    pub const Offset: u32 = 0;
+}
+
+/* #[cfg(feature = "historical")]
+struct TestSessionManager { }
+impl pallet_staking::historical::SessionManager<u64, u64> for TestSessionManager {
+	fn end_session(_: SessionIndex) {}
+	fn start_session(_: SessionIndex) {}
+	fn new_session(new_index: SessionIndex) -> Option<Vec<(u64, u64)>> {
+		<Self as SessionManager<_>>::new_session(new_index)
+			.map(|vals| vals.into_iter().map(|val| (val, val)).collect())
+	}
+} */
+
+impl pallet_session::Trait for Runtime {
+    type ValidatorId = <Self as frame_system::Trait>::AccountId;
+    type Keys = opaque::SessionKeys;
+    type WeightInfo = ();
+    type DisabledValidatorsThreshold = DisabledValidatorsThreshold;
+    type ValidatorIdOf = ConvertInto;// pallet_staking::StashOf<Self>;
+    type Event = Event;
+    type ShouldEndSession = pallet_session::PeriodicSessions<Period, Offset>;
+    type NextSessionRotation = pallet_session::PeriodicSessions<Period, Offset>;
+    type SessionManager = ();// pallet_session::historical::NoteHistoricalRoot<Self, TestSessionManager>;
+    type SessionHandler = <opaque::SessionKeys as OpaqueKeys>::KeyTypeIdProviders;
+}
+
 impl pallet_sudo::Trait for Runtime {
     type Event = Event;
     type Call = Call;
@@ -338,6 +368,8 @@ construct_runtime!(
         RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Module, Call, Storage},
         Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent},
         Aura: pallet_aura::{Module, Config<T>, Inherent},
+        Session: pallet_session::{Module, Call, Storage, Event, Config<T>},
+        // Staking: pallet_staking::{Module, Call, Config<T>, Storage, Event<T>, ValidateUnsigned},
         Grandpa: pallet_grandpa::{Module, Call, Storage, Config, Event},
         Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
         TransactionPayment: pallet_transaction_payment::{Module, Storage},
@@ -345,11 +377,6 @@ construct_runtime!(
         CosmosAbci: cosmos_abci::{Module, Call, ValidateUnsigned},
     }
 );
-
-/* pub struct AbciResponseQuery {
-    pub fn get_log,
-    pub get_info
-} */
 
 /// The address format for describing accounts.
 pub type Address = AccountId;
