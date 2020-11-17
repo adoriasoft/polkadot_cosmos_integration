@@ -167,6 +167,7 @@ codec = { package = 'parity-scale-codec', version = '1.3.1' }
 futures = { version = "0.3.1", features = ["compat"] }
 base64 = '0.12.3'
 hex = '0.4.2'
+hex-literal = "0.3.1"
 
 jsonrpc-http-server = { git = 'https://github.com/enfipy/jsonrpc', rev = '4bca2c5186a873488d5fb989b28cb9c7225ec9c6' }
 cosmos-abci = { path = '../pallets/cosmos-abci', package = 'pallet-cosmos-abci' }

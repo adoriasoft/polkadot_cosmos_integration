@@ -12,10 +12,10 @@ use pallet_grandpa::{AuthorityId as GrandpaId, AuthorityList as GrandpaAuthority
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
-use sp_runtime::{generic::Era};
+use sp_runtime::generic::Era;
 use sp_runtime::traits::{
-    ConvertInto,
-    BlakeTwo256, Block as BlockT, IdentifyAccount, IdentityLookup, NumberFor, Saturating, Verify, OpaqueKeys
+    BlakeTwo256, Block as BlockT, ConvertInto, IdentifyAccount, IdentityLookup, NumberFor,
+    OpaqueKeys, Saturating, Verify,
 };
 use sp_runtime::{
     create_runtime_str, generic, impl_opaque_keys,
@@ -264,27 +264,16 @@ parameter_types! {
     pub const Offset: u32 = 0;
 }
 
-/* #[cfg(feature = "historical")]
-struct TestSessionManager { }
-impl pallet_staking::historical::SessionManager<u64, u64> for TestSessionManager {
-	fn end_session(_: SessionIndex) {}
-	fn start_session(_: SessionIndex) {}
-	fn new_session(new_index: SessionIndex) -> Option<Vec<(u64, u64)>> {
-		<Self as SessionManager<_>>::new_session(new_index)
-			.map(|vals| vals.into_iter().map(|val| (val, val)).collect())
-	}
-} */
-
 impl pallet_session::Trait for Runtime {
     type ValidatorId = <Self as frame_system::Trait>::AccountId;
     type Keys = opaque::SessionKeys;
     type WeightInfo = ();
     type DisabledValidatorsThreshold = DisabledValidatorsThreshold;
-    type ValidatorIdOf = ConvertInto;// pallet_staking::StashOf<Self>;
+    type ValidatorIdOf = ConvertInto; // pallet_staking::StashOf<Self>;
     type Event = Event;
     type ShouldEndSession = pallet_session::PeriodicSessions<Period, Offset>;
     type NextSessionRotation = pallet_session::PeriodicSessions<Period, Offset>;
-    type SessionManager = ();// pallet_session::historical::NoteHistoricalRoot<Self, TestSessionManager>;
+    type SessionManager = ();
     type SessionHandler = <opaque::SessionKeys as OpaqueKeys>::KeyTypeIdProviders;
 }
 

@@ -76,7 +76,10 @@ pub trait Trait: CreateSignedTransaction<Call<Self>> + pallet_session::Trait {
     type Call: From<Call<Self>>;
 }
 
-impl<T: Trait> sp_runtime::BoundToRuntimeAppPublic for Module<T> where <T as Trait>::AuthorityId: sp_runtime::RuntimeAppPublic {
+impl<T: Trait> sp_runtime::BoundToRuntimeAppPublic for Module<T>
+where
+    <T as Trait>::AuthorityId: sp_runtime::RuntimeAppPublic,
+{
     type Public = T::AuthorityId;
 }
 
@@ -180,7 +183,7 @@ impl<T: Trait> Module<T> {
         match abci_interface::end_block(block_number.saturated_into() as i64) {
             Ok(_) => {
                 let substrate_validators = <session::Module<T>>::validators();
-                debug::info!("Substrate validators: {:?}", substrate_validators);
+                debug::info!("%Substrate node validators: {:?}", substrate_validators);
                 match abci_interface::commit() {
                     Err(err) => {
                         panic!("Commit failed: {:?}", err);
@@ -296,7 +299,7 @@ pub trait AbciInterface {
             .map_err(|_| "end_block failed")?;
         // debug::info!("Result: {:?}", result);
         let validator_updates = _result.get_validator_updates();
-        debug::info!("Cosmos validators: {:?}", validator_updates);
+        debug::info!("%Cosmos node validators: {:?}", validator_updates);
 
         Ok(())
     }
