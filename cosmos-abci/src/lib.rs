@@ -1,7 +1,7 @@
 //! The pallet for interact with cosmos abci interface.
 
 #![cfg_attr(not(feature = "std"), no_std)]
-#[warn(unused_must_use)]
+#![warn(unused_must_use)]
 use frame_support::{
     codec::{Decode, Encode},
     debug, decl_module, decl_storage,
@@ -124,7 +124,7 @@ impl<T: Trait> Module<T> {
     pub fn call_abci_transaction(data: Vec<u8>) -> DispatchResult {
         let block_number = <system::Module<T>>::block_number();
         let mut abci_txs: ABCITxs = <ABCITxStorage<T>>::get(block_number);
-        abci_txs.data_array.push(data.clone());
+        abci_txs.data_array.push(data);
         <ABCITxStorage<T>>::insert(block_number, abci_txs);
         Ok(())
     }
@@ -164,7 +164,7 @@ impl<T: Trait> Module<T> {
         ) {
             panic!("Begin block failed: {:?}", err);
         }
-        return true;
+        true
     }
 
     /// Called on block finalize.
@@ -222,7 +222,7 @@ impl<T: Trait> CosmosAbci for Module<T> {
 sp_api::decl_runtime_apis! {
     /// ExtrinsicConstructionApi trait for define broadcast_abci_tx method.
     pub trait ExtrinsicConstructionApi {
-        fn broadcast_abci_tx(data: &Vec<u8>);
+        fn broadcast_abci_tx(data: Vec<u8>);
     }
 }
 

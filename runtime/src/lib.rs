@@ -518,8 +518,8 @@ impl_runtime_apis! {
     }
 
     impl pallet_cosmos_abci::ExtrinsicConstructionApi<Block> for Runtime {
-        fn broadcast_abci_tx(data: &Vec<u8>) {
-            let call = pallet_cosmos_abci::Call::abci_transaction(data.to_vec());
+        fn broadcast_abci_tx(data: Vec<u8>) {
+            let call = pallet_cosmos_abci::Call::abci_transaction(data);
             let _ = SubmitTransaction::<Runtime, <Runtime as pallet_cosmos_abci::Trait>::Call>::submit_unsigned_transaction(call.into())
             .map_err(|e| {
                 debug::error!("Failed to broadcast deliver_tx transaction, error: {:?}", e);

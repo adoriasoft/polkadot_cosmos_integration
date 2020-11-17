@@ -36,7 +36,7 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
         let info = client.info();
         let best_hash = info.best_hash;
         let at = BlockId::<Block>::hash(best_hash);
-        client.runtime_api().broadcast_abci_tx(&at, &tx_value).ok();
+        client.runtime_api().broadcast_abci_tx(&at, tx_value).ok();
 
         info.best_number.into()
     };
