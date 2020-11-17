@@ -213,7 +213,7 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
     async fn abci_check_tx(params: Params) -> sc_service::Result<jsonrpc_core::Value, Error> {
         let query_params: types::AbciCheckTx = params.parse().unwrap();
         let tx = hex::decode(query_params.tx).unwrap_or(vec![]);
-        let abci_instance_res = abci::get_abci_instance()
+        let abci_instance_res = pallet_abci::get_abci_instance()
             .ok()
             .ok_or(FAILED_SETUP_CONNECTION_MSG);
 

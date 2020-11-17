@@ -39,6 +39,10 @@ jobs:
           toolchain: nightly
           components: rustfmt, clippy
           override: true
+      - name: Install target
+        run: |
+          rustup default nightly
+          rustup target add wasm32-unknown-unknown
       - name: Check the format
         run: cargo +nightly fmt --all -- --check
       - name: Run clippy
