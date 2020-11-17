@@ -80,16 +80,11 @@ impl crate::AbciInterface for AbciinterfaceGrpc {
         app_state_bytes: Vec<u8>,
     ) -> crate::AbciResult<dyn crate::ResponseInitChain> {
         let evidence = protos::EvidenceParams {
-            max_age_num_blocks: max_age_num_blocks,
+            max_age_num_blocks,
             max_age_duration: Some(Duration::from_micros(max_age_duration).into()),
         };
-        let block = protos::BlockParams {
-            max_bytes: max_bytes,
-            max_gas: max_gas,
-        };
-        let validator = protos::ValidatorParams {
-            pub_key_types: pub_key_types,
-        };
+        let block = protos::BlockParams { max_bytes, max_gas };
+        let validator = protos::ValidatorParams { pub_key_types };
 
         let consensus_params = protos::ConsensusParams {
             block: Some(block),
@@ -140,7 +135,7 @@ impl crate::AbciInterface for AbciinterfaceGrpc {
                     }),
                 }),
                 last_commit_hash: vec![],
-                data_hash: data_hash,
+                data_hash,
                 validators_hash: vec![],
                 next_validators_hash: vec![],
                 consensus_hash: vec![],

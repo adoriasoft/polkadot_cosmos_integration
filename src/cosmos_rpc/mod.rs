@@ -37,8 +37,7 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
         let best_hash = info.best_hash;
         let at = BlockId::<Block>::hash(best_hash);
         client.runtime_api().broadcast_abci_tx(&at, tx_value).ok();
-
-        info.best_number.into()
+        info.best_number
     };
 
     /** Handle and map RPC server error. */
@@ -66,9 +65,9 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
 
         Ok(json!({
             "response": {
-                "data": format!("{}", result.get_data()),
-                "version": format!("{}", result.get_version()),
-                "app_version": format!("{}", result.get_app_version())
+                "data": result.get_data(),
+                "version": result.get_version(),
+                "app_version": result.get_app_version().to_string()
             }
         }))
     }
@@ -95,9 +94,9 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
                     Err(_e) => handle_ok_error(_e),
                     Ok(abci_set_option_res_ok) => Ok(json!({
                         "response": {
-                            "code": format!("{}", abci_set_option_res_ok.get_code()),
-                            "log": format!("{}", abci_set_option_res_ok.get_log()),
-                            "info": format!("{}", abci_set_option_res_ok.get_info())
+                            "code": abci_set_option_res_ok.get_code().to_string(),
+                            "log": abci_set_option_res_ok.get_log(),
+                            "info": abci_set_option_res_ok.get_info()
                         }
                     })),
                 }
@@ -115,7 +114,7 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
 
         match abci_instance_res {
             Ok(mut abci_instance_res_ok) => {
-                let data = hex::decode(query_params.data).unwrap_or(vec![]);
+                let data = hex::decode(query_params.data).unwrap_or_default();
                 let mut path = query_params.path;
 
                 if path.chars().count() == 0 {
@@ -170,10 +169,10 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
 
                         Ok(json!({
                             "response": {
-                                "log" : format!("{}", abci_query_res_ok.get_log()),
-                                "height" : format!("{}", abci_query_res_ok.get_height()),
-                                "index" : format!("{}", abci_query_res_ok.get_index()),
-                                "code" : format!("{}", abci_query_res_ok.get_code()),
+                                "log" : abci_query_res_ok.get_log(),
+                                "height" : abci_query_res_ok.get_height().to_string(),
+                                "index" : abci_query_res_ok.get_index().to_string(),
+                                "code" : abci_query_res_ok.get_code().to_string(),
                                 "key" : &key,
                                 "value" : &value,
                                 "proof" : &proof,
@@ -212,7 +211,7 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
     /** Substrate RPC check_tx() method. */
     async fn abci_check_tx(params: Params) -> sc_service::Result<jsonrpc_core::Value, Error> {
         let query_params: types::AbciCheckTx = params.parse().unwrap();
-        let tx = hex::decode(query_params.tx).unwrap_or(vec![]);
+        let tx = hex::decode(query_params.tx).unwrap_or_default();
         let abci_instance_res = pallet_abci::get_abci_instance()
             .ok()
             .ok_or(FAILED_SETUP_CONNECTION_MSG);
@@ -305,15 +304,15 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
 
             Ok(json!({
                 "code": result.get_code(),
-                "data": format!("{}", base64::encode(result.get_data())),
-                "log": format!("{}", result.get_log()),
+                "data": base64::encode(result.get_data()),
+                "log": result.get_log(),
                 "codespace": "",
                 "hash": "",
             }))
         }
     });
 
-    let client_commit_copy = client.clone();
+    let client_commit_copy = client;
     io.add_method("broadcast_tx_commit", move |params: Params| {
         let client = client_commit_copy.clone();
         async move {
@@ -332,14 +331,14 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
                 "height": (best_height + 1).to_string(),
                 "hash": "",
                 "deliver_tx": {
-                    "log": format!("{}", result.get_log()),
-                    "data": format!("{}", base64::encode(result.get_data().clone())),
-                    "code": format!("{}", result.get_code())
+                    "log": result.get_log(),
+                    "data": base64::encode(result.get_data()),
+                    "code": result.get_code().to_string()
                 },
                 "check_tx": {
-                    "log": format!("{}", result.get_log()),
-                    "data": format!("{}", base64::encode(result.get_data())),
-                    "code": format!("{}", result.get_code())
+                    "log": result.get_log(),
+                    "data": base64::encode(result.get_data()),
+                    "code": result.get_code().to_string()
                 }
             }))
         }

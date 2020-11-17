@@ -42,4 +42,4 @@ jobs:
       - name: Check the format
         run: cargo +nightly-2020-08-19 fmt --all -- --check
       - name: Run clippy
-        run: cargo +nightly-2020-08-19 clippy --all-targets --all-features -- -D warnings
+        run: cargo +nightly-2020-08-19 clippy --all-targets --all-features -- -D warnings -A clippy::large-enum-variant -A clippy::too-many-arguments -A clippy::unnecessary-mut-passed -A clippy::type-complexity

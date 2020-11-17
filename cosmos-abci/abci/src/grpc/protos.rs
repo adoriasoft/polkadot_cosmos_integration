@@ -22,15 +22,15 @@ pub use proto::abci_proto::*;
 
 impl crate::ResponseSetOption for ResponseSetOption {
     fn get_code(&self) -> u32 {
-        self.code.clone()
+        self.code
     }
 
     fn get_log(&self) -> String {
-        self.log.clone().to_string()
+        self.log.clone()
     }
 
     fn get_info(&self) -> String {
-        self.info.clone().to_string()
+        self.info.clone()
     }
 }
 
@@ -52,7 +52,7 @@ impl crate::ResponseInfo for ResponseInfo {
     }
 
     fn get_last_block_height(&self) -> i64 {
-        self.last_block_height.clone()
+        self.last_block_height
     }
 }
 

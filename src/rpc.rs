@@ -33,7 +33,7 @@ pub fn create_full<P: TransactionPool + 'static>(
         deps.deny_unsafe,
     )));
     io.extend_with(TransactionPaymentApi::to_delegate(TransactionPayment::new(
-        deps.client.clone(),
+        deps.client,
     )));
     io
 }
