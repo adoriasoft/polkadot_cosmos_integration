@@ -2,7 +2,6 @@ use node_template_runtime::{
     opaque::SessionKeys, AccountId, AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig,
     SessionConfig, Signature, SudoConfig, SystemConfig, WASM_BINARY,
 };
-// use hex_literal;
 use sc_service::ChainType;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{sr25519, Pair, Public};
@@ -49,9 +48,6 @@ pub fn to_session_keys(
     SessionKeys {
         grandpa: ed25519_keyring.to_owned().public().into(),
         aura: sr25519_keyring.to_owned().public().into(),
-        // babe: sr25519_keyring.to_owned().public().into(),
-        // im_online: sr25519_keyring.to_owned().public().into(),
-        // authority_discovery: sr25519_keyring.to_owned().public().into(),
     }
 }
 

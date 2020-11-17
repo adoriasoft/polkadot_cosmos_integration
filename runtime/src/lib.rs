@@ -269,7 +269,7 @@ impl pallet_session::Trait for Runtime {
     type Keys = opaque::SessionKeys;
     type WeightInfo = ();
     type DisabledValidatorsThreshold = DisabledValidatorsThreshold;
-    type ValidatorIdOf = ConvertInto; // pallet_staking::StashOf<Self>;
+    type ValidatorIdOf = ConvertInto;
     type Event = Event;
     type ShouldEndSession = pallet_session::PeriodicSessions<Period, Offset>;
     type NextSessionRotation = pallet_session::PeriodicSessions<Period, Offset>;
