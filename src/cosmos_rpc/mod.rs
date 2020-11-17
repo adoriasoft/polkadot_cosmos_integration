@@ -5,8 +5,8 @@ mod types;
 
 use jsonrpc_http_server::jsonrpc_core::{serde_json::json, Error, ErrorCode, IoHandler, Params};
 use jsonrpc_http_server::ServerBuilder;
-use node_template_runtime::pallet_cosmos_abci::ExtrinsicConstructionApi;
 use node_template_runtime::opaque::Block;
+use node_template_runtime::pallet_cosmos_abci::ExtrinsicConstructionApi;
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::generic::BlockId;

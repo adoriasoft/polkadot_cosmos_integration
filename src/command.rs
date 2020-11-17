@@ -15,12 +15,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::{chain_spec, service};
 use crate::cli::{Cli, Subcommand};
-use sc_cli::{SubstrateCli, RuntimeVersion, Role, ChainSpec};
+use crate::{chain_spec, service};
+use node_template_runtime::Block;
+use sc_cli::{ChainSpec, Role, RuntimeVersion, SubstrateCli};
 use sc_service::PartialComponents;
 use std::{fs, path::PathBuf};
-use node_template_runtime::Block;
 
 fn from_json_file() -> sc_cli::Result<String> {
     let path: PathBuf = std::env::var("ABCI_GENESIS_STATE_PATH")
@@ -44,7 +44,7 @@ fn init_chain() -> sc_cli::Result<()> {
     let genesis = pallet_abci::utils::parse_cosmos_genesis_file(&get_abci_genesis())
         .map_err(|err| sc_cli::Error::Other(err.to_string()))?;
 
-        pallet_abci::get_abci_instance()
+    pallet_abci::get_abci_instance()
         .map_err(|err| sc_cli::Error::Other(err.to_string()))?
         .init_chain(
             genesis.time_seconds,
@@ -112,73 +112,92 @@ pub fn run() -> sc_cli::Result<()> {
     .map_err(|_| "failed to set abci instance")
     .unwrap();
 
-	let cli = Cli::from_args();
+    let cli = Cli::from_args();
     match cli.subcommand {
-		Some(Subcommand::BuildSpec(ref cmd)) => {
-			let runner = cli.create_runner(cmd)?;
-			runner.sync_run(|config| cmd.run(config.chain_spec, config.network))
-		},
-		Some(Subcommand::CheckBlock(ref cmd)) => {
-			let runner = cli.create_runner(cmd)?;
-			runner.async_run(|config| {
-				let PartialComponents { client, task_manager, import_queue, ..}
-					= service::new_partial(&config)?;
-				Ok((cmd.run(client, import_queue), task_manager))
-			})
-		},
-		Some(Subcommand::ExportBlocks(ref cmd)) => {
-			let runner = cli.create_runner(cmd)?;
-			runner.async_run(|config| {
-				let PartialComponents { client, task_manager, ..}
-					= service::new_partial(&config)?;
-				Ok((cmd.run(client, config.database), task_manager))
-			})
-		},
-		Some(Subcommand::ExportState(ref cmd)) => {
-			let runner = cli.create_runner(cmd)?;
-			runner.async_run(|config| {
-				let PartialComponents { client, task_manager, ..}
-					= service::new_partial(&config)?;
-				Ok((cmd.run(client, config.chain_spec), task_manager))
-			})
-		},
-		Some(Subcommand::ImportBlocks(ref cmd)) => {
-			let runner = cli.create_runner(cmd)?;
-			runner.async_run(|config| {
-				let PartialComponents { client, task_manager, import_queue, ..}
-					= service::new_partial(&config)?;
-				Ok((cmd.run(client, import_queue), task_manager))
-			})
-		},
-		Some(Subcommand::PurgeChain(ref cmd)) => {
-			let runner = cli.create_runner(cmd)?;
-			runner.sync_run(|config| cmd.run(config.database))
-		},
-		Some(Subcommand::Revert(ref cmd)) => {
-			let runner = cli.create_runner(cmd)?;
-			runner.async_run(|config| {
-				let PartialComponents { client, task_manager, backend, ..}
-					= service::new_partial(&config)?;
-				Ok((cmd.run(client, backend), task_manager))
-			})
-		},
-		Some(Subcommand::Benchmark(ref cmd)) => {
-			if cfg!(feature = "runtime-benchmarks") {
-				let runner = cli.create_runner(cmd)?;
+        Some(Subcommand::BuildSpec(ref cmd)) => {
+            let runner = cli.create_runner(cmd)?;
+            runner.sync_run(|config| cmd.run(config.chain_spec, config.network))
+        }
+        Some(Subcommand::CheckBlock(ref cmd)) => {
+            let runner = cli.create_runner(cmd)?;
+            runner.async_run(|config| {
+                let PartialComponents {
+                    client,
+                    task_manager,
+                    import_queue,
+                    ..
+                } = service::new_partial(&config)?;
+                Ok((cmd.run(client, import_queue), task_manager))
+            })
+        }
+        Some(Subcommand::ExportBlocks(ref cmd)) => {
+            let runner = cli.create_runner(cmd)?;
+            runner.async_run(|config| {
+                let PartialComponents {
+                    client,
+                    task_manager,
+                    ..
+                } = service::new_partial(&config)?;
+                Ok((cmd.run(client, config.database), task_manager))
+            })
+        }
+        Some(Subcommand::ExportState(ref cmd)) => {
+            let runner = cli.create_runner(cmd)?;
+            runner.async_run(|config| {
+                let PartialComponents {
+                    client,
+                    task_manager,
+                    ..
+                } = service::new_partial(&config)?;
+                Ok((cmd.run(client, config.chain_spec), task_manager))
+            })
+        }
+        Some(Subcommand::ImportBlocks(ref cmd)) => {
+            let runner = cli.create_runner(cmd)?;
+            runner.async_run(|config| {
+                let PartialComponents {
+                    client,
+                    task_manager,
+                    import_queue,
+                    ..
+                } = service::new_partial(&config)?;
+                Ok((cmd.run(client, import_queue), task_manager))
+            })
+        }
+        Some(Subcommand::PurgeChain(ref cmd)) => {
+            let runner = cli.create_runner(cmd)?;
+            runner.sync_run(|config| cmd.run(config.database))
+        }
+        Some(Subcommand::Revert(ref cmd)) => {
+            let runner = cli.create_runner(cmd)?;
+            runner.async_run(|config| {
+                let PartialComponents {
+                    client,
+                    task_manager,
+                    backend,
+                    ..
+                } = service::new_partial(&config)?;
+                Ok((cmd.run(client, backend), task_manager))
+            })
+        }
+        Some(Subcommand::Benchmark(ref cmd)) => {
+            if cfg!(feature = "runtime-benchmarks") {
+                let runner = cli.create_runner(cmd)?;
 
-				runner.sync_run(|config| cmd.run::<Block, service::Executor>(config))
-			} else {
-				Err("Benchmarking wasn't enabled when building the node. \
-				You can enable it with `--features runtime-benchmarks`.".into())
-			}
-		},
-		None => {
+                runner.sync_run(|config| cmd.run::<Block, service::Executor>(config))
+            } else {
+                Err("Benchmarking wasn't enabled when building the node. \
+				You can enable it with `--features runtime-benchmarks`."
+                    .into())
+            }
+        }
+        None => {
             let runner = cli.create_runner(&cli.run)?;
             init_chain()?;
-			runner.run_node_until_exit(|config| match config.role {
-				Role::Light => service::new_light(config),
-				_ => service::new_full(config),
-			})
-		}
+            runner.run_node_until_exit(|config| match config.role {
+                Role::Light => service::new_light(config),
+                _ => service::new_full(config),
+            })
+        }
     }
 }
