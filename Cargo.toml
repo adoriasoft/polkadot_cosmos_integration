@@ -7,7 +7,7 @@ edition = '2018'
 homepage = 'https://substrate.dev'
 license = 'Unlicense'
 repository = 'https://github.com/substrate-developer-hub/substrate-node-template/'
-version = '2.0.0'
+version = '0.0.1'
 
 [profile.release]
 panic = 'unwind'
@@ -26,7 +26,6 @@ targets = ['x86_64-unknown-linux-gnu']
 name = 'node-template'
 
 [dependencies]
-# jsonrpc-http-server = '15.1.0'
 jsonrpc-http-server = { git = "https://github.com/enfipy/jsonrpc", rev = "4bca2c5186a873488d5fb989b28cb9c7225ec9c6" }
 jsonrpc-core = '15.0.0'
 structopt = '0.3.8'
@@ -38,9 +37,9 @@ base64 = '0.12.3'
 hex = '0.4.2'
 
 # local dependencies
-node-template-runtime = { path = 'runtime', version = '2.0.0' }
-pallet-cosmos-abci = { path = 'cosmos-abci', version = '2.0.0' }
-pallet-abci = { path = 'cosmos-abci/abci', version = '0.1.0' }
+node-template-runtime = { path = 'runtime', version = '0.0.1' }
+pallet-cosmos-abci = { path = 'cosmos-abci', version = '0.0.1' }
+pallet-abci = { path = 'cosmos-abci/abci', version = '0.0.1' }
 
 # Substrate dependencies
 frame-benchmarking = '2.0.0'
