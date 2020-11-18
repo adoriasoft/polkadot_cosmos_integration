@@ -6,6 +6,7 @@ on:
     - '.github/workflows/docker.yml'
     - 'Dockerfile'
     - '*.rs'
+    tags: ['v*']
 
 jobs:
 

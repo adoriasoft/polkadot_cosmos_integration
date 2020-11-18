@@ -18,8 +18,8 @@ certonly --webroot \
 To build specs for local testnet:
 
 ```sh
-docker run -it --rm docker.pkg.github.com/adoriasoft/polkadot_cosmos_integration/substrate-node build-spec --disable-default-bootnode --chain local > res/customSpec.json
-docker run -it --rm -v "$(pwd)/res:/res" docker.pkg.github.com/adoriasoft/polkadot_cosmos_integration/substrate-node build-spec --chain=res/customSpec.json --raw --disable-default-bootnode > res/customSpecRaw.json
+docker run -it --rm ghcr.io/adoriasoft/substrate-node build-spec --disable-default-bootnode --chain local > res/customSpec.json
+docker run -it --rm -v "$(pwd)/res:/res" ghcr.io/adoriasoft/substrate-node build-spec --chain=res/customSpec.json --raw --disable-default-bootnode > res/customSpecRaw.json
 ```
 
 Demo server IP: `164.90.208.88`.
@@ -51,5 +51,5 @@ docker-compose -f docker-testnet.yml up -d
 Run this command:
 
 ```sh
-docker run --rm docker.pkg.github.com/adoriasoft/polkadot_cosmos_integration/cosmos-node /bin/sh -c 'echo '12345678' | nscli tx nameservice buy-name jack.id 5nametoken --from jack --chain-id namechain -y --broadcast-mode sync --node=tcp://164.90.208.88:26657'
+docker run --rm ghcr.io/adoriasoft/cosmos-node /bin/sh -c 'echo '12345678' | nscli tx nameservice buy-name jack.id 5nametoken --from jack --chain-id namechain -y --broadcast-mode sync --node=tcp://164.90.208.88:26657'
 ```
