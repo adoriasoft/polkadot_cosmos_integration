@@ -15,12 +15,11 @@ jobs:
     steps:
     - uses: actions/checkout@master
     - name: Build image
-      run: docker build -t docker.pkg.github.com/adoriasoft/polkadot_cosmos_integration/substrate-node .
-    - name: Publish docker image
-      uses: VaultVulp/gp-docker-action@1.0.1
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        image-name: substrate-node
+      run: docker build -t ghcr.io/adoriasoft/substrate-node .
+    - name: Publish Docker Substrate image
+      run: |
+        echo ${{ secrets.DOCKER_GITHUB_TOKEN }} | docker login ghcr.io -u Mr-Leshiy --password-stdin
+        docker push ghcr.io/adoriasoft/substrate-node
 
   build-cosmos-docker:
     name: Build Cosmos Dockerfile
@@ -33,9 +32,8 @@ jobs:
       run: |
         rm Dockerfile
         cd cosmos-sdk/
-        docker build -t docker.pkg.github.com/adoriasoft/polkadot_cosmos_integration/cosmos-node .
-    - name: Publish docker Cosmos image
-      uses: VaultVulp/gp-docker-action@1.0.1
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        image-name: cosmos-node
+        docker build -t ghcr.io/adoriasoft/cosmos-node .
+    - name: Publish Cosmos image
+      run: |
+        echo ${{ secrets.DOCKER_GITHUB_TOKEN }} | docker login ghcr.io -u Mr-Leshiy --password-stdin
+        docker push ghcr.io/adoriasoft/cosmos-node

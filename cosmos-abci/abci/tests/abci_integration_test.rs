@@ -19,19 +19,19 @@ fn test_abci_begin_block() {
         "tcp://localhost:{}",
         node.get_host_port(DOCKER_PORT).unwrap_or(DOCKER_PORT)
     );
-    abci::set_abci_instance(Box::new(
-        abci::grpc::AbciinterfaceGrpc::connect(&url)
+    pallet_abci::set_abci_instance(Box::new(
+        pallet_abci::grpc::AbciinterfaceGrpc::connect(&url)
             .map_err(|_| "failed to connect")
             .unwrap(),
     ))
     .map_err(|_| "failed to set abci instance")
     .unwrap();
 
-    let mut client = abci::get_abci_instance().unwrap();
+    let mut client = pallet_abci::get_abci_instance().unwrap();
     let result = client.echo("test".to_owned());
     assert!(result.is_ok(), "should successfully call echo");
 
-    let genesis = abci::utils::parse_cosmos_genesis_file(abci::TEST_GENESIS).unwrap();
+    let genesis = pallet_abci::utils::parse_cosmos_genesis_file(pallet_abci::TEST_GENESIS).unwrap();
     let result = client.init_chain(
         genesis.time_seconds,
         genesis.time_nanos,
@@ -85,15 +85,15 @@ fn test_abci_flush() {
         "tcp://localhost:{}",
         node.get_host_port(DOCKER_PORT).unwrap_or(DOCKER_PORT)
     );
-    abci::set_abci_instance(Box::new(
-        abci::grpc::AbciinterfaceGrpc::connect(&url)
+    pallet_abci::set_abci_instance(Box::new(
+        pallet_abci::grpc::AbciinterfaceGrpc::connect(&url)
             .map_err(|_| "failed to connect")
             .unwrap(),
     ))
     .map_err(|_| "failed to set abci instance")
     .unwrap();
 
-    let mut client = abci::get_abci_instance().unwrap();
+    let mut client = pallet_abci::get_abci_instance().unwrap();
     let flush_result = client.flush();
 
     assert_eq!(flush_result.is_ok(), true);
@@ -114,15 +114,15 @@ fn test_abci_info() {
         "tcp://localhost:{}",
         node.get_host_port(DOCKER_PORT).unwrap_or(DOCKER_PORT)
     );
-    abci::set_abci_instance(Box::new(
-        abci::grpc::AbciinterfaceGrpc::connect(&url)
+    pallet_abci::set_abci_instance(Box::new(
+        pallet_abci::grpc::AbciinterfaceGrpc::connect(&url)
             .map_err(|_| "failed to connect")
             .unwrap(),
     ))
     .map_err(|_| "failed to set abci instance")
     .unwrap();
 
-    let mut client = abci::get_abci_instance().unwrap();
+    let mut client = pallet_abci::get_abci_instance().unwrap();
     let info_result = client.info();
 
     assert_eq!(info_result.unwrap().get_data(), "SimApp");
@@ -143,15 +143,15 @@ fn test_abci_set_option() {
         "tcp://localhost:{}",
         node.get_host_port(DOCKER_PORT).unwrap_or(DOCKER_PORT)
     );
-    abci::set_abci_instance(Box::new(
-        abci::grpc::AbciinterfaceGrpc::connect(&url)
+    pallet_abci::set_abci_instance(Box::new(
+        pallet_abci::grpc::AbciinterfaceGrpc::connect(&url)
             .map_err(|_| "failed to connect")
             .unwrap(),
     ))
     .map_err(|_| "failed to set abci instance")
     .unwrap();
 
-    let mut client = abci::get_abci_instance().unwrap();
+    let mut client = pallet_abci::get_abci_instance().unwrap();
     let set_option_result = client.set_option("my_opt", "yes");
 
     assert_eq!(set_option_result.unwrap().get_code(), 0);

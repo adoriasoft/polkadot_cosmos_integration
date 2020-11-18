@@ -1,7 +1,7 @@
 //! The pallet for interact with cosmos abci interface.
 
 #![cfg_attr(not(feature = "std"), no_std)]
-#[warn(unused_must_use)]
+#![warn(unused_must_use)]
 use frame_support::{
     codec::{Decode, Encode},
     debug, decl_module, decl_storage,
@@ -124,7 +124,7 @@ impl<T: Trait> Module<T> {
     pub fn call_abci_transaction(data: Vec<u8>) -> DispatchResult {
         let block_number = <system::Module<T>>::block_number();
         let mut abci_txs: ABCITxs = <ABCITxStorage<T>>::get(block_number);
-        abci_txs.data_array.push(data.clone());
+        abci_txs.data_array.push(data);
         <ABCITxStorage<T>>::insert(block_number, abci_txs);
         Ok(())
     }
@@ -142,8 +142,9 @@ impl<T: Trait> Module<T> {
         let abci_txs: ABCITxs = <ABCITxStorage<T>>::get(block_number);
         for abci_tx in abci_txs.data_array {
             debug::info!("call_offchain_worker(), abci_tx: {:?}", abci_tx);
-            let result = <Self as CosmosAbci>::deliver_tx(abci_tx)
-                .map_err(|e| debug::error!("deliver_tx() error: {:?}", e));
+            <Self as CosmosAbci>::deliver_tx(abci_tx)
+                .map_err(|e| debug::error!("deliver_tx() error: {:?}", e))
+                .unwrap();
         }
         Self::call_on_finalize(block_number);
     }
@@ -163,7 +164,7 @@ impl<T: Trait> Module<T> {
         ) {
             panic!("Begin block failed: {:?}", err);
         }
-        return true;
+        true
     }
 
     /// Called on block finalize.
@@ -221,7 +222,7 @@ impl<T: Trait> CosmosAbci for Module<T> {
 sp_api::decl_runtime_apis! {
     /// ExtrinsicConstructionApi trait for define broadcast_abci_tx method.
     pub trait ExtrinsicConstructionApi {
-        fn broadcast_abci_tx(data: &Vec<u8>);
+        fn broadcast_abci_tx(data: Vec<u8>);
     }
 }
 
@@ -229,7 +230,7 @@ sp_api::decl_runtime_apis! {
 #[runtime_interface]
 pub trait AbciInterface {
     fn echo(msg: &str) -> DispatchResult {
-        let _result = abci::get_abci_instance()
+        let _result = pallet_abci::get_abci_instance()
             .map_err(|_| "failed to setup connection")?
             .echo(msg.to_owned())
             .map_err(|_| "echo failed")?;
@@ -238,7 +239,7 @@ pub trait AbciInterface {
     }
 
     fn check_tx(data: Vec<u8>) -> Result<u64, DispatchError> {
-        let result = abci::get_abci_instance()
+        let result = pallet_abci::get_abci_instance()
             .map_err(|_| "failed to setup connection")?
             .check_tx(data)
             .map_err(|_| "check_tx failed")?;
@@ -256,7 +257,7 @@ pub trait AbciInterface {
     }
 
     fn deliver_tx(data: Vec<u8>) -> DispatchResult {
-        let _result = abci::get_abci_instance()
+        let _result = pallet_abci::get_abci_instance()
             .map_err(|_| "failed to setup connection")?
             .deliver_tx(data)
             .map_err(|_| "deliver_tx failed")?;
@@ -269,7 +270,7 @@ pub trait AbciInterface {
         last_block_id: Vec<u8>,
         proposer_address: Vec<u8>,
     ) -> DispatchResult {
-        let _result = abci::get_abci_instance()
+        let _result = pallet_abci::get_abci_instance()
             .map_err(|_| "failed to setup connection")?
             .begin_block(height, hash, last_block_id, proposer_address)
             .map_err(|_| "begin_block failed")?;
@@ -277,7 +278,7 @@ pub trait AbciInterface {
     }
 
     fn end_block(height: i64) -> DispatchResult {
-        let _result = abci::get_abci_instance()
+        let _result = pallet_abci::get_abci_instance()
             .map_err(|_| "failed to setup connection")?
             .end_block(height)
             .map_err(|_| "end_block failed")?;
@@ -286,7 +287,7 @@ pub trait AbciInterface {
     }
 
     fn commit() -> DispatchResult {
-        let _result = abci::get_abci_instance()
+        let _result = pallet_abci::get_abci_instance()
             .map_err(|_| "failed to setup connection")?
             .commit()
             .map_err(|_| "commit failed")?;
@@ -295,7 +296,7 @@ pub trait AbciInterface {
     }
 
     fn query(path: &str, data: Vec<u8>, height: i64, prove: bool) -> DispatchResult {
-        let _result = abci::get_abci_instance()
+        let _result = pallet_abci::get_abci_instance()
             .map_err(|_| "failed to setup connection")?
             .query(path.to_owned(), data, height, prove)
             .map_err(|_| "query failed")?;

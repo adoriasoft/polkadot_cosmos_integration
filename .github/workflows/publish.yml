@@ -1,0 +1,21 @@
+name: Build and publish
+
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+
+  build-and-publish-to-crates-io:
+    name: Build and publish to crates.io
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@master
+    - name: Login to crates.io
+      run: cargo login ${{ secrets.CRATES_IO_TOKEN }}
+    - name: Publish to crates.io
+      run: |
+        cd cosmos-abci/
+        cargo publish
+        cd abci/
+        cargo publish

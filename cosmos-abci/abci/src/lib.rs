@@ -14,10 +14,10 @@ use std::sync::Mutex;
 use mockall::automock;
 
 lazy_static! {
-    static ref ABCI_INTERFACE_INSTANCE: Mutex<Option<Box<dyn AbciInterface + Send>>> =
-        Mutex::new(None);
+    static ref ABCI_INTERFACE_INSTANCE: Mutex<Option<AIType>> = Mutex::new(None);
 }
 
+type AIType = Box<dyn AbciInterface + Send>;
 type AbciResult<T> = Result<Box<T>, Box<dyn std::error::Error>>;
 
 /// Trait that specify fields of ResponseFlush.
@@ -186,11 +186,8 @@ pub trait AbciInterface {
 
 /// Method that set abci instance.
 pub fn set_abci_instance<'ret>(
-    new_instance: Box<dyn AbciInterface + Send>,
-) -> Result<
-    MutexGuardRefMut<'ret, Option<Box<dyn AbciInterface + Send>>, Box<dyn AbciInterface + Send>>,
-    Box<dyn std::error::Error>,
-> {
+    new_instance: AIType,
+) -> Result<MutexGuardRefMut<'ret, Option<AIType>, AIType>, Box<dyn std::error::Error>> {
     let mut instance = ABCI_INTERFACE_INSTANCE.lock()?;
     *instance = Some(new_instance);
     // Here we create a ref to the inner value of the mutex guard.
@@ -200,10 +197,8 @@ pub fn set_abci_instance<'ret>(
 }
 
 /// Method that return abci instance.
-pub fn get_abci_instance<'ret>() -> Result<
-    MutexGuardRefMut<'ret, Option<Box<dyn AbciInterface + Send>>, Box<dyn AbciInterface + Send>>,
-    Box<dyn std::error::Error>,
-> {
+pub fn get_abci_instance<'ret>(
+) -> Result<MutexGuardRefMut<'ret, Option<AIType>, AIType>, Box<dyn std::error::Error>> {
     let instance = ABCI_INTERFACE_INSTANCE.lock()?;
     if instance.is_none() {
         panic!("abci instance has not been set, execute set_abci_instance before calling this function");

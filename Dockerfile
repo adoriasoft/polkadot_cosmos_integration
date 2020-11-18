@@ -1,4 +1,5 @@
 FROM phusion/baseimage:0.10.2 as builder
+LABEL org.opencontainers.image.source https://github.com/adoriasoft/polkadot_cosmos_integration
 
 ENV TERM=xterm
 ENV DEBIAN_FRONTEND=noninteractive

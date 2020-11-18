@@ -51,5 +51,5 @@ docker-compose -f docker-testnet.yml up -d
 Run this command:
 
 ```sh
-docker run --rm docker.pkg.github.com/adoriasoft/polkadot_cosmos_integration/cosmos-node echo '12345678' | nscli tx nameservice buy-name jack.id 5nametoken --from jack --chain-id namechain -y --broadcast-mode sync --node=tcp://164.90.208.88:26657
+docker run --rm docker.pkg.github.com/adoriasoft/polkadot_cosmos_integration/cosmos-node /bin/sh -c 'echo '12345678' | nscli tx nameservice buy-name jack.id 5nametoken --from jack --chain-id namechain -y --broadcast-mode sync --node=tcp://164.90.208.88:26657'
 ```

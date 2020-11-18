@@ -37,7 +37,7 @@ impl frame_system::Trait for Test {
     type MaximumBlockLength = MaximumBlockLength;
     type AvailableBlockRatio = AvailableBlockRatio;
     type Version = ();
-    type ModuleToIndex = ();
+    type PalletInfo = ();
     type AccountData = ();
     type OnNewAccount = ();
     type OnKilledAccount = ();
@@ -110,17 +110,17 @@ fn should_begin_block_on_initialize() {
         "tcp://localhost:{}",
         node.get_host_port(26658).unwrap_or(26658)
     );
-    abci::set_abci_instance(Box::new(
-        abci::grpc::AbciinterfaceGrpc::connect(&url)
+    pallet_abci::set_abci_instance(Box::new(
+        pallet_abci::grpc::AbciinterfaceGrpc::connect(&url)
             .map_err(|_| "failed to connect")
             .unwrap(),
     ))
     .map_err(|_| "failed to set abci instance")
     .unwrap();
 
-    let mut client = abci::get_abci_instance().unwrap();
+    let mut client = pallet_abci::get_abci_instance().unwrap();
 
-    let genesis = abci::utils::parse_cosmos_genesis_file(abci::TEST_GENESIS).unwrap();
+    let genesis = pallet_abci::utils::parse_cosmos_genesis_file(pallet_abci::TEST_GENESIS).unwrap();
     let result = client.init_chain(
         genesis.time_seconds,
         genesis.time_nanos,

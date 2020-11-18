@@ -87,6 +87,7 @@ services:
       - "19933:9933"
       - "19944:9944"
       - "30334:30333"
+      - "36657:36657"
     links:
       - second_cosmos
 
@@ -94,3 +95,5 @@ services:
     image: docker.pkg.github.com/adoriasoft/polkadot_cosmos_integration/cosmos-node:latest
     command: nsd start --with-tendermint=false --transport=grpc
     restart: on-failure
+    ports:
+      - "36658:26658"
