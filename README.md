@@ -83,12 +83,6 @@ Detailed logs may be shown by running the node with the following environment va
 
 First, install [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/).
 
-Login to docker Github packages by creating a personal token [here](https://github.com/settings/tokens/new) with `read:packages` scope. Then login with the following command (where `GITHUB_USERNAME` is your Github user name and `GITHUB_TOKEN` is you created token):
-
-```sh
-docker login -u $GITHUB_USERNAME -p $GITHUB_TOKEN docker.pkg.github.com
-```
-
 Then run the following command to start a single node development chain. Also, sometimes you have to share permission for the `.maintain` folder in Docker settings.
 
 ```sh

@@ -19,7 +19,7 @@ services:
     - second_cosmos
 
   first:
-    image: docker.pkg.github.com/adoriasoft/polkadot_cosmos_integration/substrate-node:latest
+    image: ghcr.io/adoriasoft/substrate-node:latest
     # Local node id: QmRpheLN4JWdAnY7HGJfWFNbfkQCb6tFf4vvA6hgjMZKrR
     command: |
       --name "First node"
@@ -52,14 +52,14 @@ services:
       - first_cosmos
 
   first_cosmos:
-    image: docker.pkg.github.com/adoriasoft/polkadot_cosmos_integration/cosmos-node:latest
+    image: ghcr.io/adoriasoft/cosmos-node:latest
     command: nsd start --with-tendermint=false --transport=grpc
     restart: on-failure
     ports:
       - "26658:26658"
 
   second:
-    image: docker.pkg.github.com/adoriasoft/polkadot_cosmos_integration/substrate-node:latest
+    image: ghcr.io/adoriasoft/substrate-node:latest
     # Local node id: QmSVnNf9HwVMT1Y4cK1P6aoJcEZjmoTXpjKBmAABLMnZEk
     command: |
       --name "Second node"
@@ -92,7 +92,7 @@ services:
       - second_cosmos
 
   second_cosmos:
-    image: docker.pkg.github.com/adoriasoft/polkadot_cosmos_integration/cosmos-node:latest
+    image: ghcr.io/adoriasoft/cosmos-node:latest
     command: nsd start --with-tendermint=false --transport=grpc
     restart: on-failure
     ports:

@@ -1,7 +1,7 @@
 version: "3.2"
 services:
   dev_substrate:
-    image: docker.pkg.github.com/adoriasoft/polkadot_cosmos_integration/substrate-node:latest
+    image: ghcr.io/adoriasoft/substrate-node:latest
     command: --dev
     environment:
       ABCI_RPC_SERVER_URL: 0.0.0.0:26657
@@ -16,7 +16,7 @@ services:
       - dev_cosmos
 
   dev_cosmos:
-    image: docker.pkg.github.com/adoriasoft/polkadot_cosmos_integration/cosmos-node:latest
+    image: ghcr.io/adoriasoft/cosmos-node:latest
     command: nsd start --with-tendermint=false --transport=grpc
     restart: on-failure
     ports:
