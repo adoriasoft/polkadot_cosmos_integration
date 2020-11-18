@@ -1,4 +1,4 @@
-use abci::*;
+use pallet_abci::*;
 
 #[test]
 fn test_abci_echo() {

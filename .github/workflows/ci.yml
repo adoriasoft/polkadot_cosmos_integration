@@ -22,8 +22,6 @@ jobs:
             rustup target add wasm32-unknown-unknown
             rustup component add rustfmt
             rustup update
-      - name: build
-        run: cargo build
       - name: test
         run: cargo test --all
 
