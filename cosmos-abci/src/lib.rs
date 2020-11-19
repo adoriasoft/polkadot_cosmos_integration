@@ -14,6 +14,10 @@ use frame_system::{
 };
 use sp_core::crypto::KeyTypeId;
 use sp_runtime::{
+    offchain::{
+        storage::StorageValueRef,
+        storage_lock::{BlockAndTime, StorageLock},
+    },
     traits::SaturatedConversion,
     transaction_validity::{
         InvalidTransaction, TransactionSource, TransactionValidity, ValidTransaction,
@@ -147,6 +151,18 @@ impl<T: Trait> Module<T> {
                 .unwrap();
         }
         Self::call_on_finalize(block_number);
+    }
+
+    pub fn call_on_init_chain() {
+        let storage = StorageValueRef::persistent(b"abci-local-storage:init_chain_info");
+        if let Some(Some(init_chain_info)) = storage.get::<bool>() {
+            if init_chain_info == true {
+                return;
+            }
+        }
+
+        StorageLock::<BlockAndTime<Self>>::new(b"abci-local-storage:lock").lock();
+        storage.set(&true);
     }
 
     // Called on block initialize.
@@ -302,5 +318,12 @@ pub trait AbciInterface {
             .map_err(|_| "query failed")?;
         // debug::info!("Result: {:?}", result);
         Ok(())
+    }
+}
+
+impl<T: Trait> sp_runtime::offchain::storage_lock::BlockNumberProvider for Module<T> {
+    type BlockNumber = T::BlockNumber;
+    fn current_block_number() -> Self::BlockNumber {
+        <frame_system::Module<T>>::block_number()
     }
 }
