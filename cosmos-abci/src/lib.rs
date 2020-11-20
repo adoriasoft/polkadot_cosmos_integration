@@ -240,6 +240,12 @@ sp_api::decl_runtime_apis! {
     pub trait ExtrinsicConstructionApi {
         fn broadcast_abci_tx(data: Vec<u8>);
     }
+
+    /// AbciLocalStorageApi trait for functions for the ABCI pallet local storage
+    pub trait AbciLocalStorageApi {
+        fn set_init_chain_flag(flag: bool);
+        fn get_init_chain_flag() -> bool;
+    }
 }
 
 /// AbciInterface trait with runtime_interface macro.

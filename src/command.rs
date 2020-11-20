@@ -31,6 +31,15 @@ fn from_json_file() -> sc_cli::Result<String> {
     Ok(app_state)
 }
 
+fn get_abci_genesis() -> String {
+    match from_json_file() {
+        Ok(v) => v,
+        _ => std::env::var("ABCI_GENESIS_STATE")
+            .map_err(|_| sc_cli::Error::Other("Failed to get abci genesis state file".into()))
+            .unwrap(),
+    }
+}
+
 fn init_chain() -> sc_cli::Result<()> {
     let genesis = pallet_abci::utils::parse_cosmos_genesis_file(&get_abci_genesis())
         .map_err(|err| sc_cli::Error::Other(err.to_string()))?;

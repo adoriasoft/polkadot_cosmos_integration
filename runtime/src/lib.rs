@@ -527,4 +527,13 @@ impl_runtime_apis! {
             });
         }
     }
+
+    impl pallet_cosmos_abci::AbciLocalStorageApi<Block> for Runtime {
+        fn set_init_chain_flag(_flag: bool) {
+        }
+
+        fn get_init_chain_flag() -> bool {
+            return false;
+        }
+    }
 }
