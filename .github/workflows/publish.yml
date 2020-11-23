@@ -8,13 +8,16 @@ jobs:
 
   build-and-publish-to-crates-io:
     name: Build and publish to crates.io
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@master
     - name: Login to crates.io
       run: cargo login ${{ secrets.CRATES_IO_TOKEN }}
+    - name: Install fmt
+      run: rustup component add rustfmt
     - name: Publish to crates.io
       run: |
+        rm Cargo.toml
         cd cosmos-abci/abci/
         cargo publish
         cd ../

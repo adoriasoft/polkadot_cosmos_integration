@@ -5,7 +5,7 @@ build = 'build.rs'
 description = 'A fresh FRAME-based Substrate node, ready for hacking.'
 edition = '2018'
 homepage = 'https://substrate.dev'
-license = 'Unlicense'
+license = 'Apache-2.0'
 repository = 'https://github.com/substrate-developer-hub/substrate-node-template/'
 version = '0.0.2'
 
