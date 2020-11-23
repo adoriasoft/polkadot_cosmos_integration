@@ -7,7 +7,7 @@ edition = '2018'
 homepage = 'https://substrate.dev'
 license = 'Apache-2.0'
 repository = 'https://github.com/substrate-developer-hub/substrate-node-template/'
-version = '0.0.2'
+version = '0.0.3'
 
 [profile.release]
 panic = 'unwind'
@@ -37,9 +37,9 @@ base64 = '0.12.3'
 hex = '0.4.2'
 
 # local dependencies
-node-template-runtime = { path = 'runtime', version = '0.0.2' }
-pallet-cosmos-abci = { path = 'cosmos-abci', version = '0.0.2' }
-pallet-abci = { path = 'cosmos-abci/abci', version = '0.0.2' }
+node-template-runtime = { path = 'runtime', version = '0.0.3' }
+pallet-cosmos-abci = { path = 'cosmos-abci', version = '0.0.3' }
+pallet-abci = { path = 'cosmos-abci/abci', version = '0.0.3' }
 
 # Substrate dependencies
 frame-benchmarking = '2.0.0'

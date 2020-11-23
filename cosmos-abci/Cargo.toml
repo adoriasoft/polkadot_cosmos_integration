@@ -6,10 +6,10 @@ authors = ['Adoriasoft team']
 readme = '../README.md'
 repository = 'https://github.com/adoriasoft/polkadot_cosmos_integration'
 license = 'Apache-2.0'
-version = '0.0.2'
+version = '0.0.3'
 
 [dependencies]
-pallet-abci = { path = 'abci', version = '0.0.2', optional = true }
+pallet-abci = { path = 'abci', version = '0.0.3', optional = true }
 
 codec = { package = 'parity-scale-codec', version = '1.3.0', features = ['derive'], default-features = false }
 frame-support = { version = '2.0.0', default-features = false }
