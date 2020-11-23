@@ -3292,7 +3292,7 @@ dependencies = [
 
 [[package]]
 name = "matchers"
-version = "0.0.2"
+version = "0.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f099785f7595cc4b4553a174ce30dd7589ef93391ff414dbb67f62392b9e0ce1"
 dependencies = [
@@ -3610,7 +3610,7 @@ dependencies = [
 
 [[package]]
 name = "node-template"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "base64 0.12.3",
  "frame-benchmarking",
@@ -3654,7 +3654,7 @@ dependencies = [
 
 [[package]]
 name = "node-template-runtime"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "frame-benchmarking",
  "frame-executive",
@@ -3849,7 +3849,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-abci"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "chrono",
  "lazy_static",
@@ -3918,7 +3918,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-cosmos-abci"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "alt_serde",
  "frame-support",
@@ -4980,7 +4980,7 @@ dependencies = [
 
 [[package]]
 name = "regalloc"
-version = "0.0.27"
+version = "0.0.37"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b9ba8aaf5fe7cf307c6dbdaeed85478961d29e25e3bee5169e11b92fa9f027a8"
 dependencies = [
