@@ -20,46 +20,6 @@ use crate::{chain_spec, service};
 use node_template_runtime::Block;
 use sc_cli::{ChainSpec, Role, RuntimeVersion, SubstrateCli};
 use sc_service::PartialComponents;
-use std::{fs, path::PathBuf};
-
-fn from_json_file() -> sc_cli::Result<String> {
-    let path: PathBuf = std::env::var("ABCI_GENESIS_STATE_PATH")
-        .map_err(|_| sc_cli::Error::Other("Failed to get app state file path".into()))?
-        .into();
-    let app_state = fs::read_to_string(&path)
-        .map_err(|_| sc_cli::Error::Other("Error opening app state file".into()))?;
-    Ok(app_state)
-}
-
-fn get_abci_genesis() -> String {
-    match from_json_file() {
-        Ok(v) => v,
-        _ => std::env::var("ABCI_GENESIS_STATE")
-            .map_err(|_| sc_cli::Error::Other("Failed to get abci genesis state file".into()))
-            .unwrap(),
-    }
-}
-
-fn init_chain() -> sc_cli::Result<()> {
-    let genesis = pallet_abci::utils::parse_cosmos_genesis_file(&get_abci_genesis())
-        .map_err(|err| sc_cli::Error::Other(err.to_string()))?;
-
-    pallet_abci::get_abci_instance()
-        .map_err(|err| sc_cli::Error::Other(err.to_string()))?
-        .init_chain(
-            genesis.time_seconds,
-            genesis.time_nanos,
-            &genesis.chain_id,
-            genesis.pub_key_types,
-            genesis.max_bytes,
-            genesis.max_gas,
-            genesis.max_age_num_blocks,
-            genesis.max_age_duration,
-            genesis.app_state_bytes,
-        )
-        .map_err(|err| sc_cli::Error::Other(err.to_string()))?;
-    Ok(())
-}
 
 impl SubstrateCli for Cli {
     fn impl_name() -> String {
@@ -193,7 +153,6 @@ pub fn run() -> sc_cli::Result<()> {
         }
         None => {
             let runner = cli.create_runner(&cli.run)?;
-            init_chain()?;
             runner.run_node_until_exit(|config| match config.role {
                 Role::Light => service::new_light(config),
                 _ => service::new_full(config),

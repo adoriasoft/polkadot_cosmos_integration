@@ -1,4 +1,5 @@
 use chrono::DateTime;
+use std::{fs, path::PathBuf};
 
 pub struct GenesisInfo {
     pub time_seconds: i64,
@@ -10,6 +11,23 @@ pub struct GenesisInfo {
     pub max_age_num_blocks: i64,
     pub max_age_duration: u64,
     pub app_state_bytes: Vec<u8>,
+}
+
+fn get_genesis_from_file() -> Result<String, Box<dyn std::error::Error>> {
+    let path: PathBuf = std::env::var("ABCI_GENESIS_STATE_PATH")
+        .map_err(|_| "Failed to get app state file path")?
+        .into();
+    let app_state = fs::read_to_string(&path).map_err(|_| "Error opening app state file")?;
+    Ok(app_state)
+}
+
+pub fn get_abci_genesis() -> String {
+    match get_genesis_from_file() {
+        Ok(v) => v,
+        _ => std::env::var("ABCI_GENESIS_STATE")
+            .map_err(|_| "Failed to get abci genesis state file")
+            .unwrap(),
+    }
 }
 
 pub fn parse_cosmos_genesis_file(genesis: &str) -> Result<GenesisInfo, Box<dyn std::error::Error>> {

@@ -47,7 +47,7 @@ function start_all() {
     clean_tmp
     clean_cosmos
     start_cosmos
-    sleep 1s
+    sleep 2s
     clean_substrate
     start_substrate
 }
