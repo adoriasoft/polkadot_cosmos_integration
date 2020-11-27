@@ -159,7 +159,7 @@ impl<T: Trait> Module<T> {
         let storage = StorageValueRef::persistent(b"abci-local-storage:init_chain_info");
 
         if let Some(Some(init_chain_info)) = storage.get::<bool>() {
-            if init_chain_info == false {
+            if !init_chain_info {
                 abci_interface::init_chain().unwrap();
             }
         } else {
