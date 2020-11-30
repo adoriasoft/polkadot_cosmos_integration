@@ -14,6 +14,10 @@ use frame_system::{
 };
 use sp_core::crypto::KeyTypeId;
 use sp_runtime::{
+    offchain::{
+        storage::StorageValueRef,
+        storage_lock::{BlockAndTime, StorageLock},
+    },
     traits::SaturatedConversion,
     transaction_validity::{
         InvalidTransaction, TransactionSource, TransactionValidity, ValidTransaction,
@@ -61,7 +65,6 @@ pub mod crypto {
 pub trait CosmosAbci {
     fn check_tx(data: Vec<u8>) -> Result<u64, DispatchError>;
     fn deliver_tx(data: Vec<u8>) -> DispatchResult;
-    fn query(path: &str, data: Vec<u8>, height: i64, prove: bool) -> DispatchResult;
 }
 
 /// The pallet configuration trait.
@@ -137,6 +140,9 @@ impl<T: Trait> Module<T> {
         extrinsics_root: T::Hash,
     ) {
         debug::info!("call_offchain_worker(), block_number: {:?}", block_number);
+
+        Self::call_on_init_chain();
+
         Self::call_on_initialize(block_number, block_hash, parent_hash, extrinsics_root);
 
         let abci_txs: ABCITxs = <ABCITxStorage<T>>::get(block_number);
@@ -147,6 +153,24 @@ impl<T: Trait> Module<T> {
                 .unwrap();
         }
         Self::call_on_finalize(block_number);
+    }
+
+    pub fn call_on_init_chain() {
+        let storage = StorageValueRef::persistent(b"abci-local-storage:init_chain_info");
+
+        if let Some(Some(init_chain_info)) = storage.get::<bool>() {
+            if !init_chain_info {
+                abci_interface::init_chain().unwrap();
+            }
+        } else {
+            abci_interface::init_chain().unwrap();
+        }
+
+        if let Ok(_guard) =
+            StorageLock::<BlockAndTime<Self>>::new(b"abci-local-storage:lock").try_lock()
+        {
+            storage.set(&true);
+        }
     }
 
     // Called on block initialize.
@@ -213,10 +237,6 @@ impl<T: Trait> CosmosAbci for Module<T> {
     fn deliver_tx(data: Vec<u8>) -> DispatchResult {
         abci_interface::deliver_tx(data)
     }
-
-    fn query(path: &str, data: Vec<u8>, height: i64, prove: bool) -> DispatchResult {
-        abci_interface::query(path, data, height, prove)
-    }
 }
 
 sp_api::decl_runtime_apis! {
@@ -229,12 +249,26 @@ sp_api::decl_runtime_apis! {
 /// AbciInterface trait with runtime_interface macro.
 #[runtime_interface]
 pub trait AbciInterface {
-    fn echo(msg: &str) -> DispatchResult {
-        let _result = pallet_abci::get_abci_instance()
+    fn init_chain() -> Result<(), DispatchError> {
+        let genesis =
+            pallet_abci::utils::parse_cosmos_genesis_file(&pallet_abci::utils::get_abci_genesis())
+                .map_err(|_| "failed to get cosmos genesis file")?;
+
+        pallet_abci::get_abci_instance()
             .map_err(|_| "failed to setup connection")?
-            .echo(msg.to_owned())
-            .map_err(|_| "echo failed")?;
-        // debug::info!("Result: {:?}", result);
+            .init_chain(
+                genesis.time_seconds,
+                genesis.time_nanos,
+                &genesis.chain_id,
+                genesis.pub_key_types,
+                genesis.max_bytes,
+                genesis.max_gas,
+                genesis.max_age_num_blocks,
+                genesis.max_age_duration,
+                genesis.app_state_bytes,
+            )
+            .map_err(|_| "init chain failed")?;
+
         Ok(())
     }
 
@@ -282,7 +316,6 @@ pub trait AbciInterface {
             .map_err(|_| "failed to setup connection")?
             .end_block(height)
             .map_err(|_| "end_block failed")?;
-        // debug::info!("Result: {:?}", result);
         Ok(())
     }
 
@@ -291,16 +324,13 @@ pub trait AbciInterface {
             .map_err(|_| "failed to setup connection")?
             .commit()
             .map_err(|_| "commit failed")?;
-        // debug::info!("Result: {:?}", result);
         Ok(())
     }
+}
 
-    fn query(path: &str, data: Vec<u8>, height: i64, prove: bool) -> DispatchResult {
-        let _result = pallet_abci::get_abci_instance()
-            .map_err(|_| "failed to setup connection")?
-            .query(path.to_owned(), data, height, prove)
-            .map_err(|_| "query failed")?;
-        // debug::info!("Result: {:?}", result);
-        Ok(())
+impl<T: Trait> sp_runtime::offchain::storage_lock::BlockNumberProvider for Module<T> {
+    type BlockNumber = T::BlockNumber;
+    fn current_block_number() -> Self::BlockNumber {
+        <frame_system::Module<T>>::block_number()
     }
 }

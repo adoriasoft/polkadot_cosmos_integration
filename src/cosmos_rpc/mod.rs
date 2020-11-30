@@ -34,8 +34,7 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
     /** Method for broadcasting abci tx value and return block best_number. */
     fn broadcast_abci_tx(tx_value: Vec<u8>, client: Arc<crate::service::FullClient>) -> u32 {
         let info = client.info();
-        let best_hash = info.best_hash;
-        let at = BlockId::<Block>::hash(best_hash);
+        let at = BlockId::<Block>::hash(info.best_hash);
         client.runtime_api().broadcast_abci_tx(&at, tx_value).ok();
         info.best_number
     };

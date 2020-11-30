@@ -12,8 +12,24 @@ sleep 20s
 
 ## stoping nodes test
 
-stop_all
+nscli tx nameservice buy-name jack.id 5nametoken --from jack --chain-id namechain -y
+sleep 20s
+nscli tx nameservice set-name jack.id hello_world --from jack --chain-id namechain -y
 sleep 20s
 
+value=$(nscli query nameservice resolve jack.id)
+assert_eq "$value" "value: hello_world"
+
+
+stop_all
+
+clean_tmp
+start_cosmos
+sleep 1s
+start_substrate
+sleep 5s
+
+value=$(nscli query nameservice resolve jack.id)
+assert_eq "$value" "value: hello_world"
 
 test_passed "stoping nodes test"
