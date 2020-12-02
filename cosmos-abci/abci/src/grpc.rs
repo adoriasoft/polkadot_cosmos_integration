@@ -148,7 +148,6 @@ impl crate::AbciInterface for AbciinterfaceGrpc {
         });
         let future = self.client.begin_block(request);
         let response = wait(&self.rt, future)?;
-        println!("{:?}", response);
         Ok(Box::new(response.into_inner()))
     }
 
