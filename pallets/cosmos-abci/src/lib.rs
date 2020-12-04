@@ -11,8 +11,10 @@ use frame_support::{
 use frame_system::{
     self as system, ensure_none,
     offchain::{AppCrypto, CreateSignedTransaction},
+    RawOrigin,
 };
 use pallet_session as session;
+use pallet_sudo as sudo;
 use sp_core::crypto::KeyTypeId;
 use sp_runtime::{
     traits::SaturatedConversion,
@@ -23,6 +25,7 @@ use sp_runtime::{
 };
 use sp_runtime_interface::runtime_interface;
 use sp_std::prelude::*;
+type SessionIndex = u32;
 
 /// Priority for unsigned transaction.
 pub const UNSIGNED_TXS_PRIORITY: u64 = 100;
@@ -67,9 +70,10 @@ pub trait CosmosAbci {
 }
 
 /// The pallet configuration trait.
-pub trait Trait: CreateSignedTransaction<Call<Self>> + pallet_session::Trait {
+pub trait Trait:
+    CreateSignedTransaction<Call<Self>> + pallet_session::Trait + pallet_sudo::Trait
+{
     type AuthorityId: AppCrypto<Self::Public, Self::Signature>;
-    // + Member
     // + Parameter
     // + RuntimeAppPublic
     // + Default;
@@ -91,7 +95,8 @@ pub struct ABCITxs {
 
 decl_storage! {
     trait Store for Module<T: Trait> as ABCITxStorage {
-        ABCITxStorage get(fn abci_tx): map hasher(blake2_128_concat) T::BlockNumber => ABCITxs
+        ABCITxStorage get(fn abci_tx): map hasher(blake2_128_concat) T::BlockNumber => ABCITxs;
+        CosmosValidators get(fn abci_validators): Vec<T::AccountId>;
     }
 }
 
@@ -130,6 +135,24 @@ decl_module! {
     }
 }
 
+impl<T: Trait> pallet_session::SessionManager<T::AccountId> for Module<T> {
+    fn new_session(new_index: SessionIndex) -> Option<Vec<T::AccountId>> {
+        debug::info!("A new session ID {}", new_index);
+        let sudo_root = <sudo::Module<T>>::key();
+        Some(vec![sudo_root])
+    }
+
+    fn end_session(end_index: SessionIndex) {
+        // debug::info!("End new session ID {}", end_index);
+        todo!()
+    }
+
+    fn start_session(start_index: SessionIndex) {
+        // debug::info!("Start session ID {}", start_index);
+        todo!()
+    }
+}
+
 /// Implementation of additional methods for pallet configuration trait.
 impl<T: Trait> Module<T> {
     // The abci transaction call.
@@ -154,7 +177,7 @@ impl<T: Trait> Module<T> {
         let abci_txs: ABCITxs = <ABCITxStorage<T>>::get(block_number);
         for abci_tx in abci_txs.data_array {
             debug::info!("call_offchain_worker(), abci_tx: {:?}", abci_tx);
-            <Self as CosmosAbci>::deliver_tx(abci_tx)
+            let _ = <Self as CosmosAbci>::deliver_tx(abci_tx)
                 .map_err(|e| debug::error!("deliver_tx() error: {:?}", e));
         }
         Self::call_on_finalize(block_number);
@@ -183,7 +206,25 @@ impl<T: Trait> Module<T> {
         match abci_interface::end_block(block_number.saturated_into() as i64) {
             Ok(_) => {
                 let substrate_validators = <session::Module<T>>::validators();
-                debug::info!("%Substrate node validators: {:?}", substrate_validators);
+                let proof: Vec<u8> = vec![];
+                // Set a new validator keys for new session.
+                let sudo_root = <sudo::Module<T>>::key();
+                let response = <session::Module<T>>::set_keys(
+                    RawOrigin::Signed(sudo_root).into(),
+                    <T as pallet_session::Trait>::Keys::default(),
+                    proof,
+                );
+                // <CosmosValidators<T>>::put(substrate_validators);
+
+                match response {
+                    Ok(_) => {
+                        debug::info!("Try to renew validators set success");
+                    }
+                    Err(err) => {
+                        debug::info!("Try to renew validators set error: {:?}", err);
+                    }
+                }
+                debug::info!("Substrate node validators: {:?}", substrate_validators);
                 match abci_interface::commit() {
                     Err(err) => {
                         panic!("Commit failed: {:?}", err);
@@ -299,7 +340,7 @@ pub trait AbciInterface {
             .map_err(|_| "end_block failed")?;
         // debug::info!("Result: {:?}", result);
         let validator_updates = _result.get_validator_updates();
-        debug::info!("%Cosmos node validators: {:?}", validator_updates);
+        debug::info!("Cosmos node validators: {:?}", validator_updates);
 
         Ok(())
     }

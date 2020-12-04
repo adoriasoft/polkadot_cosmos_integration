@@ -10,16 +10,17 @@ version = '2.0.0-rc6'
 [package.metadata.docs.rs]
 targets = ['x86_64-unknown-linux-gnu']
 
-[dependencies.pallet-session]
-default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc6'
-version = '2.0.0-rc6'
-
 [dependencies.pallet-staking]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc6'
+tag = "v2.0.0-rc6"
+version = '2.0.0-rc6'
+
+[dependencies.pallet-session]
+features = ["historical"]
+default-features = false
+git = 'https://github.com/paritytech/substrate.git'
+tag = "v2.0.0-rc6"
 version = '2.0.0-rc6'
 
 [dependencies.codec]
@@ -117,12 +118,6 @@ git = 'https://github.com/paritytech/substrate.git'
 tag = 'v2.0.0-rc6'
 version = '2.0.0-rc6'
 
-[dependencies.sp-staking]
-default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc6'
-version = '2.0.0-rc6'
-
 [dependencies.sp-consensus-aura]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
@@ -147,13 +142,13 @@ git = 'https://github.com/paritytech/substrate.git'
 tag = 'v2.0.0-rc6'
 version = '2.0.0-rc6'
 
-[dependencies.sp-runtime]
+[dependencies.sp-session]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
 tag = 'v2.0.0-rc6'
 version = '2.0.0-rc6'
 
-[dependencies.sp-session]
+[dependencies.sp-runtime]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
 tag = 'v2.0.0-rc6'
@@ -199,6 +194,8 @@ std = [
     'pallet-timestamp/std',
     'pallet-transaction-payment/std',
     'pallet-transaction-payment-rpc-runtime-api/std',
+    'pallet-staking/std',
+    'pallet-session/std',
     'serde',
     'sp-api/std',
     'sp-block-builder/std',
@@ -211,10 +208,7 @@ std = [
     'sp-std/std',
     'sp-transaction-pool/std',
     'sp-version/std',
-    # 'sp-staking/std',
     'cosmos-abci/std',
-    'pallet-staking/std',
-    'pallet-session/std',
 ]
 
 [build-dependencies.wasm-builder-runner]

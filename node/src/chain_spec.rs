@@ -51,6 +51,13 @@ pub fn to_session_keys(
     }
 }
 
+fn initial_poa_authorities() -> Vec<(AuraId, GrandpaId, AccountId)> {
+    vec![authority_keys_from_seed(
+        "Alice",
+        AccountKeyring::Alice.into(),
+    )]
+}
+
 pub fn development_config() -> Result<ChainSpec, String> {
     let wasm_binary = WASM_BINARY.ok_or("Development wasm binary not available".to_string())?;
 
@@ -64,10 +71,7 @@ pub fn development_config() -> Result<ChainSpec, String> {
             testnet_genesis(
                 wasm_binary,
                 // Initial PoA authorities
-                vec![authority_keys_from_seed(
-                    "Alice",
-                    AccountKeyring::Alice.into(),
-                )],
+                initial_poa_authorities(),
                 // Sudo account
                 get_account_id_from_seed::<sr25519::Public>("Alice"),
                 // Pre-funded accounts
@@ -106,10 +110,7 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
             testnet_genesis(
                 wasm_binary,
                 // Initial PoA authorities
-                vec![
-                    authority_keys_from_seed("Alice", AccountKeyring::Alice.into()),
-                    authority_keys_from_seed("Bob", AccountKeyring::Bob.into()),
-                ],
+                initial_poa_authorities(),
                 // Sudo account
                 get_account_id_from_seed::<sr25519::Public>("Alice"),
                 // Pre-funded accounts
@@ -153,6 +154,10 @@ fn testnet_genesis(
     endowed_accounts: Vec<AccountId>,
     _enable_println: bool,
 ) -> GenesisConfig {
+    println!(
+        "Init testnet gen with initial POA authorities {:?}",
+        initial_authorities
+    );
     GenesisConfig {
         frame_system: Some(SystemConfig {
             // Add Wasm runtime to storage.
@@ -167,30 +172,34 @@ fn testnet_genesis(
                 .map(|k| (k, 1 << 60))
                 .collect(),
         }),
+        // Will generate error if initial authorities array is not empty.
         pallet_aura: Some(AuraConfig {
-            authorities: vec![],
-            // initial_authorities.iter().map(|x| (x.0.clone())).collect(),
+            authorities: vec![], // initial_authorities.iter().map(|x| (x.0.clone())).collect(),
         }),
         pallet_grandpa: Some(GrandpaConfig {
-            authorities: vec![],
-            // initial_authorities.iter().map(|x| (x.1.clone(), 1)).collect(),
+            authorities: vec![], /* initial_authorities
+                                 .iter()
+                                 .map(|x| (x.1.clone(), 1))
+                                 .collect(), */
         }),
-        pallet_sudo: Some(SudoConfig {
-            // Assign network admin rights.
-            key: root_key,
-        }),
+        // Assign network admin rights.
+        pallet_sudo: Some(SudoConfig { key: root_key }),
         pallet_session: Some(SessionConfig {
             keys: vec![
                 (
-                    AccountKeyring::Dave.into(),
-                    AccountKeyring::Alice.into(),
+                    get_account_id_from_seed::<sr25519::Public>("Alice"),
+                    get_account_id_from_seed::<sr25519::Public>("Alice"),
                     to_session_keys(&Ed25519Keyring::Alice, &Sr25519Keyring::Alice),
-                ),
-                (
-                    AccountKeyring::Eve.into(),
-                    AccountKeyring::Bob.into(),
-                    to_session_keys(&Ed25519Keyring::Bob, &Sr25519Keyring::Bob),
-                ),
+                ), /* (
+                       get_account_id_from_seed::<sr25519::Public>("Bob"),
+                       get_account_id_from_seed::<sr25519::Public>("Bob"),
+                       to_session_keys(&Ed25519Keyring::Bob, &Sr25519Keyring::Bob),
+                   ),
+                   (
+                       get_account_id_from_seed::<sr25519::Public>("Dave"),
+                       get_account_id_from_seed::<sr25519::Public>("Dave"),
+                       to_session_keys(&Ed25519Keyring::Dave, &Sr25519Keyring::Dave),
+                   ), */
             ],
         }),
     }

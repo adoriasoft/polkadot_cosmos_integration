@@ -7,8 +7,10 @@
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 use codec::Encode;
-use pallet_grandpa::fg_primitives;
-use pallet_grandpa::{AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
+use pallet_grandpa::{
+    fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
+};
+// use pallet_staking;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
@@ -260,20 +262,26 @@ impl pallet_transaction_payment::Trait for Runtime {
 
 parameter_types! {
     pub const DisabledValidatorsThreshold: Perbill = Perbill::from_percent(33);
-    pub const Period: u32 = 1;
-    pub const Offset: u32 = 0;
+    /// 2 blocks = session duration.
+    pub const Period: BlockNumber = 2;
+    pub const Offset: BlockNumber = 0;
 }
+
+/* impl pallet_session::historical::Trait for Runtime {
+    type FullIdentification = pallet_staking::Exposure<AccountId, Balance>;
+    type FullIdentificationOf = pallet_staking::ExposureOf<Self>;
+} */
 
 impl pallet_session::Trait for Runtime {
     type ValidatorId = <Self as frame_system::Trait>::AccountId;
+    type ValidatorIdOf = ConvertInto;
     type Keys = opaque::SessionKeys;
     type WeightInfo = ();
     type DisabledValidatorsThreshold = DisabledValidatorsThreshold;
-    type ValidatorIdOf = ConvertInto;
     type Event = Event;
     type ShouldEndSession = pallet_session::PeriodicSessions<Period, Offset>;
     type NextSessionRotation = pallet_session::PeriodicSessions<Period, Offset>;
-    type SessionManager = ();
+    type SessionManager = (); // pallet_session::historical::NoteHistoricalRoot<Self, CosmosAbci>;
     type SessionHandler = <opaque::SessionKeys as OpaqueKeys>::KeyTypeIdProviders;
 }
 
@@ -358,7 +366,6 @@ construct_runtime!(
         Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent},
         Aura: pallet_aura::{Module, Config<T>, Inherent},
         Session: pallet_session::{Module, Call, Storage, Event, Config<T>},
-        // Staking: pallet_staking::{Module, Call, Config<T>, Storage, Event<T>, ValidateUnsigned},
         Grandpa: pallet_grandpa::{Module, Call, Storage, Config, Event},
         Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
         TransactionPayment: pallet_transaction_payment::{Module, Storage},
