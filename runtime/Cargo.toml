@@ -1,185 +1,68 @@
 [package]
-authors = ['Substrate DevHub <https://github.com/substrate-developer-hub>']
+name = 'node-template-runtime'
+authors = ['AdoriaSoft']
 edition = '2018'
 homepage = 'https://substrate.dev'
-license = 'Unlicense'
-name = 'node-template-runtime'
+license = 'Apache-2.0'
 repository = 'https://github.com/substrate-developer-hub/substrate-node-template/'
-version = '2.0.0-rc6'
+version = '0.0.3'
 
 [package.metadata.docs.rs]
 targets = ['x86_64-unknown-linux-gnu']
 
-[dependencies.pallet-staking]
-default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-tag = "v2.0.0-rc6"
-version = '2.0.0-rc6'
+[dependencies]
+hex-literal = { optional = true, version = '0.3.1' }
+serde = { features = ['derive'], optional = true, version = '1.0.101' }
 
-[dependencies.pallet-session]
-features = ["historical"]
-default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-tag = "v2.0.0-rc6"
-version = '2.0.0-rc6'
+# alias "parity-scale-code" to "codec"
+codec = { package = 'parity-scale-codec', default-features = false, features = ['derive'], version = '1.3.4' }
+# local dependencies
+pallet-cosmos-abci = { path = '../cosmos-abci', default-features = false, version = '0.0.3' }
 
-[dependencies.codec]
-default-features = false
-features = ['derive']
-package = 'parity-scale-codec'
-version = '1.3.4'
+# Substrate dependencies
+frame-benchmarking = { default-features = false, optional = true, version = '2.0.0' }
+frame-executive = { default-features = false, version = '2.0.0' }
+frame-support = { default-features = false, version = '2.0.0' }
+frame-system = { default-features = false, version = '2.0.0' }
+frame-system-benchmarking = { default-features = false, optional = true, version = '2.0.0' }
+frame-system-rpc-runtime-api = { default-features = false, version = '2.0.0' }
+pallet-session = { default-features = false, version = '2.0.0' }
+pallet-staking = { default-features = false, version = '2.0.0' }
+pallet-aura = { default-features = false, version = '2.0.0' }
+pallet-balances = { default-features = false, version = '2.0.0' }
+pallet-grandpa = { default-features = false, version = '2.0.0' }
+pallet-randomness-collective-flip = { default-features = false, version = '2.0.0' }
+pallet-sudo = { default-features = false, version = '2.0.0' }
+pallet-timestamp = { default-features = false, version = '2.0.0' }
+pallet-transaction-payment = { default-features = false, version = '2.0.0' }
+pallet-transaction-payment-rpc-runtime-api = { default-features = false, version = '2.0.0' }
+sp-api = { default-features = false, version = '2.0.0' }
+sp-block-builder = { default-features = false, version = '2.0.0' }
+sp-consensus-aura = { default-features = false, version = '0.8.0' }
+sp-core = { default-features = false, version = '2.0.0' }
+sp-inherents = { default-features = false, version = '2.0.0' }
+sp-offchain = { default-features = false, version = '2.0.0' }
+sp-runtime = { default-features = false, version = '2.0.0' }
+sp-session = { default-features = false, version = '2.0.0' }
+sp-std = { default-features = false, version = '2.0.0' }
+sp-transaction-pool = { default-features = false, version = '2.0.0' }
+sp-version = { default-features = false, version = '2.0.0' }
 
-[dependencies.frame-executive]
-default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc6'
-version = '2.0.0-rc6'
-
-[dependencies.frame-support]
-default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc6'
-version = '2.0.0-rc6'
-
-[dependencies.frame-system]
-default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc6'
-version = '2.0.0-rc6'
-
-[dependencies.frame-system-rpc-runtime-api]
-default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc6'
-version = '2.0.0-rc6'
-
-[dependencies.pallet-aura]
-default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc6'
-version = '2.0.0-rc6'
-
-[dependencies.pallet-balances]
-default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc6'
-version = '2.0.0-rc6'
-
-[dependencies.pallet-grandpa]
-default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc6'
-version = '2.0.0-rc6'
-
-[dependencies.pallet-randomness-collective-flip]
-default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc6'
-version = '2.0.0-rc6'
-
-[dependencies.pallet-sudo]
-default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc6'
-version = '2.0.0-rc6'
-
-[dependencies.pallet-timestamp]
-default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc6'
-version = '2.0.0-rc6'
-
-[dependencies.pallet-transaction-payment]
-default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc6'
-version = '2.0.0-rc6'
-
-[dependencies.pallet-transaction-payment-rpc-runtime-api]
-default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc6'
-version = '2.0.0-rc6'
-
-[dependencies.serde]
-features = ['derive']
-optional = true
-version = '1.0.101'
-
-[dependencies.sp-api]
-default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc6'
-version = '2.0.0-rc6'
-
-[dependencies.sp-block-builder]
-default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc6'
-version = '2.0.0-rc6'
-
-[dependencies.sp-consensus-aura]
-default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc6'
-version = '0.8.0-rc6'
-
-[dependencies.sp-core]
-default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc6'
-version = '2.0.0-rc6'
-
-[dependencies.sp-inherents]
-default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc6'
-version = '2.0.0-rc6'
-
-[dependencies.sp-offchain]
-default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc6'
-version = '2.0.0-rc6'
-
-[dependencies.sp-session]
-default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc6'
-version = '2.0.0-rc6'
-
-[dependencies.sp-runtime]
-default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc6'
-version = '2.0.0-rc6'
-
-[dependencies.sp-std]
-default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc6'
-version = '2.0.0-rc6'
-
-[dependencies.sp-transaction-pool]
-default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc6'
-version = '2.0.0-rc6'
-
-[dependencies.sp-version]
-default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'v2.0.0-rc6'
-version = '2.0.0-rc6'
-
-[dependencies.cosmos-abci]
-default-features = false
-package = 'pallet-cosmos-abci'
-path = '../pallets/cosmos-abci'
-version = '2.0.0-rc6'
+[build-dependencies]
+wasm-builder-runner = { package = 'substrate-wasm-builder-runner', version = '2.0.0' }
 
 [features]
 default = ['std']
+runtime-benchmarks = [
+    'hex-literal',
+    'frame-benchmarking',
+    'frame-support/runtime-benchmarks',
+    'frame-system-benchmarking',
+    'frame-system/runtime-benchmarks',
+    'pallet-balances/runtime-benchmarks',
+    'pallet-timestamp/runtime-benchmarks',
+    'sp-runtime/runtime-benchmarks',
+]
 std = [
     'codec/std',
     'frame-executive/std',
@@ -208,11 +91,5 @@ std = [
     'sp-std/std',
     'sp-transaction-pool/std',
     'sp-version/std',
-    'cosmos-abci/std',
+    'pallet-cosmos-abci/std',
 ]
-
-[build-dependencies.wasm-builder-runner]
-git = 'https://github.com/paritytech/substrate.git'
-package = 'substrate-wasm-builder-runner'
-tag = 'v2.0.0-rc6'
-version = '1.0.5'

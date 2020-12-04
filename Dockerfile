@@ -22,5 +22,6 @@ RUN cargo +nightly-2020-08-19 build --$PROFILE && \
 	mv ./target/$PROFILE/$PROJECT /app
 
 FROM phusion/baseimage:0.10.2
+LABEL org.opencontainers.image.source https://github.com/adoriasoft/polkadot_cosmos_integration
 COPY --from=builder /app .
 ENTRYPOINT ["/app"]

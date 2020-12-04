@@ -1,0 +1,27 @@
+[package]
+name = 'pallet-abci'
+description = 'Cosmos ABCI library to communicate with Cosmos Applications'
+edition = '2018'
+authors = ['Adoriasoft team']
+readme = '../../README.md'
+repository = 'https://github.com/adoriasoft/polkadot_cosmos_integration'
+license = 'Apache-2.0'
+version = '0.0.3'
+
+[dependencies]
+serde = { version = '1.0', features = ['derive'] }
+serde_json = { version = '1.0', default-features = false, features = ['alloc'] }
+tokio = { version = '0.2', features = ['rt-threaded', 'time', 'blocking'] }
+tonic = { version = '0.3.0', features = ['tls'] }
+prost = { version = '0.6' }
+prost-types = '0.6'
+lazy_static = '1.2.0'
+owning_ref = '0.4.1'
+mockall = '0.8.1'
+chrono = '0.4'
+
+[dev-dependencies]
+testcontainers = '0.10'
+
+[build-dependencies]
+tonic-build = { version = '0.3.0', features = ['prost'] }
