@@ -129,13 +129,9 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
                 match abci_query_res {
                     Err(e) => Ok(json!({ "error": e })),
                     Ok(abci_query_res_ok) => {
-                        let origin_key = &abci_query_res_ok.get_key();
                         let origin_proof = &abci_query_res_ok.get_proof();
-                        let origin_value = &abci_query_res_ok.get_value();
 
                         let mut proof: Option<String> = None;
-                        let mut key: Option<String> = None;
-                        let mut value: Option<String> = None;
 
                         match origin_proof {
                             Some(proof_res_ok) => {
@@ -144,36 +140,14 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
                             None => {}
                         }
 
-                        match std::str::from_utf8(origin_key) {
-                            Ok(key_res_ok) => {
-                                let key_str = key_res_ok.to_string();
-                                if key_str.chars().count() > 0 {
-                                    key = Some(key_str);
-                                }
-                            }
-                            Err(_e) => {}
-                        }
-
-                        match std::str::from_utf8(origin_value) {
-                            Ok(value_res_ok) => {
-                                let value_str = value_res_ok.to_string();
-                                if value_str.chars().count() > 0 {
-                                    value = Some(base64::encode(origin_value));
-                                }
-                            }
-                            Err(_e) => {
-                                value = Some(base64::encode(""));
-                            }
-                        }
-
                         Ok(json!({
                             "response": {
                                 "log" : abci_query_res_ok.get_log(),
                                 "height" : abci_query_res_ok.get_height().to_string(),
                                 "index" : abci_query_res_ok.get_index().to_string(),
                                 "code" : abci_query_res_ok.get_code().to_string(),
-                                "key" : &key,
-                                "value" : &value,
+                                "key" : Some(base64::encode(abci_query_res_ok.get_key())),
+                                "value" : Some(base64::encode(abci_query_res_ok.get_value())),
                                 "proof" : &proof,
                             }
                         }))
