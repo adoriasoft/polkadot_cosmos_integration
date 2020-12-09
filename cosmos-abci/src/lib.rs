@@ -11,7 +11,6 @@ use frame_support::{
 use frame_system::{
     self as system, ensure_none,
     offchain::{AppCrypto, CreateSignedTransaction},
-    RawOrigin,
 };
 use pallet_session as session;
 use pallet_sudo as sudo;
@@ -212,24 +211,24 @@ impl<T: Trait> Module<T> {
         match abci_interface::end_block(block_number.saturated_into() as i64) {
             Ok(_) => {
                 let substrate_validators = <session::Module<T>>::validators();
-                let proof: Vec<u8> = vec![];
-                // Set a new validator keys for new session.
+                /* let proof: Vec<u8> = vec![];
+                Set a new validator keys for new session.
+                <CosmosValidators<T>>::put(substrate_validators);
+
                 let sudo_root = <sudo::Module<T>>::key();
                 let response = <session::Module<T>>::set_keys(
                     RawOrigin::Signed(sudo_root).into(),
                     <T as pallet_session::Trait>::Keys::default(),
                     proof,
                 );
-                // <CosmosValidators<T>>::put(substrate_validators);
-
                 match response {
                     Ok(_) => {
-                        debug::info!("Try to renew validators set success");
+                        debug::info!("Set new keys for validator.");
                     }
                     Err(err) => {
-                        debug::info!("Try to renew validators set error: {:?}", err);
+                        debug::info!("Set keys for validator error: {:?}", err);
                     }
-                }
+                } */
                 debug::info!("Substrate node validators: {:?}", substrate_validators);
                 match abci_interface::commit() {
                     Err(err) => {
@@ -380,7 +379,7 @@ pub struct StashOf<T>(sp_std::marker::PhantomData<T>);
 
 impl<T: Trait> Convert<T::AccountId, Option<T::AccountId>> for StashOf<T> {
     fn convert(controller: T::AccountId) -> Option<T::AccountId> {
-        None
+        Some(controller)
     }
 }
 
@@ -389,8 +388,7 @@ impl<T: Trait> pallet_session::SessionManager<T::AccountId> for Module<T> {
         debug::info!("A new session ID {:?}", new_index);
         // Update validators set on session_index = 4 for test.
         if new_index == 4 {
-            let sudo_root = <sudo::Module<T>>::key();
-            Some(vec![sudo_root])
+            Some(vec![])
         } else {
             None
         }
@@ -408,9 +406,11 @@ impl<T: Trait> pallet_session::SessionManager<T::AccountId> for Module<T> {
 impl<T: Trait> pallet_session::historical::SessionManager<T::AccountId, ()> for Module<T> {
     fn new_session(new_index: SessionIndex) -> Option<Vec<(T::AccountId, ())>> {
         debug::info!("A new session ID {:?}", new_index);
+        // Update validators set on session_index = 4 for test.
         if new_index == 4 {
+            debug::info!("Update validators for session with ID = 4 {:?}", new_index);
             let sudo_root = <sudo::Module<T>>::key();
-            Some(vec![sudo_root])
+            Some(vec![])
         } else {
             None
         }
