@@ -14,15 +14,16 @@ use pallet_grandpa::{
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
-use sp_runtime::generic::Era;
 use sp_runtime::traits::{
     BlakeTwo256, Block as BlockT, ConvertInto, IdentifyAccount, IdentityLookup, NumberFor,
     OpaqueKeys, Saturating, Verify,
 };
 use sp_runtime::{
-    create_runtime_str, generic, impl_opaque_keys,
+    create_runtime_str, generic,
+    generic::Era,
+    impl_opaque_keys,
     transaction_validity::{InvalidTransaction, TransactionSource, TransactionValidity},
-    ApplyExtrinsicResult, MultiSignature, Perbill,
+    ApplyExtrinsicResult, MultiSignature, Perbill, RuntimeAppPublic,
 };
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
@@ -271,22 +272,22 @@ parameter_types! {
     pub const Offset: BlockNumber = 0;
 }
 
-/* impl pallet_session::historical::Trait for Runtime {
-    type FullIdentification = pallet_staking::Exposure<AccountId, Balance>;
-    type FullIdentificationOf = pallet_staking::ExposureOf<Self>;
-} */
+impl pallet_session::historical::Trait for Runtime {
+    type FullIdentification = (); //pallet_staking::Exposure<AccountId, Balance>;
+    type FullIdentificationOf = (); //pallet_staking::ExposureOf<Runtime>;
+}
 
 impl pallet_session::Trait for Runtime {
-    type ValidatorId = <Self as frame_system::Trait>::AccountId;
-    type ValidatorIdOf = ConvertInto;
-    type Keys = opaque::SessionKeys;
-    type WeightInfo = ();
-    type DisabledValidatorsThreshold = DisabledValidatorsThreshold;
     type Event = Event;
+    type ValidatorId = <Self as frame_system::Trait>::AccountId;
+    type ValidatorIdOf = pallet_cosmos_abci::StashOf<Self>;
     type ShouldEndSession = pallet_session::PeriodicSessions<Period, Offset>;
     type NextSessionRotation = pallet_session::PeriodicSessions<Period, Offset>;
-    type SessionManager = (); // pallet_session::historical::NoteHistoricalRoot<Self, CosmosAbci>;
+    type SessionManager = pallet_session::historical::NoteHistoricalRoot<Self, CosmosAbci>;
     type SessionHandler = <opaque::SessionKeys as OpaqueKeys>::KeyTypeIdProviders;
+    type Keys = opaque::SessionKeys;
+    type DisabledValidatorsThreshold = DisabledValidatorsThreshold;
+    type WeightInfo = ();
 }
 
 impl pallet_sudo::Trait for Runtime {

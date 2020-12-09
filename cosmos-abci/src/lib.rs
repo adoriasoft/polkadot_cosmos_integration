@@ -21,7 +21,7 @@ use sp_runtime::{
         storage::StorageValueRef,
         storage_lock::{BlockAndTime, StorageLock},
     },
-    traits::SaturatedConversion,
+    traits::{Convert, SaturatedConversion},
     transaction_validity::{
         InvalidTransaction, TransactionSource, TransactionValidity, ValidTransaction,
     },
@@ -41,6 +41,7 @@ pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"abci");
 /// them with the pallet-specific identifier.
 pub mod crypto {
     use crate::KEY_TYPE;
+    use frame_support::codec::Decode;
     use sp_core::sr25519::Signature as Sr25519Signature;
     use sp_runtime::app_crypto::{app_crypto, sr25519};
     use sp_runtime::traits::Verify;
@@ -48,6 +49,7 @@ pub mod crypto {
 
     app_crypto!(sr25519, KEY_TYPE);
 
+    #[derive(Decode, Default)]
     pub struct ABCIAuthId;
     /// Implemented for ocw-runtime.
     impl frame_system::offchain::AppCrypto<MultiSigner, MultiSignature> for ABCIAuthId {
@@ -76,10 +78,7 @@ pub trait CosmosAbci {
 pub trait Trait:
     CreateSignedTransaction<Call<Self>> + pallet_session::Trait + pallet_sudo::Trait
 {
-    type AuthorityId: AppCrypto<Self::Public, Self::Signature>;
-    // + Parameter
-    // + RuntimeAppPublic
-    // + Default;
+    type AuthorityId: AppCrypto<Self::Public, Self::Signature> + Default + Decode;
     type Call: From<Call<Self>>;
 }
 
@@ -135,24 +134,6 @@ decl_module! {
                 Self::call_offchain_worker(block_number, block_hash, parent_hash, extrinsics_root);
             }
         }
-    }
-}
-
-impl<T: Trait> pallet_session::SessionManager<T::AccountId> for Module<T> {
-    fn new_session(new_index: SessionIndex) -> Option<Vec<T::AccountId>> {
-        debug::info!("A new session ID {}", new_index);
-        let sudo_root = <sudo::Module<T>>::key();
-        Some(vec![sudo_root])
-    }
-
-    fn end_session(end_index: SessionIndex) {
-        // debug::info!("End new session ID {}", end_index);
-        todo!()
-    }
-
-    fn start_session(start_index: SessionIndex) {
-        // debug::info!("Start session ID {}", start_index);
-        todo!()
     }
 }
 
@@ -392,5 +373,54 @@ impl<T: Trait> sp_runtime::offchain::storage_lock::BlockNumberProvider for Modul
     type BlockNumber = T::BlockNumber;
     fn current_block_number() -> Self::BlockNumber {
         <frame_system::Module<T>>::block_number()
+    }
+}
+
+pub struct StashOf<T>(sp_std::marker::PhantomData<T>);
+
+impl<T: Trait> Convert<T::AccountId, Option<T::AccountId>> for StashOf<T> {
+    fn convert(controller: T::AccountId) -> Option<T::AccountId> {
+        None
+    }
+}
+
+impl<T: Trait> pallet_session::SessionManager<T::AccountId> for Module<T> {
+    fn new_session(new_index: SessionIndex) -> Option<Vec<T::AccountId>> {
+        debug::info!("A new session ID {:?}", new_index);
+        // Update validators set on session_index = 4 for test.
+        if new_index == 4 {
+            let sudo_root = <sudo::Module<T>>::key();
+            Some(vec![sudo_root])
+        } else {
+            None
+        }
+    }
+
+    fn end_session(end_index: SessionIndex) {
+        debug::info!("Session is ended {:?}", end_index);
+    }
+
+    fn start_session(start_index: SessionIndex) {
+        debug::info!("Session is started {:?}", start_index);
+    }
+}
+
+impl<T: Trait> pallet_session::historical::SessionManager<T::AccountId, ()> for Module<T> {
+    fn new_session(new_index: SessionIndex) -> Option<Vec<(T::AccountId, ())>> {
+        debug::info!("A new session ID {:?}", new_index);
+        if new_index == 4 {
+            let sudo_root = <sudo::Module<T>>::key();
+            Some(vec![sudo_root])
+        } else {
+            None
+        }
+    }
+
+    fn end_session(end_index: SessionIndex) {
+        debug::info!("Session is started {:?}", end_index);
+    }
+
+    fn start_session(start_index: SessionIndex) {
+        debug::info!("Session is ended {:?}", start_index);
     }
 }
