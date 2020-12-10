@@ -16,6 +16,7 @@ panic = 'unwind'
 members = [
     'cosmos-abci',
     'cosmos-abci/abci',
+    'cosmos-abci/abci_storage',
     'runtime',
 ]
 

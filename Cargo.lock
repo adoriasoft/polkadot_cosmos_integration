@@ -11,6 +11,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "abci-storage"
+version = "0.0.3"
+dependencies = [
+ "chrono",
+ "lazy_static",
+ "mockall",
+ "owning_ref",
+ "rocksdb",
+]
+
+[[package]]
 name = "addr2line"
 version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
