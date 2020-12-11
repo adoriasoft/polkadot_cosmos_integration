@@ -90,6 +90,18 @@ pub trait Trait:
 {
     type AuthorityId: AppCrypto<Self::Public, Self::Signature> + Default + Decode;
     type Call: From<Call<Self>>;
+    type Subscription: SubscriptionManager;
+}
+
+/// The pallet Subscription manager trait.
+pub trait SubscriptionManager {
+    fn on_check_tx(data: Vec<u8>) -> DispatchResult;
+    fn on_deliver_tx(data: Vec<u8>) -> DispatchResult;
+}
+
+impl SubscriptionManager for () {
+    fn on_check_tx(_: Vec<u8>) -> DispatchResult { Ok(()) }
+    fn on_deliver_tx(_: Vec<u8>) -> DispatchResult { Ok(()) }
 }
 
 impl<T: Trait> sp_runtime::BoundToRuntimeAppPublic for Module<T>
@@ -288,10 +300,12 @@ impl<T: Trait> frame_support::unsigned::ValidateUnsigned for Module<T> {
 /// The implementation for CosmosAbci trait for pallet.
 impl<T: Trait> CosmosAbci for Module<T> {
     fn check_tx(data: Vec<u8>) -> Result<u64, DispatchError> {
+        <Self as SubscriptionManager>::on_check_tx(data)?;
         abci_interface::check_tx(data)
     }
 
     fn deliver_tx(data: Vec<u8>) -> DispatchResult {
+        <Self as SubscriptionManager>::on_deliver_tx(data)?;
         abci_interface::deliver_tx(data)
     }
 }
