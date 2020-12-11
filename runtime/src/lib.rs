@@ -298,6 +298,7 @@ impl pallet_sudo::Trait for Runtime {
 impl pallet_cosmos_abci::Trait for Runtime {
     type AuthorityId = pallet_cosmos_abci::crypto::ABCIAuthId;
     type Call = Call;
+    type Subscription = ();
 }
 
 /// The payload being signed in transactions.
