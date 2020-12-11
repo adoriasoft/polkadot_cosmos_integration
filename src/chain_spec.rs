@@ -168,24 +168,33 @@ fn testnet_genesis(
                 .map(|k| (k, 1 << 60))
                 .collect(),
         }),
-        // Will generate error if initial authorities array is not empty.
+        // Keys already setted by pallet_session.
         pallet_aura: Some(AuraConfig {
-            authorities: vec![], /* initial_authorities.iter().map(|x| (x.0.clone())).collect(), */
+            authorities: vec![],
         }),
         pallet_grandpa: Some(GrandpaConfig {
-            authorities: vec![], /* initial_authorities
-                                 .iter()
-                                 .map(|x| (x.1.clone(), 1))
-                                 .collect(), */
+            authorities: vec![],
         }),
         // Assign network admin rights.
         pallet_sudo: Some(SudoConfig { key: root_key }),
         pallet_session: Some(SessionConfig {
-            keys: vec![(
-                get_account_id_from_seed::<sr25519::Public>("Alice"),
-                get_account_id_from_seed::<sr25519::Public>("Alice"),
-                to_session_keys(&Ed25519Keyring::Alice, &Sr25519Keyring::Alice),
-            )],
+            keys: vec![
+                (
+                    get_account_id_from_seed::<sr25519::Public>("Alice"),
+                    get_account_id_from_seed::<sr25519::Public>("Alice"),
+                    to_session_keys(&Ed25519Keyring::Alice, &Sr25519Keyring::Alice),
+                )
+                /* (
+                    get_account_id_from_seed::<sr25519::Public>("Bob"),
+                    get_account_id_from_seed::<sr25519::Public>("Bob"),
+                    to_session_keys(&Ed25519Keyring::Bob, &Sr25519Keyring::Bob),
+                ),
+                (
+                    get_account_id_from_seed::<sr25519::Public>("Dave"),
+                    get_account_id_from_seed::<sr25519::Public>("Dave"),
+                    to_session_keys(&Ed25519Keyring::Dave, &Sr25519Keyring::Dave),
+                ), */
+            ],
         }),
     }
 }

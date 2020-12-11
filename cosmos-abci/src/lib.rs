@@ -9,8 +9,9 @@ use frame_support::{
     weights::Weight,
 };
 use frame_system::{
-    self as system, ensure_none,
+    self as system, ensure_none, ensure_signed,
     offchain::{AppCrypto, CreateSignedTransaction},
+    RawOrigin,
 };
 use pallet_session as session;
 use pallet_sudo as sudo;
@@ -28,13 +29,23 @@ use sp_runtime::{
 };
 use sp_runtime_interface::runtime_interface;
 use sp_std::prelude::*;
+
+/// Balance type for pallet.
+pub type Balance = u64;
+/// Session index that define in pallet_session.
 type SessionIndex = u32;
+/// The optional ledger type.
+type OptionalLedger<AccountId> = Option<(AccountId, Balance)>;
 
 /// Priority for unsigned transaction.
 pub const UNSIGNED_TXS_PRIORITY: u64 = 100;
 
 /// The KeyType ID.
 pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"abci");
+
+/// Type helpers.
+pub mod utils;
+//
 /// Based on the above `KeyTypeId` we need to generate a pallet-specific crypto type wrapper.
 /// We can utilize the supported crypto kinds (`sr25519`, `ed25519` and `ecdsa`) and augment
 /// them with the pallet-specific identifier.
@@ -97,7 +108,8 @@ pub struct ABCITxs {
 decl_storage! {
     trait Store for Module<T: Trait> as ABCITxStorage {
         ABCITxStorage get(fn abci_tx): map hasher(blake2_128_concat) T::BlockNumber => ABCITxs;
-        CosmosValidators get(fn abci_validators): Vec<T::AccountId>;
+        CosmosNodeValidators get(fn cosmos_node_validators): Vec<()>;
+        AccountLedger get(fn account_ledger): map hasher(blake2_128_concat) T::AccountId => OptionalLedger<T::AccountId>;
     }
 }
 
@@ -110,6 +122,15 @@ decl_module! {
 
         // Block finalization.
         fn on_finalize(block_number: T::BlockNumber) {
+        }
+
+        // Simple tx.
+        #[weight = 0]
+        fn handle_origin_account(origin) -> Result<(), DispatchError> {
+            let origin_signed = ensure_signed(origin)?;
+            <AccountLedger<T>>::insert(&origin_signed, Some((&origin_signed, 0)));
+            // debug::info!("handle_origin_account() origin: {:?}", origin_signed);
+            Ok(())
         }
 
         // Transaction dispatch.
@@ -210,26 +231,8 @@ impl<T: Trait> Module<T> {
     pub fn call_on_finalize(block_number: T::BlockNumber) -> bool {
         match abci_interface::end_block(block_number.saturated_into() as i64) {
             Ok(_) => {
-                let substrate_validators = <session::Module<T>>::validators();
-                /* let proof: Vec<u8> = vec![];
-                Set a new validator keys for new session.
-                <CosmosValidators<T>>::put(substrate_validators);
-
-                let sudo_root = <sudo::Module<T>>::key();
-                let response = <session::Module<T>>::set_keys(
-                    RawOrigin::Signed(sudo_root).into(),
-                    <T as pallet_session::Trait>::Keys::default(),
-                    proof,
-                );
-                match response {
-                    Ok(_) => {
-                        debug::info!("Set new keys for validator.");
-                    }
-                    Err(err) => {
-                        debug::info!("Set keys for validator error: {:?}", err);
-                    }
-                } */
-                debug::info!("Substrate node validators: {:?}", substrate_validators);
+                let substrate_node_validators = <pallet_session::Module<T>>::validators();
+                debug::info!("Substrate validators {:?}", substrate_node_validators);
                 match abci_interface::commit() {
                     Err(err) => {
                         panic!("Commit failed: {:?}", err);
@@ -239,6 +242,23 @@ impl<T: Trait> Module<T> {
             }
             Err(err) => {
                 panic!("End block failed: {:?}", err);
+            }
+        }
+    }
+
+    pub fn update_keys_for_account(validator_id: T::AccountId) {
+        let proof = vec![];
+        let set_keys_response = <session::Module<T>>::set_keys(
+            RawOrigin::Signed(validator_id.clone()).into(),
+            T::Keys::default(),
+            proof,
+        );
+        match set_keys_response {
+            Ok(_) => {
+                debug::info!("Set new keys for validator {:?}", validator_id);
+            }
+            Err(err) => {
+                debug::info!("Set keys for validator error {:?}", err);
             }
         }
     }
@@ -354,8 +374,10 @@ pub trait AbciInterface {
             .end_block(height)
             .map_err(|_| "end_block failed")?;
         // debug::info!("Result: {:?}", result);
-        let validator_updates = _result.get_validator_updates();
-        debug::info!("Cosmos node validators: {:?}", validator_updates);
+        let cosmos_node_validators = _result.get_validator_updates();
+        debug::info!("Cosmos validators {:?}", cosmos_node_validators);
+        // todo
+        // Save cosmos node validators into storage.
         Ok(())
     }
 
@@ -375,20 +397,35 @@ impl<T: Trait> sp_runtime::offchain::storage_lock::BlockNumberProvider for Modul
     }
 }
 
-pub struct StashOf<T>(sp_std::marker::PhantomData<T>);
-
-impl<T: Trait> Convert<T::AccountId, Option<T::AccountId>> for StashOf<T> {
+impl<T: Trait> Convert<T::AccountId, Option<T::AccountId>> for utils::StashOf<T> {
     fn convert(controller: T::AccountId) -> Option<T::AccountId> {
-        Some(controller)
+        let account_ledger: OptionalLedger<T::AccountId> = <Module<T>>::account_ledger(&controller);
+        match account_ledger {
+            Some(_ledger) => Some(_ledger.0),
+            None => Some(controller),
+        }
+    }
+}
+
+impl<T: Trait> Convert<T::AccountId, Option<utils::Exposure<T::AccountId, Balance>>>
+    for utils::ExposureOf<T>
+{
+    fn convert(_validator: T::AccountId) -> Option<utils::Exposure<T::AccountId, Balance>> {
+        Some(utils::Exposure {
+            total: 0,
+            own: 0,
+            others: vec![],
+        })
     }
 }
 
 impl<T: Trait> pallet_session::SessionManager<T::AccountId> for Module<T> {
     fn new_session(new_index: SessionIndex) -> Option<Vec<T::AccountId>> {
-        debug::info!("A new session ID {:?}", new_index);
-        // Update validators set on session_index = 4 for test.
-        if new_index == 4 {
-            Some(vec![])
+        if new_index == 5 {
+            // let bob = <Module<T>>::account_ledger();
+            let sudo_root = <sudo::Module<T>>::key();
+            let synced_validators: Vec<T::AccountId> = vec![sudo_root];
+            Some(synced_validators)
         } else {
             None
         }
@@ -398,19 +435,29 @@ impl<T: Trait> pallet_session::SessionManager<T::AccountId> for Module<T> {
         debug::info!("Session is ended {:?}", end_index);
     }
 
-    fn start_session(start_index: SessionIndex) {
-        debug::info!("Session is started {:?}", start_index);
-    }
+    fn start_session(_start_index: SessionIndex) {}
 }
 
-impl<T: Trait> pallet_session::historical::SessionManager<T::AccountId, ()> for Module<T> {
-    fn new_session(new_index: SessionIndex) -> Option<Vec<(T::AccountId, ())>> {
-        debug::info!("A new session ID {:?}", new_index);
-        // Update validators set on session_index = 4 for test.
-        if new_index == 4 {
-            debug::info!("Update validators for session with ID = 4 {:?}", new_index);
+impl<T: Trait>
+    pallet_session::historical::SessionManager<T::AccountId, utils::Exposure<T::AccountId, Balance>>
+    for Module<T>
+{
+    fn new_session(
+        new_index: SessionIndex,
+    ) -> Option<Vec<(T::AccountId, utils::Exposure<T::AccountId, Balance>)>> {
+        if new_index == 5 {
+            debug::info!("The validators list updated {:?}", new_index);
             let sudo_root = <sudo::Module<T>>::key();
-            Some(vec![])
+            let synced_validators: Vec<(T::AccountId, utils::Exposure<T::AccountId, Balance>)> =
+                vec![(
+                    sudo_root,
+                    utils::Exposure {
+                        total: 0,
+                        own: 0,
+                        others: vec![],
+                    },
+                )];
+            Some(synced_validators)
         } else {
             None
         }
@@ -420,7 +467,5 @@ impl<T: Trait> pallet_session::historical::SessionManager<T::AccountId, ()> for 
         debug::info!("Session is started {:?}", end_index);
     }
 
-    fn start_session(start_index: SessionIndex) {
-        debug::info!("Session is ended {:?}", start_index);
-    }
+    fn start_session(_start_index: SessionIndex) {}
 }

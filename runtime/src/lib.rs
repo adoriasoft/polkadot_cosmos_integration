@@ -10,20 +10,19 @@ use codec::Encode;
 use pallet_grandpa::{
     fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
 };
-// use pallet_staking;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::traits::{
-    BlakeTwo256, Block as BlockT, ConvertInto, IdentifyAccount, IdentityLookup, NumberFor,
-    OpaqueKeys, Saturating, Verify,
+    BlakeTwo256, Block as BlockT, IdentifyAccount, IdentityLookup, NumberFor, OpaqueKeys,
+    Saturating, Verify,
 };
 use sp_runtime::{
     create_runtime_str, generic,
     generic::Era,
     impl_opaque_keys,
     transaction_validity::{InvalidTransaction, TransactionSource, TransactionValidity},
-    ApplyExtrinsicResult, MultiSignature, Perbill, RuntimeAppPublic,
+    ApplyExtrinsicResult, MultiSignature, Perbill,
 };
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
@@ -36,7 +35,7 @@ pub use frame_support::{
     construct_runtime, debug,
     dispatch::{CallableCallFor, IsSubType},
     parameter_types,
-    traits::{KeyOwnerProofSystem, Randomness},
+    traits::{Imbalance, KeyOwnerProofSystem, Randomness, ReservableCurrency},
     weights::{
         constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
         IdentityFee, Weight,
@@ -273,14 +272,17 @@ parameter_types! {
 }
 
 impl pallet_session::historical::Trait for Runtime {
-    type FullIdentification = (); //pallet_staking::Exposure<AccountId, Balance>;
-    type FullIdentificationOf = (); //pallet_staking::ExposureOf<Runtime>;
+    type FullIdentification = pallet_cosmos_abci::utils::Exposure<
+        <Self as frame_system::Trait>::AccountId,
+        pallet_cosmos_abci::Balance,
+    >;
+    type FullIdentificationOf = pallet_cosmos_abci::utils::ExposureOf<Self>;
 }
 
 impl pallet_session::Trait for Runtime {
     type Event = Event;
     type ValidatorId = <Self as frame_system::Trait>::AccountId;
-    type ValidatorIdOf = pallet_cosmos_abci::StashOf<Self>;
+    type ValidatorIdOf = pallet_cosmos_abci::utils::StashOf<Self>;
     type ShouldEndSession = pallet_session::PeriodicSessions<Period, Offset>;
     type NextSessionRotation = pallet_session::PeriodicSessions<Period, Offset>;
     type SessionManager = pallet_session::historical::NoteHistoricalRoot<Self, CosmosAbci>;
