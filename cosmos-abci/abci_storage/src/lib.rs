@@ -1,6 +1,7 @@
-mod rocksdb;
+pub mod rocksdb;
 
 use lazy_static::lazy_static;
+use mockall::automock;
 use owning_ref::MutexGuardRefMut;
 use std::sync::Mutex;
 
@@ -11,6 +12,7 @@ lazy_static! {
 type AbciStorageType = Box<dyn AbciStorage + Send>;
 type CustomStorageResult<T> = Result<T, Box<dyn std::error::Error>>;
 
+#[automock]
 pub trait AbciStorage {
     fn write(&mut self, key: Vec<u8>, data: Vec<u8>) -> CustomStorageResult<()>;
 
@@ -21,7 +23,7 @@ pub trait AbciStorage {
 }
 
 /// Method that set abci instance.
-pub fn set_custom_storage_instance<'ret>(
+pub fn set_abci_storage_instance<'ret>(
     new_instance: AbciStorageType,
 ) -> Result<
     MutexGuardRefMut<'ret, Option<AbciStorageType>, AbciStorageType>,
@@ -36,7 +38,7 @@ pub fn set_custom_storage_instance<'ret>(
 }
 
 /// Method that return abci instance.
-pub fn get_abci_instance<'ret>() -> Result<
+pub fn get_abci_storage_instance<'ret>() -> Result<
     MutexGuardRefMut<'ret, Option<AbciStorageType>, AbciStorageType>,
     Box<dyn std::error::Error>,
 > {

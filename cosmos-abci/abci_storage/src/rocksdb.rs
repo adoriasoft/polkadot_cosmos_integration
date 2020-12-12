@@ -16,15 +16,18 @@ impl AbciStorageRocksdb {
 }
 
 impl crate::AbciStorage for AbciStorageRocksdb {
-    fn write(&mut self, key: Vec<u8>, value: Vec<u8>) -> CustomStorageResult<()> {
+    fn write(&mut self, key: Vec<u8>, value: Vec<u8>) -> crate::CustomStorageResult<()> {
         self.db.put(key, value)?;
+        Ok(())
     }
 
-    fn get(&mut self, key: Vec<u8>) -> CustomStorageResult<Vec<u8>> {
-        self.db.get(key)?
+    fn get(&mut self, key: Vec<u8>) -> crate::CustomStorageResult<Option<Vec<u8>>> {
+        let val = self.db.get(key)?;
+        Ok(val)
     }
 
-    fn close(&mut self) -> CustomStorageResult<()> {
-        DB::destroy(&Options::default(), self.path);
+    fn close(&mut self) -> crate::CustomStorageResult<()> {
+        DB::destroy(&Options::default(), self.path.clone())?;
+        Ok(())
     }
 }
