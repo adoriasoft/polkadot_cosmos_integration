@@ -17,9 +17,6 @@ pub trait AbciStorage {
     fn write(&mut self, key: Vec<u8>, data: Vec<u8>) -> CustomStorageResult<()>;
 
     fn get(&mut self, key: Vec<u8>) -> CustomStorageResult<Option<Vec<u8>>>;
-
-    // close db
-    fn close(&mut self) -> CustomStorageResult<()>;
 }
 
 /// Method that set abci instance.
