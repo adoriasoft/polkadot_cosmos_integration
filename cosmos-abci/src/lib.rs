@@ -108,8 +108,8 @@ pub struct ABCITxs {
 decl_storage! {
     trait Store for Module<T: Trait> as ABCITxStorage {
         ABCITxStorage get(fn abci_tx): map hasher(blake2_128_concat) T::BlockNumber => ABCITxs;
-        CosmosNodeValidators get(fn cosmos_node_validators): Vec<()>;
-        AccountLedger get(fn account_ledger): map hasher(blake2_128_concat) T::AccountId => OptionalLedger<T::AccountId>;
+        CosmosAccounts get(fn cosmos_accounts): map hasher(blake2_128_concat) utils::CosmosAccountId => (T::AccountId, utils::CosmosAccountId);
+        AccountLedger get(fn account_ledgers): map hasher(blake2_128_concat) T::AccountId => OptionalLedger<T::AccountId>;
     }
 }
 
@@ -124,12 +124,15 @@ decl_module! {
         fn on_finalize(block_number: T::BlockNumber) {
         }
 
-        // Simple tx.
+        // Save cosmos account via tx.
         #[weight = 0]
-        fn handle_origin_account(origin) -> Result<(), DispatchError> {
+        pub fn create_cosmos_account(origin, cosmos_account_id: Vec<u8>) -> DispatchResult {
             let origin_signed = ensure_signed(origin)?;
             <AccountLedger<T>>::insert(&origin_signed, Some((&origin_signed, 0)));
-            // debug::info!("handle_origin_account() origin: {:?}", origin_signed);
+            let cosmos_account = (&origin_signed, cosmos_account_id.clone());
+            <CosmosAccounts<T>>::insert(cosmos_account_id.clone(), cosmos_account);
+            // todo
+            // Save cosmos node accounts into rocks_db storage.
             Ok(())
         }
 
@@ -232,7 +235,7 @@ impl<T: Trait> Module<T> {
         match abci_interface::end_block(block_number.saturated_into() as i64) {
             Ok(_) => {
                 let substrate_node_validators = <pallet_session::Module<T>>::validators();
-                debug::info!("Substrate validators {:?}", substrate_node_validators);
+                debug::info!("Substrate validators after last on_finalize {:?}", substrate_node_validators);
                 match abci_interface::commit() {
                     Err(err) => {
                         panic!("Commit failed: {:?}", err);
@@ -374,10 +377,9 @@ pub trait AbciInterface {
             .end_block(height)
             .map_err(|_| "end_block failed")?;
         // debug::info!("Result: {:?}", result);
-        let cosmos_node_validators = _result.get_validator_updates();
-        debug::info!("Cosmos validators {:?}", cosmos_node_validators);
+        let _cosmos_node_validators = _result.get_validator_updates();
         // todo
-        // Save cosmos node validators into storage.
+        // Save last cosmos node validators into rocks_db storage.
         Ok(())
     }
 
@@ -399,7 +401,7 @@ impl<T: Trait> sp_runtime::offchain::storage_lock::BlockNumberProvider for Modul
 
 impl<T: Trait> Convert<T::AccountId, Option<T::AccountId>> for utils::StashOf<T> {
     fn convert(controller: T::AccountId) -> Option<T::AccountId> {
-        let account_ledger: OptionalLedger<T::AccountId> = <Module<T>>::account_ledger(&controller);
+        let account_ledger: OptionalLedger<T::AccountId> = <Module<T>>::account_ledgers(&controller);
         match account_ledger {
             Some(_ledger) => Some(_ledger.0),
             None => Some(controller),
@@ -421,11 +423,18 @@ impl<T: Trait> Convert<T::AccountId, Option<utils::Exposure<T::AccountId, Balanc
 
 impl<T: Trait> pallet_session::SessionManager<T::AccountId> for Module<T> {
     fn new_session(new_index: SessionIndex) -> Option<Vec<T::AccountId>> {
-        if new_index == 5 {
-            // let bob = <Module<T>>::account_ledger();
-            let sudo_root = <sudo::Module<T>>::key();
-            let synced_validators: Vec<T::AccountId> = vec![sudo_root];
-            Some(synced_validators)
+        if new_index == 10 {
+            // todo
+            // Get cosmos accounts & active validators from rocks_db storage.
+            let last_cosmos_validators = vec![
+                vec![66, 111, 98, 98, 121, 83, 111, 98, 98, 121],
+                vec![76, 117, 99, 107, 121, 70, 111, 120]
+            ];
+            let new_substrate_validators: Vec<T::AccountId> = last_cosmos_validators.iter().map(|cosmos_acc_id| {
+                <CosmosAccounts<T>>::get(cosmos_acc_id).0
+            }).collect();
+            debug::info!("Substrate validators for update {:?}", new_substrate_validators);
+            Some(new_substrate_validators)
         } else {
             None
         }
@@ -445,19 +454,26 @@ impl<T: Trait>
     fn new_session(
         new_index: SessionIndex,
     ) -> Option<Vec<(T::AccountId, utils::Exposure<T::AccountId, Balance>)>> {
-        if new_index == 5 {
-            debug::info!("The validators list updated {:?}", new_index);
-            let sudo_root = <sudo::Module<T>>::key();
-            let synced_validators: Vec<(T::AccountId, utils::Exposure<T::AccountId, Balance>)> =
-                vec![(
-                    sudo_root,
-                    utils::Exposure {
-                        total: 0,
-                        own: 0,
-                        others: vec![],
-                    },
-                )];
-            Some(synced_validators)
+        if new_index == 10 {
+            // todo
+            // Get cosmos accounts & active validators from rocks_db storage.
+            let last_cosmos_validators = vec![
+                vec![66, 111, 98, 98, 121, 83, 111, 98, 98, 121],
+                vec![76, 117, 99, 107, 121, 70, 111, 120]
+            ];
+            let new_substrate_validators: Vec<(T::AccountId, utils::Exposure<T::AccountId, Balance>)> =
+                last_cosmos_validators.iter().map(|cosmos_acc_id| {
+                    (
+                        <CosmosAccounts<T>>::get(cosmos_acc_id).0,
+                        utils::Exposure {
+                            total: 0,
+                            own: 0,
+                            others: vec![],
+                        },
+                    )
+                }).collect();
+            debug::info!("Substrate validators for update {:?}", new_substrate_validators);
+            Some(new_substrate_validators)
         } else {
             None
         }
@@ -469,3 +485,8 @@ impl<T: Trait>
 
     fn start_session(_start_index: SessionIndex) {}
 }
+
+/* fn get_test_validators_for_update<T, AccountId>() {
+    let sudo_root = <sudo::Module<T>>::key();
+    let synced_validators: Vec<AccountId> = vec![sudo_root];
+} */

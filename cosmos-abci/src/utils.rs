@@ -2,6 +2,9 @@ use codec::{Decode, Encode};
 use sp_runtime::RuntimeDebug;
 use sp_std::{fmt, prelude::*};
 
+/// Cosmos account ID.
+pub type CosmosAccountId = Vec<u8>;
+
 pub struct AbciCommitResponse {
     pub height: i64,
     pub hash: Vec<u8>,
@@ -24,8 +27,6 @@ impl fmt::Display for AbciCommitResponse {
     }
 }
 
-/// Bridge for validators matching between both nodes.
-
 /// Return exposure of account.
 pub struct ExposureOf<T>(sp_std::marker::PhantomData<T>);
 
@@ -39,15 +40,11 @@ pub struct Exposure<AccountId, Balance> {
 /// Return stash of account.
 pub struct StashOf<T>(sp_std::marker::PhantomData<T>);
 
-pub struct CosmosValidatorId<SubstrateValidatorId> {
-   pub origin_id: (SubstrateValidatorId, Vec<i32>),
-}
-
-/* pub fn match_cosmos_accounts_to_substrate_accounts<AccountId>(
-    substrate_accounts: Vec<AccountId>,
-    cosmos_accounts: Vec<CosmosValidatorId<AccountId>>,
-) -> Vec<AccountId> {
+pub fn get_matched_accounts<AccountId>(
+    all_cosmos_accounts: Vec<(CosmosAccountId, AccountId)>,
+    last_cosmos_validators: Vec<CosmosAccountId>,
+) -> Vec<CosmosAccountId> {
     let mut output = Vec::new();
-    output.extend(cosmos_accounts.iter().map(|acc| acc.origin_id.0));
+    // output.extend(last_cosmos_validators.iter().map(|cosmos_acc_id| all_cosmos_accounts.get(cosmos_acc_id)) cosmos_acc_id).collect::<Vec<_>>());
     output
-} */
+}
