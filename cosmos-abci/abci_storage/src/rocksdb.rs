@@ -8,7 +8,7 @@ pub struct AbciStorageRocksdb {
 impl AbciStorageRocksdb {
     pub fn init(path: &str) -> Result<Self, Box<dyn std::error::Error>> {
         let db = Database::open(&DatabaseConfig::default(), path)?;
-        Ok(AbciStorageRocksdb { db: db })
+        Ok(AbciStorageRocksdb { db })
     }
 }
 
