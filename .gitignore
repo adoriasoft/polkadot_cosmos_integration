@@ -29,3 +29,6 @@ scripts/integration_tests/tmp
 token_datas
 
 .maintain/res
+
+abci_storage_test/
+abci_storage_rocksdb/
