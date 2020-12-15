@@ -41,6 +41,7 @@ pub fn get_abci_storage_instance<'ret>() -> Result<
 > {
     let instance = ABCI_STORAGE_INSTANCE.lock()?;
     if instance.is_none() {
+        // TODO return an error
         panic!("abci storage instance has not been set, execute set_storage_instance before calling this function");
     }
     // Here we create a ref to the inner value of the mutex guard.

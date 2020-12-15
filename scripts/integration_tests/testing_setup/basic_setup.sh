@@ -5,6 +5,7 @@ trap "kill 0" EXIT
 function clean_tmp() {
     rm -rf tmp
     mkdir tmp
+    rm -rf abci_storage_rocksdb
     touch tmp/substrate_log.log
     touch tmp/cosmos_log.log
 }

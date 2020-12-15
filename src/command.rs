@@ -21,6 +21,49 @@ use node_template_runtime::Block;
 use sc_cli::{ChainSpec, Role, RuntimeVersion, SubstrateCli};
 use sc_service::PartialComponents;
 
+fn init_chain() -> sc_cli::Result<()> {
+    let key = b"init_chain_info".to_vec();
+    let value = b"init_chain_info".to_vec();
+
+    let mut abci_storage = abci_storage::get_abci_storage_instance()
+        .map_err(|_| "failed to get abci storage instance")?;
+
+    match abci_storage
+        .get(key.clone())
+        .map_err(|_| "failed to get value from the abci storage")?
+    {
+        // Just check that in storage exists some value to the following key
+        Some(_) => {}
+        None => {
+            let genesis = pallet_abci::utils::parse_cosmos_genesis_file(
+                &pallet_abci::utils::get_abci_genesis(),
+            )
+            .map_err(|_| "failed to get cosmos genesis file")?;
+
+            pallet_abci::get_abci_instance()
+                .map_err(|_| "failed to setup connection")?
+                .init_chain(
+                    genesis.time_seconds,
+                    genesis.time_nanos,
+                    &genesis.chain_id,
+                    genesis.pub_key_types,
+                    genesis.max_bytes,
+                    genesis.max_gas,
+                    genesis.max_age_num_blocks,
+                    genesis.max_age_duration,
+                    genesis.app_state_bytes,
+                )
+                .map_err(|_| "init chain failed")?;
+
+            abci_storage
+                .write(key, value)
+                .map_err(|_| "faile to write some data into the abci storage")?;
+        }
+    }
+
+    Ok(())
+}
+
 impl SubstrateCli for Cli {
     fn impl_name() -> String {
         "Substrate Node".into()
@@ -161,6 +204,7 @@ pub fn run() -> sc_cli::Result<()> {
         }
         None => {
             let runner = cli.create_runner(&cli.run)?;
+            init_chain()?;
             runner.run_node_until_exit(|config| match config.role {
                 Role::Light => service::new_light(config),
                 _ => service::new_full(config),
