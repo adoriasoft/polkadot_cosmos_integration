@@ -178,7 +178,7 @@ decl_module! {
         fn insert_cosmos_account(origin, cosmos_account_id: Vec<u8>) -> DispatchResult {
             let origin_signed = ensure_signed(origin)?;
             <AccountLedger<T>>::insert(&origin_signed, Some((&origin_signed, 0)));
-            <CosmosAccounts<T>>::insert(cosmos_account_id.clone(), &origin_signed);
+            <CosmosAccounts<T>>::insert(&cosmos_account_id, &origin_signed);
             // todo
             // Save cosmos node accounts into rocks_db storage.
             Ok(())
@@ -486,10 +486,15 @@ impl<T: Trait> pallet_session::SessionManager<T::AccountId> for Module<T> {
         for cosmos_validator_id in &last_cosmos_validators {
             let substrate_account_id = <CosmosAccounts<T>>::get(&cosmos_validator_id);
             if substrate_account_id.is_some() {
-                new_substrate_validators.push(substrate_account_id.unwrap());
+                match substrate_account_id {
+                    Some(account) => {
+                        new_substrate_validators.push(account);
+                    },
+                    None => {}
+                }
             }
         }
-        if new_substrate_validators.len() > 0 {
+        if !new_substrate_validators.is_empty() {
             debug::info!(
                 "Substrate validators for update {:?}",
                 new_substrate_validators
@@ -530,18 +535,21 @@ impl<T: Trait>
         )> = vec![];
         for cosmos_validator_id in &last_cosmos_validators {
             let substrate_account_id = <CosmosAccounts<T>>::get(&cosmos_validator_id);
-            if substrate_account_id.is_some() {
-                new_substrate_validators.push((
-                    substrate_account_id.unwrap(),
-                    utils::Exposure {
-                        total: 0,
-                        own: 0,
-                        others: vec![],
-                    },
-                ));
+            match substrate_account_id {
+                Some(account) => {
+                    new_substrate_validators.push((
+                        account,
+                        utils::Exposure {
+                            total: 0,
+                            own: 0,
+                            others: vec![],
+                        },
+                    ));
+                },
+                None => {}
             }
         }
-        if new_substrate_validators.len() > 0 {
+        if !new_substrate_validators.is_empty() {
             debug::info!(
                 "Substrate validators for update {:?}",
                 new_substrate_validators
