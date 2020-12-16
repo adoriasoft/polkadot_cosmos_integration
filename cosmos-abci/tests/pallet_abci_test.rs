@@ -2,6 +2,8 @@ use frame_support::{impl_outer_origin, parameter_types, weights::Weight};
 use pallet_cosmos_abci::{crypto, Call, Module, Trait, KEY_TYPE};
 use sp_core::{crypto::{key_types::DUMMY, KeyTypeId}, H256};
 use sp_runtime::{
+    RuntimeAppPublic,
+    AccountId32,
     generic,
 	testing::{TestXt, Header, UintAuthorityId},
     traits::{BlakeTwo256, Extrinsic as ExtrinsicT, OpaqueKeys, IdentifyAccount, IdentityLookup, Verify, ConvertInto},
@@ -53,8 +55,8 @@ impl_outer_origin! {
 }
 
 thread_local! {
-	pub static VALIDATORS: RefCell<Vec<AccountId>> = RefCell::new(vec![1, 2, 3]);
-	pub static NEXT_VALIDATORS: RefCell<Vec<AccountId>> = RefCell::new(vec![1, 2, 3]);
+	pub static VALIDATORS: RefCell<Vec<AccountId>> = RefCell::new(vec![AccountId32::default(), AccountId32::default(), AccountId32::default()]);
+	pub static NEXT_VALIDATORS: RefCell<Vec<AccountId>> = RefCell::new(vec![AccountId32::default(), AccountId32::default(), AccountId32::default()]);
 	pub static AUTHORITIES: RefCell<Vec<UintAuthorityId>> =
 		RefCell::new(vec![UintAuthorityId(1), UintAuthorityId(2), UintAuthorityId(3)]);
 	pub static FORCE_SESSION_END: RefCell<bool> = RefCell::new(false);
@@ -126,7 +128,7 @@ impl pallet_session::historical::SessionManager<AccountId, AccountId> for TestSe
 		-> Option<Vec<(AccountId, AccountId)>>
 	{
 		<Self as SessionManager<_>>::new_session(new_index)
-			.map(|vals| vals.into_iter().map(|val| (val, val)).collect())
+			.map(|vals| vals.into_iter().map(|val| (val.clone(), val.clone())).collect())
 	}
 }
 

@@ -154,7 +154,7 @@ pub struct ABCITxs {
 decl_storage! {
     trait Store for Module<T: Trait> as ABCITxStorage {
         ABCITxStorage get(fn abci_tx): map hasher(blake2_128_concat) T::BlockNumber => ABCITxs;
-        CosmosAccounts get(fn cosmos_accounts): map hasher(blake2_128_concat) utils::CosmosAccountId => T::AccountId;// Option<T::AccountId> = None;
+        CosmosAccounts get(fn cosmos_accounts): map hasher(blake2_128_concat) utils::CosmosAccountId => Option<T::AccountId> = None;
         AccountLedger get(fn account_ledgers): map hasher(blake2_128_concat) T::AccountId => OptionalLedger<T::AccountId>;
     }
 }
@@ -172,10 +172,9 @@ decl_module! {
 
         // Simple tx.
         #[weight = 0]
-        fn handle_origin_account(origin) -> Result<(), DispatchError> {
+        fn insert_cosmos_account(origin, cosmos_account_id: Vec<u8>) -> DispatchResult {
             let origin_signed = ensure_signed(origin)?;
             <AccountLedger<T>>::insert(&origin_signed, Some((&origin_signed, 0)));
-            let cosmos_account = (&origin_signed, cosmos_account_id.clone());
             <CosmosAccounts<T>>::insert(cosmos_account_id.clone(), &origin_signed);
             // todo
             // Save cosmos node accounts into rocks_db storage.
@@ -448,7 +447,7 @@ impl<T: Trait> sp_runtime::offchain::storage_lock::BlockNumberProvider for Modul
 
 impl<T: Trait> Convert<T::AccountId, Option<T::AccountId>> for utils::StashOf<T> {
     fn convert(controller: T::AccountId) -> Option<T::AccountId> {
-        let account_ledger: OptionalLedger<T::AccountId> = <Module<T>>::account_ledger(&controller);
+        let account_ledger: OptionalLedger<T::AccountId> = <Module<T>>::account_ledgers(&controller);
         match account_ledger {
             Some(_ledger) => Some(_ledger.0),
             None => Some(controller),
@@ -474,18 +473,19 @@ impl<T: Trait> pallet_session::SessionManager<T::AccountId> for Module<T> {
         debug::info!("Substrate validators after last on_finalize {:?}", substrate_node_validators);
         // todo
         // Get cosmos accounts & active validators from rocks_db storage.
-        let last_cosmos_validators = vec![
+        let last_cosmos_validators: Vec<utils::CosmosAccountId> = vec![
             vec![66, 111, 98, 98, 121, 83, 111, 98, 98, 121],
             vec![76, 117, 99, 107, 121, 70, 111, 120]
         ];
-        let new_substrate_validators: Vec<T::AccountId> = last_cosmos_validators.iter()
-            .map(|cosmos_acc_id| {
-                <CosmosAccounts<T>>::get(cosmos_acc_id)
-            })
-            // todo
-            // .filter(|substrate_acc_id| { substrate_acc_id.is_some() })
-            .collect();
-        if last_cosmos_validators.len() > 0 {
+        let mut new_substrate_validators: Vec<T::AccountId> = vec![];
+        for cosmos_validator_id in &last_cosmos_validators {
+            let substrate_account_id = <CosmosAccounts<T>>::get(&cosmos_validator_id);
+            // Check if related Substrate account to Cosmos existed.
+            if substrate_account_id.is_some() {
+                new_substrate_validators.push(substrate_account_id.unwrap());
+            }
+        }
+        if new_substrate_validators.len() > 0 {
             debug::info!("Substrate validators for update {:?}", new_substrate_validators);
             return Some(new_substrate_validators);
         }
@@ -510,22 +510,26 @@ impl<T: Trait>
         debug::info!("Substrate validators after last on_finalize {:?}", substrate_node_validators);
         // todo
         // Get cosmos accounts & active validators from rocks_db storage.
-        let last_cosmos_validators = vec![
+        let last_cosmos_validators: Vec<utils::CosmosAccountId> = vec![
             vec![66, 111, 98, 98, 121, 83, 111, 98, 98, 121],
             vec![76, 117, 99, 107, 121, 70, 111, 120]
         ];
-        let new_substrate_validators: Vec<(T::AccountId, utils::Exposure<T::AccountId, Balance>)> =
-            last_cosmos_validators.iter().map(|cosmos_acc_id| {
-                (
-                    <CosmosAccounts<T>>::get(cosmos_acc_id),
+        let mut new_substrate_validators: Vec<(T::AccountId, utils::Exposure<T::AccountId, Balance>)> = vec![];
+        for cosmos_validator_id in &last_cosmos_validators {
+            let substrate_account_id = <CosmosAccounts<T>>::get(&cosmos_validator_id);
+            // Check if related Substrate account to Cosmos existed.
+            if substrate_account_id.is_some() {
+                new_substrate_validators.push((
+                    substrate_account_id.unwrap(),
                     utils::Exposure {
                         total: 0,
                         own: 0,
                         others: vec![],
                     },
-                )
-            }).collect();
-        if last_cosmos_validators.len() > 0 {
+                ));
+            }
+        }
+        if new_substrate_validators.len() > 0 {
             debug::info!("Substrate validators for update {:?}", new_substrate_validators);
             return Some(new_substrate_validators);
         }

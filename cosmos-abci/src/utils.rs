@@ -24,8 +24,6 @@ impl fmt::Display for AbciCommitResponse {
     }
 }
 
-/// Bridge for validators matching between both nodes.
-
 /// Return exposure of account.
 pub struct ExposureOf<T>(sp_std::marker::PhantomData<T>);
 
@@ -39,9 +37,7 @@ pub struct Exposure<AccountId, Balance> {
 /// Return stash of account.
 pub struct StashOf<T>(sp_std::marker::PhantomData<T>);
 
-pub struct CosmosValidatorId<SubstrateValidatorId> {
-   pub origin_id: (SubstrateValidatorId, Vec<i32>),
-}
+pub type CosmosAccountId = Vec<u8>;
 
 /* pub fn match_cosmos_accounts_to_substrate_accounts<AccountId>(
     substrate_accounts: Vec<AccountId>,
