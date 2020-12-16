@@ -5,13 +5,13 @@ trap "kill 0" EXIT
 function clean_tmp() {
     rm -rf tmp
     mkdir tmp
-    rm -rf abci_storage_rocksdb
     touch tmp/substrate_log.log
     touch tmp/cosmos_log.log
 }
 
 function clean_substrate() {
     echo "Clean Substrate"
+    rm -rf abci_storage_rocksdb
     export ABCI_GENESIS_STATE_PATH=$HOME/.nsd/config/genesis.json
     ./../../target/debug/node-template purge-chain --dev -y
 }
