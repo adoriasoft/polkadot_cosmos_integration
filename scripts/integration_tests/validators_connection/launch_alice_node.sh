@@ -11,10 +11,10 @@ function launch_alice_node() {
         --chain $1 \
         --alice \
         --port 30333 \
-        --ws-port 9945 \
+        --ws-port 9944 \
         --rpc-port 9933 \
         --validator
-        --node-key 0000000000000000000000000000000000000000000000000000000000000001
+        # --node-key 0000000000000000000000000000000000000000000000000000000000000001
     export ALICE_NODE_PID=$!
     bash
 }
