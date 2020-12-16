@@ -489,7 +489,7 @@ impl<T: Trait> pallet_session::SessionManager<T::AccountId> for Module<T> {
                 match substrate_account_id {
                     Some(account) => {
                         new_substrate_validators.push(account);
-                    },
+                    }
                     None => {}
                 }
             }
@@ -545,7 +545,7 @@ impl<T: Trait>
                             others: vec![],
                         },
                     ));
-                },
+                }
                 None => {}
             }
         }
