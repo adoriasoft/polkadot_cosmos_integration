@@ -16,6 +16,7 @@ panic = 'unwind'
 members = [
     'cosmos-abci',
     'cosmos-abci/abci',
+    'cosmos-abci/abci_storage',
     'runtime',
 ]
 
@@ -40,6 +41,7 @@ hex = '0.4.2'
 node-template-runtime = { path = 'runtime', version = '0.0.3' }
 pallet-cosmos-abci = { path = 'cosmos-abci', version = '0.0.3' }
 pallet-abci = { path = 'cosmos-abci/abci', version = '0.0.3' }
+abci-storage = {path = 'cosmos-abci/abci_storage', version = '0.0.3' }
 
 # Substrate dependencies
 frame-benchmarking = '2.0.0'

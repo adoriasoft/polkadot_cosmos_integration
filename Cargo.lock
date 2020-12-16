@@ -11,6 +11,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "abci-storage"
+version = "0.0.3"
+dependencies = [
+ "chrono",
+ "kvdb",
+ "kvdb-rocksdb",
+ "lazy_static",
+ "mockall",
+ "owning_ref",
+]
+
+[[package]]
 name = "addr2line"
 version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3649,6 +3661,7 @@ dependencies = [
 name = "node-template"
 version = "0.0.3"
 dependencies = [
+ "abci-storage",
  "base64 0.12.3",
  "frame-benchmarking",
  "frame-benchmarking-cli",
@@ -3707,7 +3720,6 @@ dependencies = [
  "pallet-grandpa",
  "pallet-randomness-collective-flip",
  "pallet-session",
- "pallet-staking",
  "pallet-sudo",
  "pallet-timestamp",
  "pallet-transaction-payment",
@@ -3969,6 +3981,7 @@ dependencies = [
  "pallet-sudo",
  "parity-scale-codec",
  "parking_lot 0.10.2",
+ "serde",
  "sp-api",
  "sp-core",
  "sp-io",
@@ -4051,27 +4064,6 @@ dependencies = [
  "sp-staking",
  "sp-std",
  "sp-trie",
-]
-
-[[package]]
-name = "pallet-staking"
-version = "2.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9d296b36c5c32d1e480de15d0bf08460bb6d8e1771d928a6017e88a6a1de6bf7"
-dependencies = [
- "frame-support",
- "frame-system",
- "pallet-authorship",
- "pallet-session",
- "parity-scale-codec",
- "serde",
- "sp-application-crypto",
- "sp-io",
- "sp-npos-elections",
- "sp-runtime",
- "sp-staking",
- "sp-std",
- "static_assertions",
 ]
 
 [[package]]
@@ -6746,31 +6738,6 @@ dependencies = [
  "sp-core",
  "sp-runtime",
  "strum",
-]
-
-[[package]]
-name = "sp-npos-elections"
-version = "2.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "54bb6d3d49dccf6ee26586a29ce8aabade8e102e51ed5009660ef7abb973eb7d"
-dependencies = [
- "parity-scale-codec",
- "serde",
- "sp-arithmetic",
- "sp-npos-elections-compact",
- "sp-std",
-]
-
-[[package]]
-name = "sp-npos-elections-compact"
-version = "2.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d784c5576824b0ffa4cb359b7eebfd87511c49685b170b8214aabaa5f2454c87"
-dependencies = [
- "proc-macro-crate",
- "proc-macro2",
- "quote",
- "syn",
 ]
 
 [[package]]

@@ -144,7 +144,6 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
     ))
 }
 
-// todo
 /// Configure initial storage state for FRAME modules.
 fn testnet_genesis(
     wasm_binary: &[u8],
@@ -178,23 +177,11 @@ fn testnet_genesis(
         // Assign network admin rights.
         pallet_sudo: Some(SudoConfig { key: root_key }),
         pallet_session: Some(SessionConfig {
-            keys: vec![
-                (
-                    get_account_id_from_seed::<sr25519::Public>("Alice"),
-                    get_account_id_from_seed::<sr25519::Public>("Alice"),
-                    to_session_keys(&Ed25519Keyring::Alice, &Sr25519Keyring::Alice),
-                )
-                /* (
-                    get_account_id_from_seed::<sr25519::Public>("Bob"),
-                    get_account_id_from_seed::<sr25519::Public>("Bob"),
-                    to_session_keys(&Ed25519Keyring::Bob, &Sr25519Keyring::Bob),
-                ),
-                (
-                    get_account_id_from_seed::<sr25519::Public>("Dave"),
-                    get_account_id_from_seed::<sr25519::Public>("Dave"),
-                    to_session_keys(&Ed25519Keyring::Dave, &Sr25519Keyring::Dave),
-                ), */
-            ],
+            keys: vec![(
+                get_account_id_from_seed::<sr25519::Public>("Alice"),
+                get_account_id_from_seed::<sr25519::Public>("Alice"),
+                to_session_keys(&Ed25519Keyring::Alice, &Sr25519Keyring::Alice),
+            )],
         }),
     }
 }

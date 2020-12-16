@@ -27,7 +27,7 @@ impl fmt::Display for AbciCommitResponse {
     }
 }
 
-/// Return exposure of account.
+/// Return exposure for account.
 pub struct ExposureOf<T>(sp_std::marker::PhantomData<T>);
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Encode, Decode, Default, RuntimeDebug)]
@@ -37,14 +37,8 @@ pub struct Exposure<AccountId, Balance> {
     pub others: Vec<(AccountId, Balance)>,
 }
 
-/// Return stash of account.
+/// Return stash for account.
 pub struct StashOf<T>(sp_std::marker::PhantomData<T>);
 
-pub fn get_matched_accounts<AccountId>(
-    all_cosmos_accounts: Vec<(CosmosAccountId, AccountId)>,
-    last_cosmos_validators: Vec<CosmosAccountId>,
-) -> Vec<CosmosAccountId> {
-    let mut output = Vec::new();
-    // output.extend(last_cosmos_validators.iter().map(|cosmos_acc_id| all_cosmos_accounts.get(cosmos_acc_id)) cosmos_acc_id).collect::<Vec<_>>());
-    output
-}
+/// Cosmos node account ID.
+pub type CosmosAccountId = Vec<u8>;
