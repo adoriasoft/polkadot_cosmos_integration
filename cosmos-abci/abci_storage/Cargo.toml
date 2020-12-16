@@ -1,0 +1,17 @@
+[package]
+name = 'abci-storage'
+description = 'Cosmos ABCI library to communicate with Cosmos Applications'
+edition = '2018'
+authors = ['Adoriasoft team']
+readme = '../../README.md'
+repository = 'https://github.com/adoriasoft/polkadot_cosmos_integration'
+license = 'Apache-2.0'
+version = '0.0.3'
+
+[dependencies]
+lazy_static = '1.2.0'
+owning_ref = '0.4.1'
+mockall = '0.8.1'
+chrono = '0.4'
+kvdb = '0.7.0'
+kvdb-rocksdb = '0.9.1'
