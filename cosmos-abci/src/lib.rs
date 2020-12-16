@@ -478,19 +478,13 @@ impl<T: Trait> pallet_session::SessionManager<T::AccountId> for Module<T> {
         );
         // todo
         // Get cosmos accounts & active validators from rocks_db storage.
-        let last_cosmos_validators: Vec<utils::CosmosAccountId> = vec![
-            vec![66, 111, 98, 98, 121, 83, 111, 98, 98, 121],
-            vec![76, 117, 99, 107, 121, 70, 111, 120],
-        ];
+        let last_cosmos_validators: Vec<utils::CosmosAccountId> = vec![];
         let mut new_substrate_validators: Vec<T::AccountId> = vec![];
         for cosmos_validator_id in &last_cosmos_validators {
             let substrate_account_id = <CosmosAccounts<T>>::get(&cosmos_validator_id);
             if substrate_account_id.is_some() {
-                match substrate_account_id {
-                    Some(account) => {
-                        new_substrate_validators.push(account);
-                    }
-                    None => {}
+                if let Some(full_substrate_account_id) = substrate_account_id {
+                    new_substrate_validators.push(full_substrate_account_id);
                 }
             }
         }
@@ -525,28 +519,22 @@ impl<T: Trait>
         );
         // todo
         // Get cosmos accounts & active validators from rocks_db storage.
-        let last_cosmos_validators: Vec<utils::CosmosAccountId> = vec![
-            vec![66, 111, 98, 98, 121, 83, 111, 98, 98, 121],
-            vec![76, 117, 99, 107, 121, 70, 111, 120],
-        ];
-        let mut new_substrate_validators: Vec<(
+        let last_cosmos_validators: Vec<utils::CosmosAccountId> = vec![];
+        let mut new_substrate_validators: Vec<(;
             T::AccountId,
             utils::Exposure<T::AccountId, Balance>,
         )> = vec![];
         for cosmos_validator_id in &last_cosmos_validators {
             let substrate_account_id = <CosmosAccounts<T>>::get(&cosmos_validator_id);
-            match substrate_account_id {
-                Some(account) => {
-                    new_substrate_validators.push((
-                        account,
-                        utils::Exposure {
-                            total: 0,
-                            own: 0,
-                            others: vec![],
-                        },
-                    ));
-                }
-                None => {}
+            if let Some(full_substrate_account_id) = substrate_account_id {
+                new_substrate_validators.push((
+                    full_substrate_account_id,
+                    utils::Exposure {
+                        total: 0,
+                        own: 0,
+                        others: vec![],
+                    },
+                ));
             }
         }
         if !new_substrate_validators.is_empty() {
