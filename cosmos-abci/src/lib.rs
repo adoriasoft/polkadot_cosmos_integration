@@ -104,6 +104,40 @@ impl SubscriptionManager for () {
     fn on_deliver_tx(_: Vec<u8>) -> DispatchResult { Ok(()) }
 }
 
+macro_rules! tuple_impls {
+    ( $( $name:ident )+ ) => {
+        impl<$($name: SubscriptionManager),+> SubscriptionManager for ($($name,)+)
+        {
+            fn on_check_tx(data: Vec<u8>) -> DispatchResult {
+                $($name::on_check_tx(data.clone())?;)+
+                Ok(())
+            }
+
+            fn on_deliver_tx(data: Vec<u8>) -> DispatchResult {
+                $($name::on_deliver_tx(data.clone())?;)+
+                Ok(())
+            }
+        }
+    };
+}
+
+tuple_impls! { A }
+tuple_impls! { A B }
+tuple_impls! { A B C }
+tuple_impls! { A B C D }
+tuple_impls! { A B C D E }
+tuple_impls! { A B C D E F }
+tuple_impls! { A B C D E F G }
+tuple_impls! { A B C D E F G H }
+tuple_impls! { A B C D E F G H I }
+tuple_impls! { A B C D E F G H I J }
+tuple_impls! { A B C D E F G H I J K }
+tuple_impls! { A B C D E F G H I J K L }
+tuple_impls! { A B C D E F G H I J K L M }
+tuple_impls! { A B C D E F G H I J K L M N }
+tuple_impls! { A B C D E F G H I J K L M N O}
+tuple_impls! { A B C D E F G H I J K L M N O P }
+
 impl<T: Trait> sp_runtime::BoundToRuntimeAppPublic for Module<T>
 where
     <T as Trait>::AuthorityId: sp_runtime::RuntimeAppPublic,
@@ -300,12 +334,12 @@ impl<T: Trait> frame_support::unsigned::ValidateUnsigned for Module<T> {
 /// The implementation for CosmosAbci trait for pallet.
 impl<T: Trait> CosmosAbci for Module<T> {
     fn check_tx(data: Vec<u8>) -> Result<u64, DispatchError> {
-        <Self as SubscriptionManager>::on_check_tx(data)?;
+        <T::Subscription as SubscriptionManager>::on_check_tx(data.clone())?;
         abci_interface::check_tx(data)
     }
 
     fn deliver_tx(data: Vec<u8>) -> DispatchResult {
-        <Self as SubscriptionManager>::on_deliver_tx(data)?;
+        <T::Subscription as SubscriptionManager>::on_deliver_tx(data.clone())?;
         abci_interface::deliver_tx(data)
     }
 }
