@@ -3969,6 +3969,7 @@ dependencies = [
  "pallet-sudo",
  "parity-scale-codec",
  "parking_lot 0.10.2",
+ "serde",
  "sp-api",
  "sp-core",
  "sp-io",
