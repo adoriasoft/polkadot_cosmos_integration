@@ -36,6 +36,7 @@ std = [
 	'parking_lot',
 	'codec/std',
 	'pallet-session/std',
+	'pallet-sudo/std',
 	'frame-support/std',
 	'frame-system/std',
 	'sp-core/std',

@@ -14,7 +14,6 @@ use frame_system::{
     RawOrigin,
 };
 use pallet_session as session;
-use pallet_sudo as sudo;
 use sp_core::crypto::KeyTypeId;
 use sp_runtime::{
     offchain::{
@@ -43,7 +42,7 @@ pub const UNSIGNED_TXS_PRIORITY: u64 = 100;
 /// The KeyType ID.
 pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"abci");
 
-/// Type helpers.
+/// Cosmos ABCI pallet utils.
 pub mod utils;
 //
 /// Based on the above `KeyTypeId` we need to generate a pallet-specific crypto type wrapper.
@@ -100,8 +99,12 @@ pub trait SubscriptionManager {
 }
 
 impl SubscriptionManager for () {
-    fn on_check_tx(_: Vec<u8>) -> DispatchResult { Ok(()) }
-    fn on_deliver_tx(_: Vec<u8>) -> DispatchResult { Ok(()) }
+    fn on_check_tx(_: Vec<u8>) -> DispatchResult {
+        Ok(())
+    }
+    fn on_deliver_tx(_: Vec<u8>) -> DispatchResult {
+        Ok(())
+    }
 }
 
 macro_rules! tuple_impls {
@@ -278,14 +281,12 @@ impl<T: Trait> Module<T> {
     /// Called on block finalize.
     pub fn call_on_finalize(block_number: T::BlockNumber) -> bool {
         match abci_interface::end_block(block_number.saturated_into() as i64) {
-            Ok(_) => {
-                match abci_interface::commit() {
-                    Err(err) => {
-                        panic!("Commit failed: {:?}", err);
-                    }
-                    _ => true,
+            Ok(_) => match abci_interface::commit() {
+                Err(err) => {
+                    panic!("Commit failed: {:?}", err);
                 }
-            }
+                _ => true,
+            },
             Err(err) => {
                 panic!("End block failed: {:?}", err);
             }
@@ -447,7 +448,8 @@ impl<T: Trait> sp_runtime::offchain::storage_lock::BlockNumberProvider for Modul
 
 impl<T: Trait> Convert<T::AccountId, Option<T::AccountId>> for utils::StashOf<T> {
     fn convert(controller: T::AccountId) -> Option<T::AccountId> {
-        let account_ledger: OptionalLedger<T::AccountId> = <Module<T>>::account_ledgers(&controller);
+        let account_ledger: OptionalLedger<T::AccountId> =
+            <Module<T>>::account_ledgers(&controller);
         match account_ledger {
             Some(_ledger) => Some(_ledger.0),
             None => Some(controller),
@@ -468,25 +470,30 @@ impl<T: Trait> Convert<T::AccountId, Option<utils::Exposure<T::AccountId, Balanc
 }
 
 impl<T: Trait> pallet_session::SessionManager<T::AccountId> for Module<T> {
-    fn new_session(new_index: SessionIndex) -> Option<Vec<T::AccountId>> {
+    fn new_session(_new_index: SessionIndex) -> Option<Vec<T::AccountId>> {
         let substrate_node_validators = <pallet_session::Module<T>>::validators();
-        debug::info!("Substrate validators after last on_finalize {:?}", substrate_node_validators);
+        debug::info!(
+            "Substrate validators after last on_finalize {:?}",
+            substrate_node_validators
+        );
         // todo
         // Get cosmos accounts & active validators from rocks_db storage.
         let last_cosmos_validators: Vec<utils::CosmosAccountId> = vec![
             vec![66, 111, 98, 98, 121, 83, 111, 98, 98, 121],
-            vec![76, 117, 99, 107, 121, 70, 111, 120]
+            vec![76, 117, 99, 107, 121, 70, 111, 120],
         ];
         let mut new_substrate_validators: Vec<T::AccountId> = vec![];
         for cosmos_validator_id in &last_cosmos_validators {
             let substrate_account_id = <CosmosAccounts<T>>::get(&cosmos_validator_id);
-            // Check if related Substrate account to Cosmos existed.
             if substrate_account_id.is_some() {
                 new_substrate_validators.push(substrate_account_id.unwrap());
             }
         }
         if new_substrate_validators.len() > 0 {
-            debug::info!("Substrate validators for update {:?}", new_substrate_validators);
+            debug::info!(
+                "Substrate validators for update {:?}",
+                new_substrate_validators
+            );
             return Some(new_substrate_validators);
         }
         None
@@ -504,20 +511,25 @@ impl<T: Trait>
     for Module<T>
 {
     fn new_session(
-        new_index: SessionIndex,
+        _new_index: SessionIndex,
     ) -> Option<Vec<(T::AccountId, utils::Exposure<T::AccountId, Balance>)>> {
         let substrate_node_validators = <pallet_session::Module<T>>::validators();
-        debug::info!("Substrate validators after last on_finalize {:?}", substrate_node_validators);
+        debug::info!(
+            "Substrate validators after last on_finalize {:?}",
+            substrate_node_validators
+        );
         // todo
         // Get cosmos accounts & active validators from rocks_db storage.
         let last_cosmos_validators: Vec<utils::CosmosAccountId> = vec![
             vec![66, 111, 98, 98, 121, 83, 111, 98, 98, 121],
-            vec![76, 117, 99, 107, 121, 70, 111, 120]
+            vec![76, 117, 99, 107, 121, 70, 111, 120],
         ];
-        let mut new_substrate_validators: Vec<(T::AccountId, utils::Exposure<T::AccountId, Balance>)> = vec![];
+        let mut new_substrate_validators: Vec<(
+            T::AccountId,
+            utils::Exposure<T::AccountId, Balance>,
+        )> = vec![];
         for cosmos_validator_id in &last_cosmos_validators {
             let substrate_account_id = <CosmosAccounts<T>>::get(&cosmos_validator_id);
-            // Check if related Substrate account to Cosmos existed.
             if substrate_account_id.is_some() {
                 new_substrate_validators.push((
                     substrate_account_id.unwrap(),
@@ -530,7 +542,10 @@ impl<T: Trait>
             }
         }
         if new_substrate_validators.len() > 0 {
-            debug::info!("Substrate validators for update {:?}", new_substrate_validators);
+            debug::info!(
+                "Substrate validators for update {:?}",
+                new_substrate_validators
+            );
             return Some(new_substrate_validators);
         }
         None

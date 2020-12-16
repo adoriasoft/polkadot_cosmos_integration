@@ -1,28 +1,32 @@
 use frame_support::{impl_outer_origin, parameter_types, weights::Weight};
 use pallet_cosmos_abci::{crypto, Call, Module, Trait, KEY_TYPE};
-use sp_core::{crypto::{key_types::DUMMY, KeyTypeId}, H256};
-use sp_runtime::{
-    RuntimeAppPublic,
-    AccountId32,
-    generic,
-	testing::{TestXt, Header, UintAuthorityId},
-    traits::{BlakeTwo256, Extrinsic as ExtrinsicT, OpaqueKeys, IdentifyAccount, IdentityLookup, Verify, ConvertInto},
-    MultiSignature, Perbill, impl_opaque_keys,
-};
 use pallet_session::*;
-use std::cell::RefCell;
+use sp_core::{
+    crypto::{key_types::DUMMY, KeyTypeId},
+    H256,
+};
+use sp_runtime::{
+    generic, impl_opaque_keys,
+    testing::{Header, TestXt, UintAuthorityId},
+    traits::{
+        BlakeTwo256, ConvertInto, Extrinsic as ExtrinsicT, IdentifyAccount, IdentityLookup,
+        OpaqueKeys, Verify,
+    },
+    AccountId32, MultiSignature, Perbill, RuntimeAppPublic,
+};
 use sp_std::boxed::*;
+use std::cell::RefCell;
 
 impl_opaque_keys! {
-	pub struct MockSessionKeys {
-		pub dummy: UintAuthorityId,
-	}
+    pub struct MockSessionKeys {
+        pub dummy: UintAuthorityId,
+    }
 }
 
 impl From<UintAuthorityId> for MockSessionKeys {
-	fn from(dummy: UintAuthorityId) -> Self {
-		Self { dummy }
-	}
+    fn from(dummy: UintAuthorityId) -> Self {
+        Self { dummy }
+    }
 }
 
 pub const KEY_ID_A: KeyTypeId = KeyTypeId([4; 4]);
@@ -30,106 +34,113 @@ pub const KEY_ID_B: KeyTypeId = KeyTypeId([9; 4]);
 
 #[derive(Debug, Clone, codec::Encode, codec::Decode, PartialEq, Eq)]
 pub struct PreUpgradeMockSessionKeys {
-	pub a: [u8; 32],
-	pub b: [u8; 64],
+    pub a: [u8; 32],
+    pub b: [u8; 64],
 }
 
 impl OpaqueKeys for PreUpgradeMockSessionKeys {
-	type KeyTypeIdProviders = ();
+    type KeyTypeIdProviders = ();
 
-	fn key_ids() -> &'static [KeyTypeId] {
-		&[KEY_ID_A, KEY_ID_B]
-	}
+    fn key_ids() -> &'static [KeyTypeId] {
+        &[KEY_ID_A, KEY_ID_B]
+    }
 
-	fn get_raw(&self, i: KeyTypeId) -> &[u8] {
-		match i {
-			i if i == KEY_ID_A => &self.a[..],
-			i if i == KEY_ID_B => &self.b[..],
-			_ => &[],
-		}
-	}
+    fn get_raw(&self, i: KeyTypeId) -> &[u8] {
+        match i {
+            i if i == KEY_ID_A => &self.a[..],
+            i if i == KEY_ID_B => &self.b[..],
+            _ => &[],
+        }
+    }
 }
 
 impl_outer_origin! {
-	pub enum Origin for Test where system = frame_system {}
+    pub enum Origin for Test where system = frame_system {}
 }
 
 thread_local! {
-	pub static VALIDATORS: RefCell<Vec<AccountId>> = RefCell::new(vec![AccountId32::default(), AccountId32::default(), AccountId32::default()]);
-	pub static NEXT_VALIDATORS: RefCell<Vec<AccountId>> = RefCell::new(vec![AccountId32::default(), AccountId32::default(), AccountId32::default()]);
-	pub static AUTHORITIES: RefCell<Vec<UintAuthorityId>> =
-		RefCell::new(vec![UintAuthorityId(1), UintAuthorityId(2), UintAuthorityId(3)]);
-	pub static FORCE_SESSION_END: RefCell<bool> = RefCell::new(false);
-	pub static SESSION_LENGTH: RefCell<u64> = RefCell::new(2);
-	pub static SESSION_CHANGED: RefCell<bool> = RefCell::new(false);
-	pub static TEST_SESSION_CHANGED: RefCell<bool> = RefCell::new(false);
-	pub static DISABLED: RefCell<bool> = RefCell::new(false);
-	// Stores if `on_before_session_end` was called
-	pub static BEFORE_SESSION_END_CALLED: RefCell<bool> = RefCell::new(false);
+    pub static VALIDATORS: RefCell<Vec<AccountId>> = RefCell::new(vec![AccountId32::default(), AccountId32::default(), AccountId32::default()]);
+    pub static NEXT_VALIDATORS: RefCell<Vec<AccountId>> = RefCell::new(vec![AccountId32::default(), AccountId32::default(), AccountId32::default()]);
+    pub static AUTHORITIES: RefCell<Vec<UintAuthorityId>> =
+        RefCell::new(vec![UintAuthorityId(1), UintAuthorityId(2), UintAuthorityId(3)]);
+    pub static FORCE_SESSION_END: RefCell<bool> = RefCell::new(false);
+    pub static SESSION_LENGTH: RefCell<u64> = RefCell::new(2);
+    pub static SESSION_CHANGED: RefCell<bool> = RefCell::new(false);
+    pub static TEST_SESSION_CHANGED: RefCell<bool> = RefCell::new(false);
+    pub static DISABLED: RefCell<bool> = RefCell::new(false);
+    // Stores if `on_before_session_end` was called
+    pub static BEFORE_SESSION_END_CALLED: RefCell<bool> = RefCell::new(false);
 }
 
 pub struct TestShouldEndSession;
 impl ShouldEndSession<u64> for TestShouldEndSession {
-	fn should_end_session(now: u64) -> bool {
-		let l = SESSION_LENGTH.with(|l| *l.borrow());
-		now % l == 0 || FORCE_SESSION_END.with(|l| { let r = *l.borrow(); *l.borrow_mut() = false; r })
-	}
+    fn should_end_session(now: u64) -> bool {
+        let l = SESSION_LENGTH.with(|l| *l.borrow());
+        now % l == 0
+            || FORCE_SESSION_END.with(|l| {
+                let r = *l.borrow();
+                *l.borrow_mut() = false;
+                r
+            })
+    }
 }
 
 pub struct TestSessionHandler;
 impl SessionHandler<AccountId> for TestSessionHandler {
-	const KEY_TYPE_IDS: &'static [sp_runtime::KeyTypeId] = &[UintAuthorityId::ID];
-	fn on_genesis_session<T: OpaqueKeys>(_validators: &[(AccountId, T)]) {}
-	fn on_new_session<T: OpaqueKeys>(
-		changed: bool,
-		validators: &[(AccountId, T)],
-		_queued_validators: &[(AccountId, T)],
-	) {
-		SESSION_CHANGED.with(|l| *l.borrow_mut() = changed);
-		AUTHORITIES.with(|l|
-			*l.borrow_mut() = validators.iter()
-				.map(|(_, id)| id.get::<UintAuthorityId>(DUMMY).unwrap_or_default())
-				.collect()
-		);
-	}
-	fn on_disabled(_validator_index: usize) {
-		DISABLED.with(|l| *l.borrow_mut() = true)
-	}
-	fn on_before_session_ending() {
-		BEFORE_SESSION_END_CALLED.with(|b| *b.borrow_mut() = true);
-	}
+    const KEY_TYPE_IDS: &'static [sp_runtime::KeyTypeId] = &[UintAuthorityId::ID];
+    fn on_genesis_session<T: OpaqueKeys>(_validators: &[(AccountId, T)]) {}
+    fn on_new_session<T: OpaqueKeys>(
+        changed: bool,
+        validators: &[(AccountId, T)],
+        _queued_validators: &[(AccountId, T)],
+    ) {
+        SESSION_CHANGED.with(|l| *l.borrow_mut() = changed);
+        AUTHORITIES.with(|l| {
+            *l.borrow_mut() = validators
+                .iter()
+                .map(|(_, id)| id.get::<UintAuthorityId>(DUMMY).unwrap_or_default())
+                .collect()
+        });
+    }
+    fn on_disabled(_validator_index: usize) {
+        DISABLED.with(|l| *l.borrow_mut() = true)
+    }
+    fn on_before_session_ending() {
+        BEFORE_SESSION_END_CALLED.with(|b| *b.borrow_mut() = true);
+    }
 }
 
 pub struct TestSessionManager;
 impl SessionManager<AccountId> for TestSessionManager {
-	fn end_session(_: u32) {}
-	fn start_session(_: u32) {}
-	fn new_session(_: u32) -> Option<Vec<AccountId>> {
-		if !TEST_SESSION_CHANGED.with(|l| *l.borrow()) {
-			VALIDATORS.with(|v| {
-				let mut v = v.borrow_mut();
-				*v = NEXT_VALIDATORS.with(|l| l.borrow().clone());
-				Some(v.clone())
-			})
-		} else if DISABLED.with(|l| std::mem::replace(&mut *l.borrow_mut(), false)) {
-			// If there was a disabled validator, underlying conditions have changed
-			// so we return `Some`.
-			Some(VALIDATORS.with(|v| v.borrow().clone()))
-		} else {
-			None
-		}
-	}
+    fn end_session(_: u32) {}
+    fn start_session(_: u32) {}
+    fn new_session(_: u32) -> Option<Vec<AccountId>> {
+        if !TEST_SESSION_CHANGED.with(|l| *l.borrow()) {
+            VALIDATORS.with(|v| {
+                let mut v = v.borrow_mut();
+                *v = NEXT_VALIDATORS.with(|l| l.borrow().clone());
+                Some(v.clone())
+            })
+        } else if DISABLED.with(|l| std::mem::replace(&mut *l.borrow_mut(), false)) {
+            // If there was a disabled validator, underlying conditions have changed
+            // so we return `Some`.
+            Some(VALIDATORS.with(|v| v.borrow().clone()))
+        } else {
+            None
+        }
+    }
 }
 
 impl pallet_session::historical::SessionManager<AccountId, AccountId> for TestSessionManager {
-	fn end_session(_: u32) {}
-	fn start_session(_: u32) {}
-	fn new_session(new_index: u32)
-		-> Option<Vec<(AccountId, AccountId)>>
-	{
-		<Self as SessionManager<_>>::new_session(new_index)
-			.map(|vals| vals.into_iter().map(|val| (val.clone(), val.clone())).collect())
-	}
+    fn end_session(_: u32) {}
+    fn start_session(_: u32) {}
+    fn new_session(new_index: u32) -> Option<Vec<(AccountId, AccountId)>> {
+        <Self as SessionManager<_>>::new_session(new_index).map(|vals| {
+            vals.into_iter()
+                .map(|val| (val.clone(), val.clone()))
+                .collect()
+        })
+    }
 }
 
 #[derive(Clone, Eq, PartialEq)]
