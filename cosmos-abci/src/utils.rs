@@ -2,9 +2,6 @@ use codec::{Decode, Encode};
 use sp_runtime::RuntimeDebug;
 use sp_std::{fmt, prelude::*};
 
-/// Cosmos account ID.
-pub type CosmosAccountId = Vec<u8>;
-
 pub struct AbciCommitResponse {
     pub height: i64,
     pub hash: Vec<u8>,

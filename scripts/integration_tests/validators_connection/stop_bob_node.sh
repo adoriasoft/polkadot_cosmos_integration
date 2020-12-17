@@ -1,7 +1,6 @@
 function stop_bob_node() {
-    echo 'Stop Bob node'
-    echo $BOB_NODE_PID
-    kill -9 $BOB_NODE_PID
+    echo 'Stop Bob node with PID' $1
+    kill -9 $1
 }
 
-stop_bob_node
+stop_bob_node $BOB_NODE_PID

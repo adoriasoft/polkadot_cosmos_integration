@@ -434,10 +434,8 @@ impl<T: Trait> pallet_session::SessionManager<T::AccountId> for Module<T> {
         let mut new_substrate_validators: Vec<T::AccountId> = vec![];
         for cosmos_validator_id in &last_cosmos_validators {
             let substrate_account_id = <CosmosAccounts<T>>::get(&cosmos_validator_id);
-            if substrate_account_id.is_some() {
-                if let Some(full_substrate_account_id) = substrate_account_id {
-                    new_substrate_validators.push(full_substrate_account_id);
-                }
+            if let Some(full_substrate_account_id) = substrate_account_id {
+                new_substrate_validators.push(full_substrate_account_id);
             }
         }
         if !new_substrate_validators.is_empty() {
@@ -478,28 +476,6 @@ impl<T: Trait>
         )> = vec![];
         for cosmos_validator_id in &last_cosmos_validators {
             let substrate_account_id = <CosmosAccounts<T>>::get(&cosmos_validator_id);
-<<<<<<< HEAD
-            match substrate_account_id {
-                Some(account) => {
-                    new_substrate_validators.push((
-                        account,
-                        utils::Exposure {
-                            total: 0,
-                            own: 0,
-                            others: vec![],
-                        },
-<<<<<<< HEAD
-                    )
-                }).collect();
-            debug::info!("Substrate validators for update {:?}", new_substrate_validators);
-            Some(new_substrate_validators)
-        } else {
-            None
-=======
-                    ));
-                },
-                None => {}
-=======
             if let Some(full_substrate_account_id) = substrate_account_id {
                 new_substrate_validators.push((
                     full_substrate_account_id,
@@ -509,7 +485,6 @@ impl<T: Trait>
                         others: vec![],
                     },
                 ));
->>>>>>> 8834ff1fcd934f135e6fa0b675977b214e4ee504
             }
         }
         if !new_substrate_validators.is_empty() {
@@ -518,7 +493,6 @@ impl<T: Trait>
                 new_substrate_validators
             );
             return Some(new_substrate_validators);
->>>>>>> PCI-209-modify-validators
         }
         None
     }

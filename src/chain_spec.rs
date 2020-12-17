@@ -34,7 +34,10 @@ where
 }
 
 /// Generate an Aura/Grandpa authority keys.
-pub fn authority_keys_from_seed(seed: &str, account_key: AccountId) -> (AuraId, GrandpaId, AccountId) {
+pub fn authority_keys_from_seed(
+    seed: &str,
+    account_key: AccountId,
+) -> (AuraId, GrandpaId, AccountId) {
     (
         get_from_seed::<AuraId>(seed),
         get_from_seed::<GrandpaId>(seed),
@@ -155,7 +158,10 @@ fn testnet_genesis(
     endowed_accounts: Vec<AccountId>,
     _enable_println: bool,
 ) -> GenesisConfig {
-    println!("POA authorities for Substrate chain {:?}", initial_authorities);
+    println!(
+        "POA authorities for Substrate chain {:?}",
+        initial_authorities
+    );
     GenesisConfig {
         frame_system: Some(SystemConfig {
             // Add Wasm runtime to storage.
@@ -185,6 +191,10 @@ fn testnet_genesis(
                 get_account_id_from_seed::<sr25519::Public>("Alice"),
                 get_account_id_from_seed::<sr25519::Public>("Alice"),
                 to_session_keys(&Ed25519Keyring::Alice, &Sr25519Keyring::Alice),
+            ), (
+                get_account_id_from_seed::<sr25519::Public>("Bob"),
+                get_account_id_from_seed::<sr25519::Public>("Bob"),
+                to_session_keys(&Ed25519Keyring::Bob, &Sr25519Keyring::Bob),
             )],
         }),
     }
