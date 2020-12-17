@@ -22,6 +22,7 @@ pub fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Pu
         .public()
 }
 
+/// Public account type.
 type AccountPublic = <Signature as Verify>::Signer;
 
 /// Generate an account ID from seed.
@@ -32,15 +33,16 @@ where
     AccountPublic::from(get_from_seed::<TPublic>(seed)).into_account()
 }
 
-/// Generate an Aura authority key.
-pub fn authority_keys_from_seed(s: &str, account_key: AccountId) -> (AuraId, GrandpaId, AccountId) {
-    return (
-        get_from_seed::<AuraId>(s),
-        get_from_seed::<GrandpaId>(s),
+/// Generate an Aura/Grandpa authority keys.
+pub fn authority_keys_from_seed(seed: &str, account_key: AccountId) -> (AuraId, GrandpaId, AccountId) {
+    (
+        get_from_seed::<AuraId>(seed),
+        get_from_seed::<GrandpaId>(seed),
         account_key,
-    );
+    )
 }
 
+/// Return an Aura/Grandpa session keys.
 pub fn to_session_keys(
     ed25519_keyring: &Ed25519Keyring,
     sr25519_keyring: &Sr25519Keyring,
@@ -51,6 +53,7 @@ pub fn to_session_keys(
     }
 }
 
+/// Return initial POA authorities.
 fn initial_poa_authorities() -> Vec<(AuraId, GrandpaId, AccountId)> {
     vec![authority_keys_from_seed(
         "Alice",
@@ -152,7 +155,7 @@ fn testnet_genesis(
     endowed_accounts: Vec<AccountId>,
     _enable_println: bool,
 ) -> GenesisConfig {
-    println!("POA authorities {:?}", initial_authorities);
+    println!("POA authorities for Substrate chain {:?}", initial_authorities);
     GenesisConfig {
         frame_system: Some(SystemConfig {
             // Add Wasm runtime to storage.
@@ -176,6 +179,7 @@ fn testnet_genesis(
         }),
         // Assign network admin rights.
         pallet_sudo: Some(SudoConfig { key: root_key }),
+        // Set initial authorities that is only Alice node for now.
         pallet_session: Some(SessionConfig {
             keys: vec![(
                 get_account_id_from_seed::<sr25519::Public>("Alice"),
