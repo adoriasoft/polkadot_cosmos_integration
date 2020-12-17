@@ -16,10 +16,6 @@ use frame_system::{
 use pallet_session as session;
 use sp_core::crypto::KeyTypeId;
 use sp_runtime::{
-    offchain::{
-        storage::StorageValueRef,
-        storage_lock::{BlockAndTime, StorageLock},
-    },
     traits::{Convert, SaturatedConversion},
     transaction_validity::{
         InvalidTransaction, TransactionSource, TransactionValidity, ValidTransaction,
@@ -157,11 +153,7 @@ pub struct ABCITxs {
 decl_storage! {
     trait Store for Module<T: Trait> as ABCITxStorage {
         ABCITxStorage get(fn abci_tx): map hasher(blake2_128_concat) T::BlockNumber => ABCITxs;
-<<<<<<< HEAD
-        CosmosAccounts get(fn cosmos_accounts): map hasher(blake2_128_concat) utils::CosmosAccountId => (T::AccountId, utils::CosmosAccountId);
-=======
         CosmosAccounts get(fn cosmos_accounts): map hasher(blake2_128_concat) utils::CosmosAccountId => Option<T::AccountId> = None;
->>>>>>> PCI-209-modify-validators
         AccountLedger get(fn account_ledgers): map hasher(blake2_128_concat) T::AccountId => OptionalLedger<T::AccountId>;
     }
 }
@@ -179,18 +171,10 @@ decl_module! {
 
         // Save cosmos account via tx.
         #[weight = 0]
-<<<<<<< HEAD
-        pub fn create_cosmos_account(origin, cosmos_account_id: Vec<u8>) -> DispatchResult {
-            let origin_signed = ensure_signed(origin)?;
-            <AccountLedger<T>>::insert(&origin_signed, Some((&origin_signed, 0)));
-            let cosmos_account = (&origin_signed, cosmos_account_id.clone());
-            <CosmosAccounts<T>>::insert(cosmos_account_id.clone(), cosmos_account);
-=======
         fn insert_cosmos_account(origin, cosmos_account_id: Vec<u8>) -> DispatchResult {
             let origin_signed = ensure_signed(origin)?;
             <AccountLedger<T>>::insert(&origin_signed, Some((&origin_signed, 0)));
             <CosmosAccounts<T>>::insert(&cosmos_account_id, &origin_signed);
->>>>>>> PCI-209-modify-validators
             // todo
             // Save cosmos node accounts into rocks_db storage.
             Ok(())
@@ -240,8 +224,6 @@ impl<T: Trait> Module<T> {
     ) {
         debug::info!("call_offchain_worker(), block_number: {:?}", block_number);
 
-        Self::call_on_init_chain();
-
         Self::call_on_initialize(block_number, block_hash, parent_hash, extrinsics_root);
 
         let abci_txs: ABCITxs = <ABCITxStorage<T>>::get(block_number);
@@ -252,24 +234,6 @@ impl<T: Trait> Module<T> {
                 .unwrap();
         }
         Self::call_on_finalize(block_number);
-    }
-
-    pub fn call_on_init_chain() {
-        let storage = StorageValueRef::persistent(b"abci-local-storage:init_chain_info");
-
-        if let Some(Some(init_chain_info)) = storage.get::<bool>() {
-            if !init_chain_info {
-                abci_interface::init_chain().unwrap();
-            }
-        } else {
-            abci_interface::init_chain().unwrap();
-        }
-
-        if let Ok(_guard) =
-            StorageLock::<BlockAndTime<Self>>::new(b"abci-local-storage:lock").try_lock()
-        {
-            storage.set(&true);
-        }
     }
 
     // Called on block initialize.
@@ -293,20 +257,9 @@ impl<T: Trait> Module<T> {
     /// Called on block finalize.
     pub fn call_on_finalize(block_number: T::BlockNumber) -> bool {
         match abci_interface::end_block(block_number.saturated_into() as i64) {
-<<<<<<< HEAD
-            Ok(_) => {
-                let substrate_node_validators = <pallet_session::Module<T>>::validators();
-                debug::info!("Substrate validators after last on_finalize {:?}", substrate_node_validators);
-                match abci_interface::commit() {
-                    Err(err) => {
-                        panic!("Commit failed: {:?}", err);
-                    }
-                    _ => true,
-=======
             Ok(_) => match abci_interface::commit() {
                 Err(err) => {
                     panic!("Commit failed: {:?}", err);
->>>>>>> PCI-209-modify-validators
                 }
                 _ => true,
             },
@@ -378,29 +331,6 @@ sp_api::decl_runtime_apis! {
 /// AbciInterface trait with runtime_interface macro.
 #[runtime_interface]
 pub trait AbciInterface {
-    fn init_chain() -> Result<(), DispatchError> {
-        let genesis =
-            pallet_abci::utils::parse_cosmos_genesis_file(&pallet_abci::utils::get_abci_genesis())
-                .map_err(|_| "failed to get cosmos genesis file")?;
-
-        pallet_abci::get_abci_instance()
-            .map_err(|_| "failed to setup connection")?
-            .init_chain(
-                genesis.time_seconds,
-                genesis.time_nanos,
-                &genesis.chain_id,
-                genesis.pub_key_types,
-                genesis.max_bytes,
-                genesis.max_gas,
-                genesis.max_age_num_blocks,
-                genesis.max_age_duration,
-                genesis.app_state_bytes,
-            )
-            .map_err(|_| "init chain failed")?;
-
-        Ok(())
-    }
-
     fn check_tx(data: Vec<u8>) -> Result<u64, DispatchError> {
         let result = pallet_abci::get_abci_instance()
             .map_err(|_| "failed to setup connection")?
@@ -470,12 +400,8 @@ impl<T: Trait> sp_runtime::offchain::storage_lock::BlockNumberProvider for Modul
 
 impl<T: Trait> Convert<T::AccountId, Option<T::AccountId>> for utils::StashOf<T> {
     fn convert(controller: T::AccountId) -> Option<T::AccountId> {
-<<<<<<< HEAD
-        let account_ledger: OptionalLedger<T::AccountId> = <Module<T>>::account_ledgers(&controller);
-=======
         let account_ledger: OptionalLedger<T::AccountId> =
             <Module<T>>::account_ledgers(&controller);
->>>>>>> PCI-209-modify-validators
         match account_ledger {
             Some(_ledger) => Some(_ledger.0),
             None => Some(controller),
@@ -496,23 +422,6 @@ impl<T: Trait> Convert<T::AccountId, Option<utils::Exposure<T::AccountId, Balanc
 }
 
 impl<T: Trait> pallet_session::SessionManager<T::AccountId> for Module<T> {
-<<<<<<< HEAD
-    fn new_session(new_index: SessionIndex) -> Option<Vec<T::AccountId>> {
-        if new_index == 10 {
-            // todo
-            // Get cosmos accounts & active validators from rocks_db storage.
-            let last_cosmos_validators = vec![
-                vec![66, 111, 98, 98, 121, 83, 111, 98, 98, 121],
-                vec![76, 117, 99, 107, 121, 70, 111, 120]
-            ];
-            let new_substrate_validators: Vec<T::AccountId> = last_cosmos_validators.iter().map(|cosmos_acc_id| {
-                <CosmosAccounts<T>>::get(cosmos_acc_id).0
-            }).collect();
-            debug::info!("Substrate validators for update {:?}", new_substrate_validators);
-            Some(new_substrate_validators)
-        } else {
-            None
-=======
     fn new_session(_new_index: SessionIndex) -> Option<Vec<T::AccountId>> {
         let substrate_node_validators = <pallet_session::Module<T>>::validators();
         debug::info!(
@@ -521,22 +430,15 @@ impl<T: Trait> pallet_session::SessionManager<T::AccountId> for Module<T> {
         );
         // todo
         // Get cosmos accounts & active validators from rocks_db storage.
-        let last_cosmos_validators: Vec<utils::CosmosAccountId> = vec![
-            vec![66, 111, 98, 98, 121, 83, 111, 98, 98, 121],
-            vec![76, 117, 99, 107, 121, 70, 111, 120],
-        ];
+        let last_cosmos_validators: Vec<utils::CosmosAccountId> = vec![];
         let mut new_substrate_validators: Vec<T::AccountId> = vec![];
         for cosmos_validator_id in &last_cosmos_validators {
             let substrate_account_id = <CosmosAccounts<T>>::get(&cosmos_validator_id);
             if substrate_account_id.is_some() {
-                match substrate_account_id {
-                    Some(account) => {
-                        new_substrate_validators.push(account);
-                    },
-                    None => {}
+                if let Some(full_substrate_account_id) = substrate_account_id {
+                    new_substrate_validators.push(full_substrate_account_id);
                 }
             }
->>>>>>> PCI-209-modify-validators
         }
         if !new_substrate_validators.is_empty() {
             debug::info!(
@@ -569,16 +471,14 @@ impl<T: Trait>
         );
         // todo
         // Get cosmos accounts & active validators from rocks_db storage.
-        let last_cosmos_validators: Vec<utils::CosmosAccountId> = vec![
-            vec![66, 111, 98, 98, 121, 83, 111, 98, 98, 121],
-            vec![76, 117, 99, 107, 121, 70, 111, 120],
-        ];
+        let last_cosmos_validators: Vec<utils::CosmosAccountId> = vec![];
         let mut new_substrate_validators: Vec<(
             T::AccountId,
             utils::Exposure<T::AccountId, Balance>,
         )> = vec![];
         for cosmos_validator_id in &last_cosmos_validators {
             let substrate_account_id = <CosmosAccounts<T>>::get(&cosmos_validator_id);
+<<<<<<< HEAD
             match substrate_account_id {
                 Some(account) => {
                     new_substrate_validators.push((
@@ -599,6 +499,17 @@ impl<T: Trait>
                     ));
                 },
                 None => {}
+=======
+            if let Some(full_substrate_account_id) = substrate_account_id {
+                new_substrate_validators.push((
+                    full_substrate_account_id,
+                    utils::Exposure {
+                        total: 0,
+                        own: 0,
+                        others: vec![],
+                    },
+                ));
+>>>>>>> 8834ff1fcd934f135e6fa0b675977b214e4ee504
             }
         }
         if !new_substrate_validators.is_empty() {

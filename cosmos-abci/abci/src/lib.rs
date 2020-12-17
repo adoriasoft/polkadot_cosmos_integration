@@ -4,7 +4,6 @@ pub mod utils;
 
 pub use defaults::*;
 pub use grpc::*;
-use protos;
 
 use lazy_static::lazy_static;
 use owning_ref::MutexGuardRefMut;
@@ -203,6 +202,7 @@ pub fn get_abci_instance<'ret>(
 ) -> Result<MutexGuardRefMut<'ret, Option<AIType>, AIType>, Box<dyn std::error::Error>> {
     let instance = ABCI_INTERFACE_INSTANCE.lock()?;
     if instance.is_none() {
+        // TODO return an error
         panic!("abci instance has not been set, execute set_abci_instance before calling this function");
     }
     // Here we create a ref to the inner value of the mutex guard.
