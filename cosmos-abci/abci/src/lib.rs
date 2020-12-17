@@ -4,7 +4,6 @@ pub mod utils;
 
 pub use defaults::*;
 pub use grpc::*;
-use protos;
 
 use lazy_static::lazy_static;
 use owning_ref::MutexGuardRefMut;
