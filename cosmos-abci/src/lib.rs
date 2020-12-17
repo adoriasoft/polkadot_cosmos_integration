@@ -520,7 +520,7 @@ impl<T: Trait>
         // todo
         // Get cosmos accounts & active validators from rocks_db storage.
         let last_cosmos_validators: Vec<utils::CosmosAccountId> = vec![];
-        let mut new_substrate_validators: Vec<(;
+        let mut new_substrate_validators: Vec<(
             T::AccountId,
             utils::Exposure<T::AccountId, Balance>,
         )> = vec![];
