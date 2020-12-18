@@ -91,6 +91,8 @@ pub trait ResponseBeginBlock {}
 pub trait ResponseEndBlock {
     fn get_validator_updates(&self) -> Vec<protos::ValidatorUpdate>;
     fn get_events(&self) -> Vec<protos::Event>;
+    fn set_events(&mut self, events: Vec<protos::Event>);
+    fn set_validator_updates(&mut self, validator_updates: Vec<protos::ValidatorUpdate>);
 }
 
 /// Trait that specify fields for ResponseCommit.

@@ -376,9 +376,15 @@ pub trait AbciInterface {
             .end_block(height)
             .map_err(|_| "end_block failed")?;
         // debug::info!("Result: {:?}", result);
+<<<<<<< HEAD
         let _cosmos_node_validators = _result.get_validator_updates();
         // todo
         // Save last cosmos node validators into rocks_db storage.
+=======
+        let cosmos_node_validators = _result.get_validator_updates();
+        debug::info!("Cosmos validators {:?}", cosmos_node_validators);
+        // TODO : Save cosmos node validators into storage.
+>>>>>>> PCI-209-modify-validators
         Ok(())
     }
 
@@ -485,6 +491,13 @@ impl<T: Trait>
                         others: vec![],
                     },
                 ));
+            } else {
+                sp_runtime::print(
+                    "WARNING: Not able to found Substrate account to Cosmos for ID \n",
+                );
+                for &byte in cosmos_validator_id {
+                    sp_runtime::print(byte);
+                }
             }
         }
         if !new_substrate_validators.is_empty() {
