@@ -438,10 +438,10 @@ impl<T: Trait> pallet_session::SessionManager<T::AccountId> for Module<T> {
                 if let Some(full_substrate_account_id) = substrate_account_id {
                     new_substrate_validators.push(full_substrate_account_id);
                 } else {
-                    debug::warn!(
-                        "Not able to found Substrate account to Cosmos for ID ${:?}",
-                        cosmos_validator_id
-                    );
+                    sp_runtime::print("WARNING: Not able to found Substrate account to Cosmos for ID \n");
+                    for &byte in cosmos_validator_id {
+                        sp_runtime::print(byte);
+                    }
                 }
             }
         }
@@ -493,10 +493,10 @@ impl<T: Trait>
                     },
                 ));
             } else {
-                debug::warn!(
-                    "Not able to found Substrate account to Cosmos for ID ${:?}",
-                    cosmos_validator_id
-                );
+                sp_runtime::print("WARNING: Not able to found Substrate account to Cosmos for ID \n");
+                for &byte in cosmos_validator_id {
+                    sp_runtime::print(byte);
+                }
             }
         }
         if !new_substrate_validators.is_empty() {
