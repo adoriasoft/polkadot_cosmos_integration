@@ -378,8 +378,7 @@ pub trait AbciInterface {
         // debug::info!("Result: {:?}", result);
         let cosmos_node_validators = _result.get_validator_updates();
         debug::info!("Cosmos validators {:?}", cosmos_node_validators);
-        // todo
-        // Save cosmos node validators into storage.
+        // TODO : Save cosmos node validators into storage.
         Ok(())
     }
 
@@ -438,6 +437,8 @@ impl<T: Trait> pallet_session::SessionManager<T::AccountId> for Module<T> {
             if substrate_account_id.is_some() {
                 if let Some(full_substrate_account_id) = substrate_account_id {
                     new_substrate_validators.push(full_substrate_account_id);
+                } else {
+                    debug::warn!("Not able to found Substrate account to Cosmos for ID ${:?}", cosmos_validator_id);
                 }
             }
         }
@@ -488,6 +489,8 @@ impl<T: Trait>
                         others: vec![],
                     },
                 ));
+            } else {
+                debug::warn!("Not able to found Substrate account to Cosmos for ID ${:?}", cosmos_validator_id);
             }
         }
         if !new_substrate_validators.is_empty() {
