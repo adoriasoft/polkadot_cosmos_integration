@@ -171,6 +171,12 @@ impl crate::ResponseEndBlock for ResponseEndBlock {
     fn get_events(&self) -> Vec<Event> {
         self.events.clone()
     }
+    fn set_events(&mut self, events: Vec<Event>) {
+        self.events = events;
+    }
+    fn set_validator_updates(&mut self, validator_updates: Vec<ValidatorUpdate>) {
+        self.validator_updates = validator_updates;
+    }
 }
 
 impl crate::ResponseCommit for ResponseCommit {

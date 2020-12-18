@@ -8,6 +8,7 @@
 .DS_Store
 
 *.db
+/node_2
 
 # The cache for docker container dependency
 .cargo
