@@ -376,15 +376,9 @@ pub trait AbciInterface {
             .end_block(height)
             .map_err(|_| "end_block failed")?;
         // debug::info!("Result: {:?}", result);
-<<<<<<< HEAD
         let _cosmos_node_validators = _result.get_validator_updates();
         // todo
         // Save last cosmos node validators into rocks_db storage.
-=======
-        let cosmos_node_validators = _result.get_validator_updates();
-        debug::info!("Cosmos validators {:?}", cosmos_node_validators);
-        // TODO : Save cosmos node validators into storage.
->>>>>>> PCI-209-modify-validators
         Ok(())
     }
 
@@ -516,8 +510,3 @@ impl<T: Trait>
 
     fn start_session(_start_index: SessionIndex) {}
 }
-
-/* fn get_test_validators_for_update<T, AccountId>() {
-    let sudo_root = <sudo::Module<T>>::key();
-    let synced_validators: Vec<AccountId> = vec![sudo_root];
-} */

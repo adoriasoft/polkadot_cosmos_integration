@@ -3,10 +3,15 @@ trap "exit" INT TERM ERR
 trap "kill 0" EXIT
 
 function clean_tmp() {
+    echo ${PWD}
     rm -rf tmp
     mkdir tmp
     touch tmp/substrate_log.log
     touch tmp/cosmos_log.log
+}
+
+function clean_rocks_db() {
+    rm -rf abci_storage_rocksdb
 }
 
 function clean_substrate() {

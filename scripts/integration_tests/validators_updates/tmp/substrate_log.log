@@ -1,0 +1,62 @@
+
+====================
+
+Version: 0.0.3-0cb9380-x86_64-macos
+
+   0: backtrace::backtrace::libunwind::trace
+             at /Users/mariannay/.cargo/registry/src/github.com-1ecc6299db9ec823/backtrace-0.3.55/src/backtrace/libunwind.rs:90:5
+      backtrace::backtrace::trace_unsynchronized
+             at /Users/mariannay/.cargo/registry/src/github.com-1ecc6299db9ec823/backtrace-0.3.55/src/backtrace/mod.rs:66:5
+   1: backtrace::backtrace::trace
+             at /Users/mariannay/.cargo/registry/src/github.com-1ecc6299db9ec823/backtrace-0.3.55/src/backtrace/mod.rs:53:14
+   2: backtrace::capture::Backtrace::create
+             at /Users/mariannay/.cargo/registry/src/github.com-1ecc6299db9ec823/backtrace-0.3.55/src/capture.rs:176:9
+   3: backtrace::capture::Backtrace::new
+             at /Users/mariannay/.cargo/registry/src/github.com-1ecc6299db9ec823/backtrace-0.3.55/src/capture.rs:140:22
+   4: sp_panic_handler::panic_hook
+             at /Users/mariannay/.cargo/registry/src/github.com-1ecc6299db9ec823/sp-panic-handler-2.0.0/src/lib.rs:150:18
+   5: sp_panic_handler::set::{{closure}}
+             at /Users/mariannay/.cargo/registry/src/github.com-1ecc6299db9ec823/sp-panic-handler-2.0.0/src/lib.rs:60:4
+   6: std::panicking::rust_panic_with_hook
+             at /rustc/30f0a07684f6c1f5df62d69e9519d82e13d6bf2d/library/std/src/panicking.rs:573:17
+   7: std::panicking::begin_panic::{{closure}}
+             at /Users/mariannay/.rustup/toolchains/nightly-2020-08-19-x86_64-apple-darwin/lib/rustlib/src/rust/library/std/src/panicking.rs:498:9
+   8: std::sys_common::backtrace::__rust_end_short_backtrace
+             at /Users/mariannay/.rustup/toolchains/nightly-2020-08-19-x86_64-apple-darwin/lib/rustlib/src/rust/library/std/src/sys_common/backtrace.rs:153:18
+   9: std::panicking::begin_panic
+             at /Users/mariannay/.rustup/toolchains/nightly-2020-08-19-x86_64-apple-darwin/lib/rustlib/src/rust/library/std/src/panicking.rs:497:12
+  10: abci_storage::get_abci_storage_instance
+             at /Applications/polkadot-cosmos-integration/polkadot_cosmos_integration/cosmos-abci/abci_storage/src/lib.rs:45:9
+  11: node_template::command::init_chain
+             at /Applications/polkadot-cosmos-integration/polkadot_cosmos_integration/src/command.rs:28:28
+  12: node_template::command::run
+             at /Applications/polkadot-cosmos-integration/polkadot_cosmos_integration/src/command.rs:208:13
+  13: node_template::main
+             at /Applications/polkadot-cosmos-integration/polkadot_cosmos_integration/src/main.rs:13:5
+  14: core::ops::function::FnOnce::call_once
+             at /Users/mariannay/.rustup/toolchains/nightly-2020-08-19-x86_64-apple-darwin/lib/rustlib/src/rust/library/core/src/ops/function.rs:233:5
+  15: std::sys_common::backtrace::__rust_begin_short_backtrace
+             at /Users/mariannay/.rustup/toolchains/nightly-2020-08-19-x86_64-apple-darwin/lib/rustlib/src/rust/library/std/src/sys_common/backtrace.rs:137:18
+  16: std::rt::lang_start::{{closure}}
+             at /Users/mariannay/.rustup/toolchains/nightly-2020-08-19-x86_64-apple-darwin/lib/rustlib/src/rust/library/std/src/rt.rs:66:18
+  17: core::ops::function::impls::<impl core::ops::function::FnOnce<A> for &F>::call_once
+             at /rustc/30f0a07684f6c1f5df62d69e9519d82e13d6bf2d/library/core/src/ops/function.rs:265:13
+      std::panicking::try::do_call
+             at /rustc/30f0a07684f6c1f5df62d69e9519d82e13d6bf2d/library/std/src/panicking.rs:373:40
+      std::panicking::try
+             at /rustc/30f0a07684f6c1f5df62d69e9519d82e13d6bf2d/library/std/src/panicking.rs:337:19
+      std::panic::catch_unwind
+             at /rustc/30f0a07684f6c1f5df62d69e9519d82e13d6bf2d/library/std/src/panic.rs:379:14
+      std::rt::lang_start_internal
+             at /rustc/30f0a07684f6c1f5df62d69e9519d82e13d6bf2d/library/std/src/rt.rs:51:25
+  18: std::rt::lang_start
+             at /Users/mariannay/.rustup/toolchains/nightly-2020-08-19-x86_64-apple-darwin/lib/rustlib/src/rust/library/std/src/rt.rs:65:5
+  19: _main
+
+
+Thread 'main' panicked at 'abci storage instance has not been set, execute set_storage_instance before calling this function', cosmos-abci/abci_storage/src/lib.rs:45
+
+This is a bug. Please report it at:
+
+	support.anonymous.an
+
