@@ -7,19 +7,22 @@
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 use codec::Encode;
-use pallet_grandpa::fg_primitives;
-use pallet_grandpa::{AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
+use pallet_grandpa::{
+    fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
+};
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
-use sp_runtime::generic::Era;
 use sp_runtime::traits::{
-    BlakeTwo256, Block as BlockT, IdentifyAccount, IdentityLookup, NumberFor, Saturating, Verify,
+    BlakeTwo256, Block as BlockT, IdentifyAccount, IdentityLookup, NumberFor, OpaqueKeys,
+    Saturating, Verify,
 };
 use sp_runtime::{
-    create_runtime_str, generic, impl_opaque_keys,
+    create_runtime_str, generic,
+    generic::Era,
+    impl_opaque_keys,
     transaction_validity::{InvalidTransaction, TransactionSource, TransactionValidity},
-    ApplyExtrinsicResult, MultiSignature,
+    ApplyExtrinsicResult, MultiSignature, Perbill,
 };
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
@@ -32,7 +35,7 @@ pub use frame_support::{
     construct_runtime, debug,
     dispatch::{CallableCallFor, IsSubType},
     parameter_types,
-    traits::{KeyOwnerProofSystem, Randomness},
+    traits::{Imbalance, KeyOwnerProofSystem, Randomness, ReservableCurrency},
     weights::{
         constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
         IdentityFee, Weight,
@@ -43,7 +46,6 @@ pub use pallet_balances::Call as BalancesCall;
 pub use pallet_timestamp::Call as TimestampCall;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
-pub use sp_runtime::{Perbill, Permill};
 
 pub use pallet_cosmos_abci;
 
@@ -262,6 +264,34 @@ impl pallet_transaction_payment::Trait for Runtime {
     type FeeMultiplierUpdate = ();
 }
 
+parameter_types! {
+    pub const DisabledValidatorsThreshold: Perbill = Perbill::from_percent(33);
+    /// 2 blocks = session duration.
+    pub const Period: BlockNumber = 2;
+    pub const Offset: BlockNumber = 0;
+}
+
+impl pallet_session::historical::Trait for Runtime {
+    type FullIdentification = pallet_cosmos_abci::utils::Exposure<
+        <Self as frame_system::Trait>::AccountId,
+        pallet_cosmos_abci::Balance,
+    >;
+    type FullIdentificationOf = pallet_cosmos_abci::utils::ExposureOf<Self>;
+}
+
+impl pallet_session::Trait for Runtime {
+    type Event = Event;
+    type ValidatorId = <Self as frame_system::Trait>::AccountId;
+    type ValidatorIdOf = pallet_cosmos_abci::utils::StashOf<Self>;
+    type ShouldEndSession = pallet_session::PeriodicSessions<Period, Offset>;
+    type NextSessionRotation = pallet_session::PeriodicSessions<Period, Offset>;
+    type SessionManager = pallet_session::historical::NoteHistoricalRoot<Self, CosmosAbci>;
+    type SessionHandler = <opaque::SessionKeys as OpaqueKeys>::KeyTypeIdProviders;
+    type Keys = opaque::SessionKeys;
+    type DisabledValidatorsThreshold = DisabledValidatorsThreshold;
+    type WeightInfo = ();
+}
+
 impl pallet_sudo::Trait for Runtime {
     type Event = Event;
     type Call = Call;
@@ -270,6 +300,7 @@ impl pallet_sudo::Trait for Runtime {
 impl pallet_cosmos_abci::Trait for Runtime {
     type AuthorityId = pallet_cosmos_abci::crypto::ABCIAuthId;
     type Call = Call;
+    type Subscription = ();
 }
 
 /// The payload being signed in transactions.
@@ -342,6 +373,7 @@ construct_runtime!(
         RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Module, Call, Storage},
         Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent},
         Aura: pallet_aura::{Module, Config<T>, Inherent},
+        Session: pallet_session::{Module, Call, Storage, Event, Config<T>},
         Grandpa: pallet_grandpa::{Module, Call, Storage, Config, Event},
         Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
         TransactionPayment: pallet_transaction_payment::{Module, Storage},
