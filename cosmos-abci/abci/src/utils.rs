@@ -1,3 +1,4 @@
+use bincode;
 use chrono::DateTime;
 use std::{fs, path::PathBuf};
 
@@ -11,6 +12,18 @@ pub struct GenesisInfo {
     pub max_age_num_blocks: i64,
     pub max_age_duration: u64,
     pub app_state_bytes: Vec<u8>,
+}
+
+pub fn serialize_vec(
+    validators: Vec<crate::protos::ValidatorUpdate>,
+) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+    Ok(bincode::serialize(&validators).map_err(|_| "cannot serialize")?)
+}
+
+pub fn deserialize_vec(
+    bytes: Vec<u8>,
+) -> Result<Vec<crate::protos::ValidatorUpdate>, Box<dyn std::error::Error>> {
+    Ok(bincode::deserialize(&bytes).map_err(|_| "cannot deserialize")?)
 }
 
 fn get_genesis_from_file() -> Result<String, Box<dyn std::error::Error>> {
