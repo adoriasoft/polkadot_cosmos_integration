@@ -24,8 +24,6 @@ target
 node_modules
 
 scripts/integration_tests/tmp
-scripts/integration_tests/**/tmp
-node_2
 
 # *pb.*
 token_datas
