@@ -376,6 +376,23 @@ sp_api::decl_runtime_apis! {
 /// AbciInterface trait with runtime_interface macro.
 #[runtime_interface]
 pub trait AbciInterface {
+    fn storage_write(key: Vec<u8>, value: Vec<u8>) -> Result<(), DispatchError> {
+        abci_storage::get_abci_storage_instance()
+            .map_err(|_| "failed to get abci storage instance")?
+            .write(key, value)
+            .map_err(|_| "failed to write some data into the abci storage")?;
+        Ok(())
+    }
+
+    fn storage_get(key: Vec<u8>) -> Result<Option<Vec<u8>>, DispatchError> {
+        let value = abci_storage::get_abci_storage_instance()
+            .map_err(|_| "failed to get abci storage instance")?
+            .get(key)
+            .map_err(|_| "failed to get value from the abci storage")?;
+
+        Ok(value)
+    }
+
     fn check_tx(data: Vec<u8>) -> Result<u64, DispatchError> {
         let result = pallet_abci::get_abci_instance()
             .map_err(|_| "failed to setup connection")?
@@ -416,14 +433,20 @@ pub trait AbciInterface {
     }
 
     fn end_block(height: i64) -> DispatchResult {
-        let _result = pallet_abci::get_abci_instance()
+        let result = pallet_abci::get_abci_instance()
             .map_err(|_| "failed to setup connection")?
             .end_block(height)
             .map_err(|_| "end_block failed")?;
-        // debug::info!("Result: {:?}", result);
-        let cosmos_node_validators = _result.get_validator_updates();
-        debug::info!("Cosmos validators {:?}", cosmos_node_validators);
-        // TODO : Save cosmos node validators into storage.
+        let cosmos_validators = result.get_validator_updates();
+        debug::info!("Cosmos validators {:?}", cosmos_validators);
+
+        let mut validators_data: Vec<Vec<u8>>;
+        for validator in cosmos_validators {
+            validators_data.push(validator.encode());
+        }
+
+        storage_write(height.to_ne_bytes().to_vec(), validators_data)
+
         Ok(())
     }
 

@@ -3972,6 +3972,7 @@ dependencies = [
 name = "pallet-cosmos-abci"
 version = "0.0.3"
 dependencies = [
+ "abci-storage",
  "alt_serde",
  "frame-support",
  "frame-system",
