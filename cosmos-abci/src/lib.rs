@@ -23,7 +23,7 @@ use sp_runtime::{
     DispatchError, RuntimeDebug,
 };
 use sp_runtime_interface::runtime_interface;
-use sp_std::prelude::*;
+use sp_std::{prelude::*};
 
 /// Balance type for pallet.
 pub type Balance = u64;
@@ -154,6 +154,7 @@ decl_storage! {
     trait Store for Module<T: Trait> as ABCITxStorage {
         ABCITxStorage get(fn abci_tx): map hasher(blake2_128_concat) T::BlockNumber => ABCITxs;
         CosmosAccounts get(fn cosmos_accounts): map hasher(blake2_128_concat) utils::CosmosAccountId => Option<T::AccountId> = None;
+        PrevCosmosValidators get(fn prev_cosmos_validators): Vec<utils::CosmosAccountId> = vec![];
         AccountLedger get(fn account_ledgers): map hasher(blake2_128_concat) T::AccountId => OptionalLedger<T::AccountId>;
     }
 }
@@ -438,6 +439,7 @@ impl<T: Trait> pallet_session::SessionManager<T::AccountId> for Module<T> {
         );
         // todo
         // Get cosmos accounts & active validators from rocks_db storage.
+<<<<<<< Updated upstream
         let last_cosmos_validators: Vec<utils::CosmosAccountId> = vec![
             vec![66, 111, 98, 98, 121, 83, 111, 98, 98, 121],
             vec![76, 117, 99, 107, 121, 70, 111, 120],
@@ -455,16 +457,42 @@ impl<T: Trait> pallet_session::SessionManager<T::AccountId> for Module<T> {
                     );
                     for &byte in cosmos_validator_id {
                         sp_runtime::print(byte);
+=======
+        let prev_cosmos_validators = PrevCosmosValidators::get();
+        let next_cosmos_validators: Vec<utils::CosmosAccountId> = utils::hardcoded_cosmos_accounts();
+        let is_cosmos_validators_changed = utils::is_array_changed(prev_cosmos_validators, next_cosmos_validators.clone());
+        debug::info!(
+            "Is Substrate validators changed {:?}",
+            &is_cosmos_validators_changed
+        );
+        if !next_cosmos_validators.clone().is_empty() && is_cosmos_validators_changed {
+            let mut new_substrate_validators: Vec<T::AccountId> = vec![];
+            let mut next_valid_cosmos_validators: Vec<utils::CosmosAccountId> = vec![];
+            for cosmos_validator_id in &next_cosmos_validators {
+                let substrate_account_id = <CosmosAccounts<T>>::get(&cosmos_validator_id);
+                if substrate_account_id.is_some() {
+                    if let Some(full_substrate_account_id) = substrate_account_id {
+                        new_substrate_validators.push(full_substrate_account_id);
+                        next_valid_cosmos_validators.push(cosmos_validator_id.clone());
+                    } else {
+                        sp_runtime::print(
+                            "WARNING: Not able to found Substrate account to Cosmos for ID \n",
+                        );
+                        for &byte in cosmos_validator_id {
+                            sp_runtime::print(byte);
+                        }
+>>>>>>> Stashed changes
                     }
                 }
             }
-        }
-        if !new_substrate_validators.is_empty() {
-            debug::info!(
-                "Substrate validators for update {:?}",
-                new_substrate_validators
-            );
-            return Some(new_substrate_validators);
+            if !new_substrate_validators.is_empty() {
+                PrevCosmosValidators::put(&next_valid_cosmos_validators);
+                debug::info!(
+                    "Substrate validators for update {:?}",
+                    new_substrate_validators
+                );
+                return Some(new_substrate_validators);
+            }
         }
         None
     }
@@ -486,10 +514,11 @@ impl<T: Trait>
         let substrate_node_validators = <pallet_session::Module<T>>::validators();
         debug::info!(
             "Substrate validators after last on_finalize {:?}",
-            substrate_node_validators
+            &substrate_node_validators
         );
         // todo
         // Get cosmos accounts & active validators from rocks_db storage.
+<<<<<<< Updated upstream
         let last_cosmos_validators: Vec<utils::CosmosAccountId> = vec![
             vec![66, 111, 98, 98, 121, 83, 111, 98, 98, 121],
             vec![76, 117, 99, 107, 121, 70, 111, 120],
@@ -516,15 +545,51 @@ impl<T: Trait>
                 );
                 for &byte in cosmos_validator_id {
                     sp_runtime::print(byte);
+=======
+        let next_cosmos_validators: Vec<utils::CosmosAccountId> = utils::hardcoded_cosmos_accounts();
+        let prev_cosmos_validators = PrevCosmosValidators::get();
+        let is_cosmos_validators_changed = utils::is_array_changed(prev_cosmos_validators, next_cosmos_validators.clone());
+        debug::info!(
+            "Is Substrate validators changed {:?} on session {}",
+            &is_cosmos_validators_changed,
+            _new_index
+        );
+        if !next_cosmos_validators.clone().is_empty() && is_cosmos_validators_changed {
+            let mut next_valid_cosmos_validators: Vec<utils::CosmosAccountId> = vec![];
+            let mut new_substrate_validators: Vec<(
+                T::AccountId,
+                utils::Exposure<T::AccountId, Balance>,
+            )> = vec![];
+            for cosmos_validator_id in &next_cosmos_validators {
+                let substrate_account_id = <CosmosAccounts<T>>::get(&cosmos_validator_id);
+                if let Some(full_substrate_account_id) = substrate_account_id {
+                    next_valid_cosmos_validators.push(cosmos_validator_id.clone());
+                    new_substrate_validators.push((
+                        full_substrate_account_id,
+                        utils::Exposure {
+                            total: 0,
+                            own: 0,
+                            others: vec![],
+                        },
+                    ));
+                } else {
+                    sp_runtime::print(
+                        "WARNING: Not able to found Substrate account to Cosmos for ID \n",
+                    );
+                    for &byte in cosmos_validator_id {
+                        sp_runtime::print(byte);
+                    }
+>>>>>>> Stashed changes
                 }
             }
-        }
-        if !new_substrate_validators.is_empty() {
-            debug::info!(
-                "Substrate validators for update {:?}",
-                new_substrate_validators
-            );
-            return Some(new_substrate_validators);
+            if !new_substrate_validators.is_empty() {
+                PrevCosmosValidators::put(&next_valid_cosmos_validators);
+                debug::info!(
+                    "Substrate validators for update {:?}",
+                    new_substrate_validators
+                );
+                return Some(new_substrate_validators);
+            }
         }
         None
     }

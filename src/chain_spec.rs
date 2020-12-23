@@ -160,10 +160,6 @@ fn testnet_genesis(
     endowed_accounts: Vec<AccountId>,
     _enable_println: bool,
 ) -> GenesisConfig {
-    println!(
-        "POA authorities for Substrate chain {:?}",
-        initial_authorities
-    );
     GenesisConfig {
         frame_system: Some(SystemConfig {
             // Add Wasm runtime to storage.

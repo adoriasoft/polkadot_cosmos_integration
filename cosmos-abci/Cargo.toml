@@ -26,6 +26,7 @@ alt_serde = { version = '1', default-features = false, features = ['derive'] }
 parking_lot = { version = "0.10.0", optional = true }
 lazy_static = '1.2.0'
 hex = '0.4.2'
+# std = '1.48.0'
 
 [dev-dependencies]
 testcontainers = '0.10'

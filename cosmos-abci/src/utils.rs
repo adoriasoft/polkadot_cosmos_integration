@@ -39,3 +39,24 @@ pub struct StashOf<T>(sp_std::marker::PhantomData<T>);
 
 /// Cosmos node account ID.
 pub type CosmosAccountId = Vec<u8>;
+
+/// Compare changes in two arrays.
+pub fn is_array_changed<T: PartialEq>(prev_items: Vec<T>, curr_items: Vec<T>) -> bool {
+    if prev_items.len() == curr_items.len() {
+        return prev_items
+            .iter()
+            .zip(curr_items)
+            .filter(|(a, b)| a == &b)
+            .count() != prev_items.len();
+    } else {
+        return true;
+    }
+}
+
+pub fn hardcoded_cosmos_accounts() -> Vec<CosmosAccountId> {
+    vec![
+        vec![66, 111, 98, 98, 121, 83, 111, 98, 98, 121],
+        vec![76, 117, 99, 107, 121, 70, 111, 120],
+        vec![66, 117, 108, 108, 121, 68, 111, 108, 108, 121]
+    ]
+}

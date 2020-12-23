@@ -255,7 +255,18 @@ pub const TEST_GENESIS: &str = r#"
             "supply": [],
             "denom_metadata": null
         }
-    }
+    },
+    "validators": [
+        {
+          "address": "B547AB87E79F75A4A3198C57A8C2FDAF8628CB47",
+          "pub_key": {
+            "type": "substrate/PubKeyEd25519",
+            "value": "P/V6GHuZrb8rs/k1oBorxc6vyXMlnzhJmv7LmjELDys="
+          },
+          "power": "10",
+          "name": "Alice"
+        }
+    ]
 }"#;
 
 /// App version type.
