@@ -61,7 +61,7 @@ pub fn parse_cosmos_genesis_file(genesis: &str) -> Result<GenesisInfo, Box<dyn s
         .ok_or_else(|| "chain_id not found".to_owned())?
         .parse::<u64>()?;
     let app_state_bytes = genesis["app_state"].to_string().as_bytes().to_vec();
-    let validators = &genesis["validators"].to_string().as_bytes().to_vec();
+
     let time = DateTime::parse_from_rfc3339(genesis_time)?;
 
     let result: GenesisInfo = GenesisInfo {

@@ -56,11 +56,13 @@ pub fn to_session_keys(
     }
 }
 
-/// Return initial POA authorities.
-fn initial_poa_authorities() -> Vec<(AuraId, GrandpaId, AccountId)> {
-    vec![authority_keys_from_seed(
-        "Alice",
-        AccountKeyring::Alice.into(),
+/// Return initial node session keys.
+// Vec<(AuraId, GrandpaId, AccountId)>
+fn initial_poa_keys() -> Vec<(AccountId, AccountId, SessionKeys)> {
+    vec![(
+        get_account_id_from_seed::<sr25519::Public>("Alice"),
+        get_account_id_from_seed::<sr25519::Public>("Alice"),
+        to_session_keys(&Ed25519Keyring::Alice, &Sr25519Keyring::Alice),
     )]
 }
 
@@ -78,7 +80,7 @@ pub fn development_config() -> Result<ChainSpec, String> {
             testnet_genesis(
                 wasm_binary,
                 // Initial PoA authorities
-                initial_poa_authorities(),
+                initial_poa_keys(),
                 // Sudo account
                 get_account_id_from_seed::<sr25519::Public>("Alice"),
                 // Pre-funded accounts
@@ -118,7 +120,7 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
             testnet_genesis(
                 wasm_binary,
                 // Initial PoA authorities
-                initial_poa_authorities(),
+                initial_poa_keys(),
                 // Sudo account
                 get_account_id_from_seed::<sr25519::Public>("Alice"),
                 // Pre-funded accounts
@@ -155,7 +157,7 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 /// Configure initial storage state for FRAME modules.
 fn testnet_genesis(
     wasm_binary: &[u8],
-    initial_authorities: Vec<(AuraId, GrandpaId, AccountId)>,
+    session_keys: Vec<(AccountId, AccountId, SessionKeys)>,
     root_key: AccountId,
     endowed_accounts: Vec<AccountId>,
     _enable_println: bool,
@@ -185,11 +187,7 @@ fn testnet_genesis(
         pallet_sudo: Some(SudoConfig { key: root_key }),
         // Set initial authorities that is only Alice node for now.
         pallet_session: Some(SessionConfig {
-            keys: vec![(
-                get_account_id_from_seed::<sr25519::Public>("Alice"),
-                get_account_id_from_seed::<sr25519::Public>("Alice"),
-                to_session_keys(&Ed25519Keyring::Alice, &Sr25519Keyring::Alice),
-            )],
+            keys: session_keys,
         }),
     }
 }

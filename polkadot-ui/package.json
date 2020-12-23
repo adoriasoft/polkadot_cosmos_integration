@@ -1,0 +1,14 @@
+{
+  "name": "polkadot-ui",
+  "version": "1.0.0",
+  "description": "JS client for testing polkadot_cosmos_node intergration.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@polkadot/api": "^3.1.1"
+  }
+}
