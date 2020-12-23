@@ -169,14 +169,22 @@ decl_module! {
         fn on_finalize(block_number: T::BlockNumber) {
         }
 
-        // Simple tx.
-        #[weight = 0]
+        // Create new Cosmos node account.
+        #[weight = 1]
         fn insert_cosmos_account(origin, cosmos_account_id: Vec<u8>) -> DispatchResult {
             let origin_signed = ensure_signed(origin)?;
             <AccountLedger<T>>::insert(&origin_signed, Some((&origin_signed, 0)));
             <CosmosAccounts<T>>::insert(&cosmos_account_id, &origin_signed);
             // todo
             // Save cosmos node accounts into rocks_db storage.
+            Ok(())
+        }
+
+        // Remove Cosmos node account.
+        #[weight = 0]
+        fn remove_cosmos_account(origin, cosmos_account_id: Vec<u8>) -> DispatchResult {
+            let origin_signed = ensure_signed(origin)?;
+            <CosmosAccounts<T>>::remove(&cosmos_account_id);
             Ok(())
         }
 
@@ -430,7 +438,11 @@ impl<T: Trait> pallet_session::SessionManager<T::AccountId> for Module<T> {
         );
         // todo
         // Get cosmos accounts & active validators from rocks_db storage.
-        let last_cosmos_validators: Vec<utils::CosmosAccountId> = vec![];
+        let last_cosmos_validators: Vec<utils::CosmosAccountId> = vec![
+            vec![66, 111, 98, 98, 121, 83, 111, 98, 98, 121],
+            vec![76, 117, 99, 107, 121, 70, 111, 120],
+            vec![66, 117, 108, 108, 121, 68, 111, 108, 108, 121]
+        ];
         let mut new_substrate_validators: Vec<T::AccountId> = vec![];
         for cosmos_validator_id in &last_cosmos_validators {
             let substrate_account_id = <CosmosAccounts<T>>::get(&cosmos_validator_id);
@@ -478,7 +490,11 @@ impl<T: Trait>
         );
         // todo
         // Get cosmos accounts & active validators from rocks_db storage.
-        let last_cosmos_validators: Vec<utils::CosmosAccountId> = vec![];
+        let last_cosmos_validators: Vec<utils::CosmosAccountId> = vec![
+            vec![66, 111, 98, 98, 121, 83, 111, 98, 98, 121],
+            vec![76, 117, 99, 107, 121, 70, 111, 120],
+            vec![66, 117, 108, 108, 121, 68, 111, 108, 108, 121]
+        ];
         let mut new_substrate_validators: Vec<(
             T::AccountId,
             utils::Exposure<T::AccountId, Balance>,
