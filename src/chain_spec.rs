@@ -186,8 +186,6 @@ fn testnet_genesis(
         // Assign network admin rights.
         pallet_sudo: Some(SudoConfig { key: root_key }),
         // Set initial authorities that is only Alice node for now.
-        pallet_session: Some(SessionConfig {
-            keys: session_keys,
-        }),
+        pallet_session: Some(SessionConfig { keys: session_keys }),
     }
 }

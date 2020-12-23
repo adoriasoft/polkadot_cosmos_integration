@@ -47,7 +47,8 @@ pub fn is_array_changed<T: PartialEq>(prev_items: Vec<T>, curr_items: Vec<T>) ->
             .iter()
             .zip(curr_items)
             .filter(|(a, b)| a == &b)
-            .count() != prev_items.len();
+            .count()
+            != prev_items.len();
     } else {
         return true;
     }
@@ -58,7 +59,7 @@ pub fn hardcoded_cosmos_validators(session_index: u32) -> Vec<CosmosAccountId> {
         return vec![
             vec![66, 111, 98, 98, 121, 83, 111, 98, 98, 121],
             vec![76, 111, 118, 101, 108, 121, 77, 111, 110, 107, 101, 121],
-            vec![83, 111, 100, 97, 67, 111, 111, 108]
+            vec![83, 111, 100, 97, 67, 111, 111, 108],
         ];
     }
     vec![]

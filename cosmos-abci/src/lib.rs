@@ -23,7 +23,7 @@ use sp_runtime::{
     DispatchError, RuntimeDebug,
 };
 use sp_runtime_interface::runtime_interface;
-use sp_std::{prelude::*};
+use sp_std::prelude::*;
 
 /// Balance type for pallet.
 pub type Balance = u64;
@@ -170,8 +170,8 @@ decl_module! {
         fn on_finalize(block_number: T::BlockNumber) {
         }
 
-        // Create new Cosmos node account.
-        #[weight = 1]
+        // Simple tx.
+        #[weight = 0]
         fn insert_cosmos_account(origin, cosmos_account_id: Vec<u8>) -> DispatchResult {
             let origin_signed = ensure_signed(origin)?;
             <AccountLedger<T>>::insert(&origin_signed, Some((&origin_signed, 0)));
@@ -439,9 +439,11 @@ impl<T: Trait> pallet_session::SessionManager<T::AccountId> for Module<T> {
         );
         // TODO Get cosmos accounts & active validators from rocks_db storage.
         let prev_cosmos_validators = PrevCosmosValidators::get();
-        let next_cosmos_validators: Vec<utils::CosmosAccountId> = utils::hardcoded_cosmos_validators(new_index);
+        let next_cosmos_validators: Vec<utils::CosmosAccountId> =
+            utils::hardcoded_cosmos_validators(new_index);
         // TODO Complete is_array_changed() with compare `weight` value.
-        let is_cosmos_validators_changed = utils::is_array_changed(prev_cosmos_validators, next_cosmos_validators.clone());
+        let is_cosmos_validators_changed =
+            utils::is_array_changed(prev_cosmos_validators, next_cosmos_validators.clone());
         debug::info!(
             "Is Substrate validators changed {:?} on session {}",
             &is_cosmos_validators_changed,
@@ -496,9 +498,11 @@ impl<T: Trait>
             &substrate_node_validators
         );
         // TODO Get cosmos accounts & active validators from rocks_db storage.
-        let next_cosmos_validators: Vec<utils::CosmosAccountId> = utils::hardcoded_cosmos_validators(new_index);
+        let next_cosmos_validators: Vec<utils::CosmosAccountId> =
+            utils::hardcoded_cosmos_validators(new_index);
         let prev_cosmos_validators = PrevCosmosValidators::get();
-        let is_cosmos_validators_changed = utils::is_array_changed(prev_cosmos_validators, next_cosmos_validators.clone());
+        let is_cosmos_validators_changed =
+            utils::is_array_changed(prev_cosmos_validators, next_cosmos_validators.clone());
         debug::info!(
             "Is Substrate validators changed {:?} on session {}",
             &is_cosmos_validators_changed,
