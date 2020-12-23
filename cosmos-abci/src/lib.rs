@@ -440,12 +440,7 @@ pub trait AbciInterface {
         let cosmos_validators = result.get_validator_updates();
         debug::info!("Cosmos validators {:?}", cosmos_validators);
 
-        let mut validators_data: Vec<Vec<u8>>;
-        for validator in cosmos_validators {
-            validators_data.push(validator.encode());
-        }
-
-        storage_write(height.to_ne_bytes().to_vec(), validators_data)
+        storage_write(height.to_ne_bytes().to_vec(), Vec::new())?;
 
         Ok(())
     }
