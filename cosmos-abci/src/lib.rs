@@ -408,10 +408,9 @@ pub trait AbciInterface {
 
                 let mut res = Vec::new();
                 for val in validators {
-                    match val.pub_key {
-                        Some(key) => res.push(key.data),
-                        None => {}
-                    };
+                    if let Some(key) = val.pub_key {
+                        res.push(key.data);
+                    }
                 }
                 Ok(res)
             }
