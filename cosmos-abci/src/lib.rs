@@ -303,7 +303,7 @@ impl<T: Trait> Module<T> {
         // TODO Get cosmos accounts & active validators from rocks_db storage.
         let next_cosmos_validators: Vec<utils::CosmosAccountId> =
             utils::hardcoded_cosmos_validators(new_index);
-        if !next_cosmos_validators.clone().is_empty() {
+        if !next_cosmos_validators.is_empty() {
             let mut new_substrate_validators: Vec<T::AccountId> = vec![];
             for cosmos_validator_id in &next_cosmos_validators {
                 let substrate_account_id = <CosmosAccounts<T>>::get(&cosmos_validator_id);
