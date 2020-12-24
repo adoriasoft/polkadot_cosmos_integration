@@ -3,10 +3,10 @@ use node_template_runtime::{
     SessionConfig, Signature, SudoConfig, SystemConfig, WASM_BINARY,
 };
 use sc_service::ChainType;
-use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{sr25519, Pair, Public};
-use sp_finality_grandpa::AuthorityId as GrandpaId;
-use sp_keyring::{AccountKeyring, Ed25519Keyring, Sr25519Keyring};
+// use sp_finality_grandpa::AuthorityId as GrandpaId;
+// use sp_consensus_aura::sr25519::AuthorityId as AuraId;
+use sp_keyring::{Ed25519Keyring, Sr25519Keyring};
 use sp_runtime::traits::{IdentifyAccount, Verify};
 
 // The URL for the telemetry server.
@@ -33,8 +33,8 @@ where
     AccountPublic::from(get_from_seed::<TPublic>(seed)).into_account()
 }
 
-/// Generate an Aura/Grandpa authority keys.
-pub fn authority_keys_from_seed(
+// Generate an Aura/Grandpa authority keys.
+/* pub fn authority_keys_from_seed(
     seed: &str,
     account_key: AccountId,
 ) -> (AuraId, GrandpaId, AccountId) {
@@ -43,7 +43,7 @@ pub fn authority_keys_from_seed(
         get_from_seed::<GrandpaId>(seed),
         account_key,
     )
-}
+} */
 
 /// Return an Aura/Grandpa session keys.
 pub fn to_session_keys(
@@ -56,11 +56,13 @@ pub fn to_session_keys(
     }
 }
 
-/// Return initial POA authorities.
-fn initial_poa_authorities() -> Vec<(AuraId, GrandpaId, AccountId)> {
-    vec![authority_keys_from_seed(
-        "Alice",
-        AccountKeyring::Alice.into(),
+/// Return initial node session keys.
+// Vec<(AuraId, GrandpaId, AccountId)>
+fn initial_poa_keys() -> Vec<(AccountId, AccountId, SessionKeys)> {
+    vec![(
+        get_account_id_from_seed::<sr25519::Public>("Alice"),
+        get_account_id_from_seed::<sr25519::Public>("Alice"),
+        to_session_keys(&Ed25519Keyring::Alice, &Sr25519Keyring::Alice),
     )]
 }
 
@@ -78,7 +80,7 @@ pub fn development_config() -> Result<ChainSpec, String> {
             testnet_genesis(
                 wasm_binary,
                 // Initial PoA authorities
-                initial_poa_authorities(),
+                initial_poa_keys(),
                 // Sudo account
                 get_account_id_from_seed::<sr25519::Public>("Alice"),
                 // Pre-funded accounts
@@ -118,7 +120,7 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
             testnet_genesis(
                 wasm_binary,
                 // Initial PoA authorities
-                initial_poa_authorities(),
+                initial_poa_keys(),
                 // Sudo account
                 get_account_id_from_seed::<sr25519::Public>("Alice"),
                 // Pre-funded accounts
@@ -155,15 +157,11 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 /// Configure initial storage state for FRAME modules.
 fn testnet_genesis(
     wasm_binary: &[u8],
-    initial_authorities: Vec<(AuraId, GrandpaId, AccountId)>,
+    session_keys: Vec<(AccountId, AccountId, SessionKeys)>,
     root_key: AccountId,
     endowed_accounts: Vec<AccountId>,
     _enable_println: bool,
 ) -> GenesisConfig {
-    println!(
-        "POA authorities for Substrate chain {:?}",
-        initial_authorities
-    );
     GenesisConfig {
         frame_system: Some(SystemConfig {
             // Add Wasm runtime to storage.
@@ -188,12 +186,6 @@ fn testnet_genesis(
         // Assign network admin rights.
         pallet_sudo: Some(SudoConfig { key: root_key }),
         // Set initial authorities that is only Alice node for now.
-        pallet_session: Some(SessionConfig {
-            keys: vec![(
-                get_account_id_from_seed::<sr25519::Public>("Alice"),
-                get_account_id_from_seed::<sr25519::Public>("Alice"),
-                to_session_keys(&Ed25519Keyring::Alice, &Sr25519Keyring::Alice),
-            )],
-        }),
+        pallet_session: Some(SessionConfig { keys: session_keys }),
     }
 }
