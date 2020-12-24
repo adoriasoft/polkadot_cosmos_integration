@@ -40,20 +40,6 @@ pub struct StashOf<T>(sp_std::marker::PhantomData<T>);
 /// Cosmos node account ID.
 pub type CosmosAccountId = Vec<u8>;
 
-/// Compare changes in two arrays.
-pub fn is_array_changed<T: PartialEq>(prev_items: Vec<T>, curr_items: Vec<T>) -> bool {
-    if prev_items.len() == curr_items.len() {
-        return prev_items
-            .iter()
-            .zip(curr_items)
-            .filter(|(a, b)| a == &b)
-            .count()
-            != prev_items.len();
-    } else {
-        return true;
-    }
-}
-
 pub fn hardcoded_cosmos_validators(session_index: u32) -> Vec<CosmosAccountId> {
     if session_index > 10 {
         return vec![

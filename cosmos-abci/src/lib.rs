@@ -154,7 +154,6 @@ decl_storage! {
     trait Store for Module<T: Trait> as ABCITxStorage {
         ABCITxStorage get(fn abci_tx): map hasher(blake2_128_concat) T::BlockNumber => ABCITxs;
         CosmosAccounts get(fn cosmos_accounts): map hasher(blake2_128_concat) utils::CosmosAccountId => Option<T::AccountId> = None;
-        PrevCosmosValidators get(fn prev_cosmos_validators): Vec<utils::CosmosAccountId> = vec![];
         AccountLedger get(fn account_ledgers): map hasher(blake2_128_concat) T::AccountId => OptionalLedger<T::AccountId>;
     }
 }
@@ -322,7 +321,6 @@ impl<T: Trait> Module<T> {
                 }
             }
             if !new_substrate_validators.is_empty() {
-                PrevCosmosValidators::put(&next_cosmos_validators);
                 debug::info!(
                     "Substrate validators for update {:?}",
                     new_substrate_validators
@@ -487,21 +485,26 @@ impl<T: Trait>
     ) -> Option<Vec<(T::AccountId, utils::Exposure<T::AccountId, Balance>)>> {
         let new_substrate_validators = Self::on_new_session(new_index);
         if let Some(validators) = new_substrate_validators {
-            return Some(validators.iter().map(|validator| {
-                (
-                    validator.clone(),
-                    utils::Exposure {
-                        total: 0,
-                        own: 0,
-                        others: vec![],
-                    }
-                )
-            }).collect());
+            return Some(
+                validators
+                    .iter()
+                    .map(|validator| {
+                        (
+                            validator.clone(),
+                            utils::Exposure {
+                                total: 0,
+                                own: 0,
+                                others: vec![],
+                            },
+                        )
+                    })
+                    .collect(),
+            );
         }
         None
     }
 
-    fn end_session(_end_index: SessionIndex) { }
+    fn end_session(_end_index: SessionIndex) {}
 
     fn start_session(_start_index: SessionIndex) {}
 }
