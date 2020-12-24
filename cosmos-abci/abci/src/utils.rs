@@ -14,16 +14,16 @@ pub struct GenesisInfo {
     pub app_state_bytes: Vec<u8>,
 }
 
-pub fn serialize_vec(
-    validators: Vec<crate::protos::ValidatorUpdate>,
+pub fn serialize_vec<T: serde::Serialize>(
+    validators: Vec<T>,
 ) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
     Ok(bincode::serialize(&validators).map_err(|_| "cannot serialize")?)
 }
 
-pub fn deserialize_vec(
-    bytes: Vec<u8>,
-) -> Result<Vec<crate::protos::ValidatorUpdate>, Box<dyn std::error::Error>> {
-    Ok(bincode::deserialize(&bytes).map_err(|_| "cannot deserialize")?)
+pub fn deserialize_vec<'a, T: serde::Deserialize<'a>>(
+    bytes: &'a Vec<u8>,
+) -> Result<Vec<T>, Box<dyn std::error::Error>> {
+    Ok(bincode::deserialize(bytes).map_err(|_| "cannot deserialize")?)
 }
 
 fn get_genesis_from_file() -> Result<String, Box<dyn std::error::Error>> {
