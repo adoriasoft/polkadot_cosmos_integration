@@ -440,8 +440,10 @@ pub trait AbciInterface {
         let cosmos_validators = result.get_validator_updates();
         debug::info!("Cosmos validators {:?}", cosmos_validators);
 
+        let bytes = pallet_abci::utils::serialize_vec(cosmos_validators)
+            .map_err(|_| "cannot deserialize cosmos validators")?;
 
-        storage_write(height.to_ne_bytes().to_vec(), Vec::new())?;
+        storage_write(height.to_ne_bytes().to_vec(), bytes)?;
 
         Ok(())
     }
