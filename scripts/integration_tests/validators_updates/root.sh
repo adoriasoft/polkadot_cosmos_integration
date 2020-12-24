@@ -9,23 +9,35 @@ trap "kill 0" EXIT
 # Blocks must not be produced
 # Update validators list with single validator = (Alice)
 # Blocks started produces again
-
 source ../testing_setup/basic_setup.sh
 source ../testing_setup/test_utils.sh
 source ../nodes_setup/launch_alice_node.sh
-# clean_rocks_db
+
+clean_rocks_db
 clean_tmp
+# Check curl available for performing test calls.
+curl --version
+# Setup curl urls.
+export $POLKADOT_TESTING_UI_ENDPOINT = 'http://localhost:8000'
+export $POLKADOT_TESTING_UI_QUERY_BLOCK_HEIGHT_PATH = '/testing/chain_height'
+export $POLKADOT_TESTING_UI_SEND_EXTRINSIC_PATH = '/testing/send_ext?data=bytes&origin=Bob'
 
 launch_alice_node dev
 sleep 60s
 
-echo 'Query blocks 1/2/3'
-echo 'Update validators tx'
+chain_height = $(curl $POLKADOT_TESTING_UI_ENDPOINT$POLKADOT_TESTING_UI_QUERY_BLOCK_HEIGHT_PATH)
+echo $chain_height
+# assert_eq "$chain_height" "value: ?"
+# Update validators and blocks finallized must be stopped.
 sleep 30s
 
-echo 'Query blocks 15/16/17'
-echo 'Update validators tx'
+chain_height_2 = $(curl $POLKADOT_TESTING_UI_ENDPOINT$POLKADOT_TESTING_UI_QUERY_BLOCK_HEIGHT_PATH)
+echo $chain_height
+# assert_eq "$chain_height" "value: ?"
+# Update validators and blocks must starts to produce again.
 sleep 30s
 
-echo 'Query blocks 15/16/17'
-test_passed "Validator updates"
+chain_height_3 = $(curl $POLKADOT_TESTING_UI_ENDPOINT$POLKADOT_TESTING_UI_QUERY_BLOCK_HEIGHT_PATH)
+# assert_eq "$chain_height_3" "value: ?"
+
+test_passed "Validator updates passed"
