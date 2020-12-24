@@ -20,7 +20,7 @@ pub fn serialize_vec<T: serde::Serialize>(
 }
 
 pub fn deserialize_vec<'a, T: serde::Deserialize<'a>>(
-    bytes: &'a Vec<u8>,
+    bytes: &'a [u8],
 ) -> Result<Vec<T>, Box<dyn std::error::Error>> {
     Ok(bincode::deserialize(bytes).map_err(|_| "cannot deserialize")?)
 }
