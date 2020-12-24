@@ -169,7 +169,7 @@ decl_module! {
         fn on_finalize(block_number: T::BlockNumber) {
         }
 
-        // Save cosmos account via tx.
+        // Simple tx.
         #[weight = 0]
         fn insert_cosmos_account(origin, cosmos_account_id: Vec<u8>) -> DispatchResult {
             let origin_signed = ensure_signed(origin)?;
@@ -177,6 +177,14 @@ decl_module! {
             <CosmosAccounts<T>>::insert(&cosmos_account_id, &origin_signed);
             // todo
             // Save cosmos node accounts into rocks_db storage.
+            Ok(())
+        }
+
+        // Remove Cosmos node account.
+        #[weight = 0]
+        fn remove_cosmos_account(origin, cosmos_account_id: Vec<u8>) -> DispatchResult {
+            let _origin_signed = ensure_signed(origin)?;
+            <CosmosAccounts<T>>::remove(&cosmos_account_id);
             Ok(())
         }
 
@@ -285,6 +293,43 @@ impl<T: Trait> Module<T> {
             }
         }
     }
+
+    pub fn on_new_session(new_index: SessionIndex) -> Option<Vec<T::AccountId>> {
+        let substrate_node_validators = <pallet_session::Module<T>>::validators();
+        debug::info!(
+            "Substrate validators after last on_finalize {:?}",
+            substrate_node_validators
+        );
+        // TODO Get cosmos accounts & active validators from rocks_db storage.
+        let next_cosmos_validators: Vec<utils::CosmosAccountId> =
+            utils::hardcoded_cosmos_validators(new_index);
+        if !next_cosmos_validators.is_empty() {
+            let mut new_substrate_validators: Vec<T::AccountId> = vec![];
+            for cosmos_validator_id in &next_cosmos_validators {
+                let substrate_account_id = <CosmosAccounts<T>>::get(&cosmos_validator_id);
+                if substrate_account_id.is_some() {
+                    if let Some(full_substrate_account_id) = substrate_account_id {
+                        new_substrate_validators.push(full_substrate_account_id);
+                    } else {
+                        sp_runtime::print(
+                            "WARNING: Not able to found Substrate account to Cosmos for ID \n",
+                        );
+                        for &byte in cosmos_validator_id {
+                            sp_runtime::print(byte);
+                        }
+                    }
+                }
+            }
+            if !new_substrate_validators.is_empty() {
+                debug::info!(
+                    "Substrate validators for update {:?}",
+                    new_substrate_validators
+                );
+                return Some(new_substrate_validators);
+            }
+        }
+        None
+    }
 }
 
 /// The implementation of ValidateUnsigned trait for module.
@@ -376,9 +421,9 @@ pub trait AbciInterface {
             .end_block(height)
             .map_err(|_| "end_block failed")?;
         // debug::info!("Result: {:?}", result);
-        let _cosmos_node_validators = _result.get_validator_updates();
-        // todo
-        // Save last cosmos node validators into rocks_db storage.
+        let cosmos_node_validators = _result.get_validator_updates();
+        debug::info!("Cosmos validators {:?}", cosmos_node_validators);
+        // TODO : Save cosmos node validators into storage.
         Ok(())
     }
 
@@ -422,35 +467,11 @@ impl<T: Trait> Convert<T::AccountId, Option<utils::Exposure<T::AccountId, Balanc
 }
 
 impl<T: Trait> pallet_session::SessionManager<T::AccountId> for Module<T> {
-    fn new_session(_new_index: SessionIndex) -> Option<Vec<T::AccountId>> {
-        let substrate_node_validators = <pallet_session::Module<T>>::validators();
-        debug::info!(
-            "Substrate validators after last on_finalize {:?}",
-            substrate_node_validators
-        );
-        // todo
-        // Get cosmos accounts & active validators from rocks_db storage.
-        let last_cosmos_validators: Vec<utils::CosmosAccountId> = vec![];
-        let mut new_substrate_validators: Vec<T::AccountId> = vec![];
-        for cosmos_validator_id in &last_cosmos_validators {
-            let substrate_account_id = <CosmosAccounts<T>>::get(&cosmos_validator_id);
-            if let Some(full_substrate_account_id) = substrate_account_id {
-                new_substrate_validators.push(full_substrate_account_id);
-            }
-        }
-        if !new_substrate_validators.is_empty() {
-            debug::info!(
-                "Substrate validators for update {:?}",
-                new_substrate_validators
-            );
-            return Some(new_substrate_validators);
-        }
-        None
+    fn new_session(new_index: SessionIndex) -> Option<Vec<T::AccountId>> {
+        Self::on_new_session(new_index)
     }
 
-    fn end_session(end_index: SessionIndex) {
-        debug::info!("Session is ended {:?}", end_index);
-    }
+    fn end_session(_end_index: SessionIndex) {}
 
     fn start_session(_start_index: SessionIndex) {}
 }
@@ -460,53 +481,30 @@ impl<T: Trait>
     for Module<T>
 {
     fn new_session(
-        _new_index: SessionIndex,
+        new_index: SessionIndex,
     ) -> Option<Vec<(T::AccountId, utils::Exposure<T::AccountId, Balance>)>> {
-        let substrate_node_validators = <pallet_session::Module<T>>::validators();
-        debug::info!(
-            "Substrate validators after last on_finalize {:?}",
-            substrate_node_validators
-        );
-        // todo
-        // Get cosmos accounts & active validators from rocks_db storage.
-        let last_cosmos_validators: Vec<utils::CosmosAccountId> = vec![];
-        let mut new_substrate_validators: Vec<(
-            T::AccountId,
-            utils::Exposure<T::AccountId, Balance>,
-        )> = vec![];
-        for cosmos_validator_id in &last_cosmos_validators {
-            let substrate_account_id = <CosmosAccounts<T>>::get(&cosmos_validator_id);
-            if let Some(full_substrate_account_id) = substrate_account_id {
-                new_substrate_validators.push((
-                    full_substrate_account_id,
-                    utils::Exposure {
-                        total: 0,
-                        own: 0,
-                        others: vec![],
-                    },
-                ));
-            } else {
-                sp_runtime::print(
-                    "WARNING: Not able to found Substrate account to Cosmos for ID \n",
-                );
-                for &byte in cosmos_validator_id {
-                    sp_runtime::print(byte);
-                }
-            }
-        }
-        if !new_substrate_validators.is_empty() {
-            debug::info!(
-                "Substrate validators for update {:?}",
-                new_substrate_validators
+        let new_substrate_validators = Self::on_new_session(new_index);
+        if let Some(validators) = new_substrate_validators {
+            return Some(
+                validators
+                    .iter()
+                    .map(|validator| {
+                        (
+                            validator.clone(),
+                            utils::Exposure {
+                                total: 0,
+                                own: 0,
+                                others: vec![],
+                            },
+                        )
+                    })
+                    .collect(),
             );
-            return Some(new_substrate_validators);
         }
         None
     }
 
-    fn end_session(end_index: SessionIndex) {
-        debug::info!("Session is started {:?}", end_index);
-    }
+    fn end_session(_end_index: SessionIndex) {}
 
     fn start_session(_start_index: SessionIndex) {}
 }

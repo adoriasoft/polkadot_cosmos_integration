@@ -69,7 +69,6 @@ sp-inherents = '2.0.0'
 sp-runtime = '2.0.0'
 sp-transaction-pool = '2.0.0'
 sp-keyring = '2.0.0'
-sc-network = { version = '0.8.0', default-features = false }
 substrate-frame-rpc-system = '2.0.0'
 
 [build-dependencies]
