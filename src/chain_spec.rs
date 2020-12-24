@@ -6,7 +6,7 @@ use sc_service::ChainType;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{sr25519, Pair, Public};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
-use sp_keyring::{AccountKeyring, Ed25519Keyring, Sr25519Keyring};
+use sp_keyring::{Ed25519Keyring, Sr25519Keyring};
 use sp_runtime::traits::{IdentifyAccount, Verify};
 
 // The URL for the telemetry server.
@@ -33,8 +33,8 @@ where
     AccountPublic::from(get_from_seed::<TPublic>(seed)).into_account()
 }
 
-/// Generate an Aura/Grandpa authority keys.
-pub fn authority_keys_from_seed(
+// Generate an Aura/Grandpa authority keys.
+/* pub fn authority_keys_from_seed(
     seed: &str,
     account_key: AccountId,
 ) -> (AuraId, GrandpaId, AccountId) {
@@ -43,7 +43,7 @@ pub fn authority_keys_from_seed(
         get_from_seed::<GrandpaId>(seed),
         account_key,
     )
-}
+} */
 
 /// Return an Aura/Grandpa session keys.
 pub fn to_session_keys(
