@@ -1,4 +1,3 @@
-use bincode;
 use chrono::DateTime;
 use std::{fs, path::PathBuf};
 
