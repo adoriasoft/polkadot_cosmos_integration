@@ -156,7 +156,7 @@ pub struct ABCITxs {
 decl_storage! {
     trait Store for Module<T: Trait> as ABCITxStorage {
         ABCITxStorage get(fn abci_tx): map hasher(blake2_128_concat) T::BlockNumber => ABCITxs;
-        CosmosAccounts get(fn cosmos_accounts): map hasher(blake2_128_concat) utils::CosmosAccountId => Option<T::AccountId> = None;
+        CosmosAccounts get(fn cosmos_accounts): map hasher(blake2_128_concat) utils::CosmosAccountPubKey => Option<T::AccountId> = None;
         AccountLedger get(fn account_ledgers): map hasher(blake2_128_concat) T::AccountId => OptionalLedger<T::AccountId>;
         CurrentSessionIndex get(fn curr_session_index): SessionIndex = 0;
     }
@@ -303,9 +303,9 @@ impl<T: Trait> Module<T> {
         let _prev_substrate_node_validators = <pallet_session::Module<T>>::validators();
 
         if session_index > 0 {
-            session_index = session_index - 1;
+            session_index -= 1;
             let next_cosmos_validators =
-                abci_interface::get_cosmos_validators(session_index.clone()).unwrap();
+                abci_interface::get_cosmos_validators(session_index).unwrap();
 
             if !next_cosmos_validators.is_empty() {
                 let mut new_substrate_validators: Vec<T::AccountId> = vec![];

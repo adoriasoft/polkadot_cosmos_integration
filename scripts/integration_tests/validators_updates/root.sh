@@ -23,21 +23,24 @@ export $POLKADOT_TESTING_UI_QUERY_BLOCK_HEIGHT_PATH = '/testing/chain_height'
 export $POLKADOT_TESTING_UI_SEND_EXTRINSIC_PATH = '/testing/send_ext?data=bytes&origin=Bob'
 
 launch_alice_node dev
-sleep 60s
+sleep 10s
+# Insert Alice, Bob and Dave account matchings.
+sleep 20s
 
 chain_height = $(curl $POLKADOT_TESTING_UI_ENDPOINT$POLKADOT_TESTING_UI_QUERY_BLOCK_HEIGHT_PATH)
-echo $chain_height
+echo "Chain 1 height $chain_height"
 # assert_eq "$chain_height" "value: ?"
 # Update validators and blocks finallized must be stopped.
 sleep 30s
 
 chain_height_2 = $(curl $POLKADOT_TESTING_UI_ENDPOINT$POLKADOT_TESTING_UI_QUERY_BLOCK_HEIGHT_PATH)
-echo $chain_height
+echo "Chain 2 height $chain_height_2"
 # assert_eq "$chain_height" "value: ?"
 # Update validators and blocks must starts to produce again.
 sleep 30s
 
 chain_height_3 = $(curl $POLKADOT_TESTING_UI_ENDPOINT$POLKADOT_TESTING_UI_QUERY_BLOCK_HEIGHT_PATH)
+echo "Chain 3 height $chain_height_3"
 # assert_eq "$chain_height_3" "value: ?"
 
 test_passed "Validator updates passed"

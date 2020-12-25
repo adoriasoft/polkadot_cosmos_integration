@@ -37,10 +37,10 @@ pub struct Exposure<AccountId, Balance> {
 
 /// Return stash for account.
 pub struct StashOf<T>(sp_std::marker::PhantomData<T>);
-/// Cosmos node account ID.
-pub type CosmosAccountId = Vec<u8>;
+/// Cosmos node account PubKey.
+pub type CosmosAccountPubKey = Vec<u8>;
 
-pub fn hardcoded_cosmos_validators() -> Vec<CosmosAccountId> {
+pub fn hardcoded_cosmos_validators() -> Vec<CosmosAccountPubKey> {
     vec![
         vec![66, 111, 98, 98, 121, 83, 111, 98, 98, 121],
         vec![76, 117, 99, 107, 121, 70, 111, 120],
