@@ -37,4 +37,4 @@ pub struct Exposure<AccountId, Balance> {
 /// Return stash for account.
 pub struct StashOf<T>(sp_std::marker::PhantomData<T>);
 /// Cosmos node account ID.
-pub type CosmosAccountId = Vec<u8>;
+pub type CosmosAccountPubKey = Vec<u8>;
