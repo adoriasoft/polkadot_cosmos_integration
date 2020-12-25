@@ -57,7 +57,7 @@ fn init_chain() -> sc_cli::Result<()> {
 
             abci_storage
                 .write(key, value)
-                .map_err(|_| "faile to write some data into the abci storage")?;
+                .map_err(|_| "failed to write some data into the abci storage")?;
         }
     }
 
