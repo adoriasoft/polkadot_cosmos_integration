@@ -398,7 +398,7 @@ pub trait AbciInterface {
         Ok(value)
     }
 
-    fn get_cosmos_validators(session_index: u32) -> Result<Vec<Vec<u8>>, DispatchError> {
+    fn get_cosmos_validators(session_index: SessionIndex) -> Result<Vec<Vec<u8>>, DispatchError> {
         match abci_storage::get_abci_storage_instance()
             .map_err(|_| "failed to get abci storage instance")?
             .get(session_index.to_ne_bytes().to_vec())
