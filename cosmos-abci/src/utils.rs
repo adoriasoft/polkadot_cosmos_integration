@@ -24,9 +24,10 @@ impl fmt::Display for AbciCommitResponse {
     }
 }
 
-/// Return exposure for account.
+/// Return Exposure obj for account.
 pub struct ExposureOf<T>(sp_std::marker::PhantomData<T>);
 
+/// Structure that define Exposure obj.
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Encode, Decode, Default, RuntimeDebug)]
 pub struct Exposure<AccountId, Balance> {
     pub total: Balance,

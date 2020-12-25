@@ -116,13 +116,13 @@ pub fn run() -> sc_cli::Result<()> {
     .map_err(|_| "failed to set abci instance")
     .unwrap();
 
-    /* abci_storage::set_abci_storage_instance(Box::new(
+    abci_storage::set_abci_storage_instance(Box::new(
         abci_storage::rocksdb::AbciStorageRocksdb::init("abci_storage_rocksdb")
             .map_err(|_| "failed to open abci storage")
             .unwrap(),
     ))
     .map_err(|_| "failed to set abci storage instance")
-    .unwrap(); */
+    .unwrap();
 
     let cli = Cli::from_args();
     match cli.subcommand {

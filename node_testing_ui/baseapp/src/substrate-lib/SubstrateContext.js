@@ -9,6 +9,8 @@ import keyring from '@polkadot/ui-keyring';
 
 import config from '../config';
 
+console.log(config, 'Node config')
+
 const parsedQuery = queryString.parse(window.location.search);
 const connectedSocket = parsedQuery.rpc || config.PROVIDER_SOCKET;
 console.log(`Connected socket: ${connectedSocket}`);

@@ -42,14 +42,14 @@ function Main () {
   return (
     <div ref={contextRef}>
       <Sticky context={contextRef}>
-        <Router>
+        <AccountSelector setAccountAddress={setAccountAddress} />
+      </Sticky>
+      <Router>
           <Switch>
             <Route path='/testing/chain_height' component={ChainInfoPage} />
             <Route path='/testing/send_ext' component={SendExtrinsicPage} />
           </Switch>
-        </Router>
-        <AccountSelector setAccountAddress={setAccountAddress} />
-      </Sticky>
+      </Router>
       <DeveloperConsole />
     </div>
   );
