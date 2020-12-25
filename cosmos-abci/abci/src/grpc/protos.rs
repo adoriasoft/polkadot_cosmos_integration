@@ -19,6 +19,8 @@ mod proto {
 pub use crypto::merkle::*;
 pub use libs::kv::*;
 pub use proto::abci_proto::*;
+use serde::{de::Visitor, ser::SerializeStruct, Deserialize, Deserializer, Serialize, Serializer};
+use std::fmt;
 
 impl crate::ResponseSetOption for ResponseSetOption {
     fn get_code(&self) -> u32 {
@@ -163,6 +165,72 @@ impl crate::ResponseDeliverTx for ResponseDeliverTx {
 impl crate::ResponseInitChain for ResponseInitChain {}
 
 impl crate::ResponseBeginBlock for ResponseBeginBlock {}
+
+impl Serialize for PubKey {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut state = serializer.serialize_struct("PubKey", 2)?;
+        state.serialize_field("type", &self.r#type)?;
+        state.serialize_field("data", &self.data)?;
+        state.end()
+    }
+}
+
+impl<'de> Deserialize<'de> for PubKey {
+    fn deserialize<D>(deserialize: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        struct PubKeyVisitor;
+
+        impl<'de> Visitor<'de> for PubKeyVisitor {
+            type Value = PubKey;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("struct PubKey")
+            }
+        }
+
+        deserialize.deserialize_struct("PubKey", &["type", "data"], PubKeyVisitor)
+    }
+}
+
+impl Serialize for ValidatorUpdate {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut state = serializer.serialize_struct("ValidatorUpdate", 2)?;
+        state.serialize_field("pub_key", &self.pub_key)?;
+        state.serialize_field("power", &self.power)?;
+        state.end()
+    }
+}
+
+impl<'de> Deserialize<'de> for ValidatorUpdate {
+    fn deserialize<D>(deserialize: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        struct ValidatorUpdateVisitor;
+
+        impl<'de> Visitor<'de> for ValidatorUpdateVisitor {
+            type Value = ValidatorUpdate;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("struct PubKey")
+            }
+        }
+
+        deserialize.deserialize_struct(
+            "ValidatorUpdate",
+            &["pub_key", "power"],
+            ValidatorUpdateVisitor,
+        )
+    }
+}
 
 impl crate::ResponseEndBlock for ResponseEndBlock {
     fn get_validator_updates(&self) -> Vec<ValidatorUpdate> {
