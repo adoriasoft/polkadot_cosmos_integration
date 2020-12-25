@@ -27,10 +27,13 @@ use sp_std::prelude::*;
 
 /// Balance type for pallet.
 pub type Balance = u64;
-/// Session index that define in pallet_session.
+/// The session index.
 type SessionIndex = u32;
 /// The optional ledger type.
 type OptionalLedger<AccountId> = Option<(AccountId, Balance)>;
+
+/// The Period for one session for runtime that is 2 blocks.
+pub const SESSION_PERIOD: u32 = 2;
 
 /// Priority for unsigned transaction.
 pub const UNSIGNED_TXS_PRIORITY: u64 = 100;
@@ -155,6 +158,7 @@ decl_storage! {
         ABCITxStorage get(fn abci_tx): map hasher(blake2_128_concat) T::BlockNumber => ABCITxs;
         CosmosAccounts get(fn cosmos_accounts): map hasher(blake2_128_concat) utils::CosmosAccountId => Option<T::AccountId> = None;
         AccountLedger get(fn account_ledgers): map hasher(blake2_128_concat) T::AccountId => OptionalLedger<T::AccountId>;
+        CurrentSessionIndex get(fn curr_session_index): SessionIndex = 0;
     }
 }
 
@@ -294,39 +298,39 @@ impl<T: Trait> Module<T> {
         }
     }
 
-    pub fn on_new_session(new_index: SessionIndex) -> Option<Vec<T::AccountId>> {
-        let substrate_node_validators = <pallet_session::Module<T>>::validators();
-        debug::info!(
-            "Substrate validators after last on_finalize {:?}",
-            substrate_node_validators
-        );
+    pub fn on_new_session(mut session_index: SessionIndex) -> Option<Vec<T::AccountId>> {
+        CurrentSessionIndex::put(session_index);
+        let _prev_substrate_node_validators = <pallet_session::Module<T>>::validators();
 
-        let next_cosmos_validators =
-            abci_interface::get_cosmos_validators(new_index.into()).unwrap();
+        if session_index > 0 {
+            session_index = session_index - 1;
+            let next_cosmos_validators =
+                abci_interface::get_cosmos_validators(session_index.clone()).unwrap();
 
-        if !next_cosmos_validators.is_empty() {
-            let mut new_substrate_validators: Vec<T::AccountId> = vec![];
-            for cosmos_validator_id in &next_cosmos_validators {
-                let substrate_account_id = <CosmosAccounts<T>>::get(&cosmos_validator_id);
-                if substrate_account_id.is_some() {
-                    if let Some(full_substrate_account_id) = substrate_account_id {
-                        new_substrate_validators.push(full_substrate_account_id);
-                    } else {
-                        sp_runtime::print(
-                            "WARNING: Not able to found Substrate account to Cosmos for ID \n",
-                        );
-                        for &byte in cosmos_validator_id {
-                            sp_runtime::print(byte);
+            if !next_cosmos_validators.is_empty() {
+                let mut new_substrate_validators: Vec<T::AccountId> = vec![];
+                for cosmos_validator_id in &next_cosmos_validators {
+                    let substrate_account_id = <CosmosAccounts<T>>::get(&cosmos_validator_id);
+                    if substrate_account_id.is_some() {
+                        if let Some(full_substrate_account_id) = substrate_account_id {
+                            new_substrate_validators.push(full_substrate_account_id);
+                        } else {
+                            sp_runtime::print(
+                                "WARNING: Not able to found Substrate account to Cosmos for ID \n",
+                            );
+                            for &byte in cosmos_validator_id {
+                                sp_runtime::print(byte);
+                            }
                         }
                     }
                 }
-            }
-            if !new_substrate_validators.is_empty() {
-                debug::info!(
-                    "Substrate validators for update {:?}",
-                    new_substrate_validators
-                );
-                return Some(new_substrate_validators);
+                if !new_substrate_validators.is_empty() {
+                    debug::info!(
+                        "Substrate validators for update {:?}",
+                        new_substrate_validators
+                    );
+                    return Some(new_substrate_validators);
+                }
             }
         }
         None
@@ -394,10 +398,10 @@ pub trait AbciInterface {
         Ok(value)
     }
 
-    fn get_cosmos_validators(height: i64) -> Result<Vec<Vec<u8>>, DispatchError> {
+    fn get_cosmos_validators(session_index: SessionIndex) -> Result<Vec<Vec<u8>>, DispatchError> {
         match abci_storage::get_abci_storage_instance()
             .map_err(|_| "failed to get abci storage instance")?
-            .get(height.to_ne_bytes().to_vec())
+            .get(session_index.to_ne_bytes().to_vec())
             .map_err(|_| "failed to get value from the abci storage")?
         {
             Some(bytes) => {
@@ -468,10 +472,10 @@ pub trait AbciInterface {
         let bytes = pallet_abci::utils::serialize_vec(cosmos_validators)
             .map_err(|_| "cannot deserialize cosmos validators")?;
 
-        // save it in the storage
+        let last_session_index = CurrentSessionIndex::get();
         abci_storage::get_abci_storage_instance()
             .map_err(|_| "failed to get abci storage instance")?
-            .write(height.to_ne_bytes().to_vec(), bytes)
+            .write(last_session_index.to_ne_bytes().to_vec(), bytes)
             .map_err(|_| "failed to write some data into the abci storage")?;
 
         Ok(())
