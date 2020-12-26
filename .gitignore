@@ -21,8 +21,8 @@
 target
 
 node_modules
-
 scripts/integration_tests/tmp
+scripts/integration_tests/validators_updates/tmp
 
 # *pb.*
 token_datas

@@ -30,13 +30,13 @@ echo "After inserting Dave account tx hash $insert_dave_account"
 
 chain_height_1=$(node ./block-info.app.js)
 assert_eq "$chain_height_1" "13" "14" "15"
-# Update staking on cosmos side
+# TODO staking on cosmos side
 # to get fresh validators set.
 sleep 30s
 
 chain_height_2=$(node ./block-info.app.js)
 assert_eq "$chain_height_2" "29" "30" "31"
-# Update staking on cosmos side
+# TODO staking on cosmos side
 # to get fresh validators set.
 sleep 30s
 
