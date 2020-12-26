@@ -266,7 +266,7 @@ impl pallet_transaction_payment::Trait for Runtime {
 
 parameter_types! {
     pub const DisabledValidatorsThreshold: Perbill = Perbill::from_percent(33);
-    /// The session duration = 2 block.
+    /// 2 blocks = session duration.
     pub const Period: BlockNumber = 2;
     pub const Offset: BlockNumber = 0;
 }
