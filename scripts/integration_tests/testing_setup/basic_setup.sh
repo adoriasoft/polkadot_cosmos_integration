@@ -3,7 +3,6 @@ trap "exit" INT TERM ERR
 trap "kill 0" EXIT
 
 function clean_tmp() {
-    echo ${PWD}
     rm -rf tmp
     mkdir tmp
     touch tmp/substrate_log.log
@@ -62,4 +61,3 @@ function stop_all() {
     stop_substrate
     stop_cosmos
 }
-

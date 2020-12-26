@@ -1,62 +1,308 @@
-
-====================
-
-Version: 0.0.3-0cb9380-x86_64-macos
-
-   0: backtrace::backtrace::libunwind::trace
-             at /Users/mariannay/.cargo/registry/src/github.com-1ecc6299db9ec823/backtrace-0.3.55/src/backtrace/libunwind.rs:90:5
-      backtrace::backtrace::trace_unsynchronized
-             at /Users/mariannay/.cargo/registry/src/github.com-1ecc6299db9ec823/backtrace-0.3.55/src/backtrace/mod.rs:66:5
-   1: backtrace::backtrace::trace
-             at /Users/mariannay/.cargo/registry/src/github.com-1ecc6299db9ec823/backtrace-0.3.55/src/backtrace/mod.rs:53:14
-   2: backtrace::capture::Backtrace::create
-             at /Users/mariannay/.cargo/registry/src/github.com-1ecc6299db9ec823/backtrace-0.3.55/src/capture.rs:176:9
-   3: backtrace::capture::Backtrace::new
-             at /Users/mariannay/.cargo/registry/src/github.com-1ecc6299db9ec823/backtrace-0.3.55/src/capture.rs:140:22
-   4: sp_panic_handler::panic_hook
-             at /Users/mariannay/.cargo/registry/src/github.com-1ecc6299db9ec823/sp-panic-handler-2.0.0/src/lib.rs:150:18
-   5: sp_panic_handler::set::{{closure}}
-             at /Users/mariannay/.cargo/registry/src/github.com-1ecc6299db9ec823/sp-panic-handler-2.0.0/src/lib.rs:60:4
-   6: std::panicking::rust_panic_with_hook
-             at /rustc/30f0a07684f6c1f5df62d69e9519d82e13d6bf2d/library/std/src/panicking.rs:573:17
-   7: std::panicking::begin_panic::{{closure}}
-             at /Users/mariannay/.rustup/toolchains/nightly-2020-08-19-x86_64-apple-darwin/lib/rustlib/src/rust/library/std/src/panicking.rs:498:9
-   8: std::sys_common::backtrace::__rust_end_short_backtrace
-             at /Users/mariannay/.rustup/toolchains/nightly-2020-08-19-x86_64-apple-darwin/lib/rustlib/src/rust/library/std/src/sys_common/backtrace.rs:153:18
-   9: std::panicking::begin_panic
-             at /Users/mariannay/.rustup/toolchains/nightly-2020-08-19-x86_64-apple-darwin/lib/rustlib/src/rust/library/std/src/panicking.rs:497:12
-  10: abci_storage::get_abci_storage_instance
-             at /Applications/polkadot-cosmos-integration/polkadot_cosmos_integration/cosmos-abci/abci_storage/src/lib.rs:45:9
-  11: node_template::command::init_chain
-             at /Applications/polkadot-cosmos-integration/polkadot_cosmos_integration/src/command.rs:28:28
-  12: node_template::command::run
-             at /Applications/polkadot-cosmos-integration/polkadot_cosmos_integration/src/command.rs:208:13
-  13: node_template::main
-             at /Applications/polkadot-cosmos-integration/polkadot_cosmos_integration/src/main.rs:13:5
-  14: core::ops::function::FnOnce::call_once
-             at /Users/mariannay/.rustup/toolchains/nightly-2020-08-19-x86_64-apple-darwin/lib/rustlib/src/rust/library/core/src/ops/function.rs:233:5
-  15: std::sys_common::backtrace::__rust_begin_short_backtrace
-             at /Users/mariannay/.rustup/toolchains/nightly-2020-08-19-x86_64-apple-darwin/lib/rustlib/src/rust/library/std/src/sys_common/backtrace.rs:137:18
-  16: std::rt::lang_start::{{closure}}
-             at /Users/mariannay/.rustup/toolchains/nightly-2020-08-19-x86_64-apple-darwin/lib/rustlib/src/rust/library/std/src/rt.rs:66:18
-  17: core::ops::function::impls::<impl core::ops::function::FnOnce<A> for &F>::call_once
-             at /rustc/30f0a07684f6c1f5df62d69e9519d82e13d6bf2d/library/core/src/ops/function.rs:265:13
-      std::panicking::try::do_call
-             at /rustc/30f0a07684f6c1f5df62d69e9519d82e13d6bf2d/library/std/src/panicking.rs:373:40
-      std::panicking::try
-             at /rustc/30f0a07684f6c1f5df62d69e9519d82e13d6bf2d/library/std/src/panicking.rs:337:19
-      std::panic::catch_unwind
-             at /rustc/30f0a07684f6c1f5df62d69e9519d82e13d6bf2d/library/std/src/panic.rs:379:14
-      std::rt::lang_start_internal
-             at /rustc/30f0a07684f6c1f5df62d69e9519d82e13d6bf2d/library/std/src/rt.rs:51:25
-  18: std::rt::lang_start
-             at /Users/mariannay/.rustup/toolchains/nightly-2020-08-19-x86_64-apple-darwin/lib/rustlib/src/rust/library/std/src/rt.rs:65:5
-  19: _main
-
-
-Thread 'main' panicked at 'abci storage instance has not been set, execute set_storage_instance before calling this function', cosmos-abci/abci_storage/src/lib.rs:45
-
-This is a bug. Please report it at:
-
-	support.anonymous.an
-
+Dec 26 21:54:13.908  INFO Substrate Node    
+Dec 26 21:54:13.908  INFO ✌️  version 0.0.3-cde0492-x86_64-macos    
+Dec 26 21:54:13.908  INFO ❤️  by Substrate DevHub <https://github.com/substrate-developer-hub>, 2017-2020    
+Dec 26 21:54:13.908  INFO 📋 Chain specification: Development    
+Dec 26 21:54:13.908  INFO 🏷  Node name: Alice    
+Dec 26 21:54:13.908  INFO 👤 Role: AUTHORITY    
+Dec 26 21:54:13.908  INFO 💾 Database: RocksDb at /tmp/alice/chains/dev/db    
+Dec 26 21:54:13.908  INFO ⛓  Native runtime: node-template-1 (node-template-1.tx1.au1)    
+Dec 26 21:54:15.283  INFO 🔨 Initializing Genesis block/state (state: 0x06af…1d3a, header-hash: 0x6661…71ea)    
+Dec 26 21:54:15.286  INFO 👴 Loading GRANDPA authority set from genesis on what appears to be first startup.    
+Dec 26 21:54:15.543  INFO ⏱  Loaded block-time = 2000 milliseconds from genesis on first-launch    
+Dec 26 21:54:15.544  WARN Using default protocol ID "sup" because none is configured in the chain specs    
+Dec 26 21:54:15.545  INFO 🏷  Local node identity is: 12D3KooWHVBsv3s9EqZMm72ZPvaSinRkgM7PtS4dNmn2Dd3vZ6VL (legacy representation: 12D3KooWHVBsv3s9EqZMm72ZPvaSinRkgM7PtS4dNmn2Dd3vZ6VL)    
+Dec 26 21:54:16.142  INFO 📦 Highest known block at #0    
+Dec 26 21:54:16.143  INFO 〽️ Prometheus server started at 127.0.0.1:9615    
+Dec 26 21:54:16.164  INFO Listening for new connections on 127.0.0.1:9944.    
+Dec 26 21:54:18.210  INFO 🙌 Starting consensus session on top of parent 0x6661720c17eb1709966a86449b7fc029cb89c2c928d5c50226721ff2517371ea    
+Dec 26 21:54:18.413  INFO 🎁 Prepared block for proposing at 1 [hash: 0xed1b047cca50d4295139e5b6fef024c4ba5a350e85fcd231683f7e4ad571abf4; parent_hash: 0x6661…71ea; extrinsics (1): [0x91af…1bdf]]    
+Dec 26 21:54:18.510  INFO 🔖 Pre-sealed block for proposal at 1. Hash now 0xcb2d0fefa6a00103b4ffecf642d88081688ed4f30bc48b2ed5768a3a40ca7b44, previously 0xed1b047cca50d4295139e5b6fef024c4ba5a350e85fcd231683f7e4ad571abf4.    
+Dec 26 21:54:18.511  INFO ✨ Imported #[1;37m1[0m (0xcb2d…7b44)    
+Dec 26 21:54:20.103  INFO 🙌 Starting consensus session on top of parent 0xcb2d0fefa6a00103b4ffecf642d88081688ed4f30bc48b2ed5768a3a40ca7b44    
+Dec 26 21:54:20.168  INFO 🎁 Prepared block for proposing at 2 [hash: 0x01de1ebcad3d3fff0cd7a8ce7e3cbbf0517b72e2041e300e58efd53dab894c46; parent_hash: 0xcb2d…7b44; extrinsics (1): [0x356b…164d]]    
+Dec 26 21:54:20.266  INFO 🔖 Pre-sealed block for proposal at 2. Hash now 0x727cff6d85da0fdca8f92aee528b785cd739c312820a2042a6ac022843760c10, previously 0x01de1ebcad3d3fff0cd7a8ce7e3cbbf0517b72e2041e300e58efd53dab894c46.    
+Dec 26 21:54:20.267  INFO ✨ Imported #[1;37m2[0m (0x727c…0c10)    
+Dec 26 21:54:20.268  INFO call_offchain_worker(), block_number: 1    
+Dec 26 21:54:20.279  INFO Cosmos validators []    
+Dec 26 21:54:21.168  INFO 💤 [1;37mIdle[0m ([1;37m0[0m peers), best: #[1;37m2[0m (0x727c…0c10), finalized #[1;37m0[0m (0x6661…71ea), [32m⬇ 0[0m [31m⬆ 0[0m    
+Dec 26 21:54:22.102  INFO 🙌 Starting consensus session on top of parent 0x727cff6d85da0fdca8f92aee528b785cd739c312820a2042a6ac022843760c10    
+Dec 26 21:54:22.157  INFO 🎁 Prepared block for proposing at 3 [hash: 0x13af63f1f01138cc1a15db0e0bf5ee468929cefda72de4e189f65570ee391bd9; parent_hash: 0x727c…0c10; extrinsics (1): [0x4e8f…5e2b]]    
+Dec 26 21:54:22.254  INFO 🔖 Pre-sealed block for proposal at 3. Hash now 0xa4a341ff39ecb9c2b85f384f4e80a25da3d3b3db0ad21005de60b47a28049b38, previously 0x13af63f1f01138cc1a15db0e0bf5ee468929cefda72de4e189f65570ee391bd9.    
+Dec 26 21:54:22.256  INFO ✨ Imported #[1;37m3[0m (0xa4a3…9b38)    
+Dec 26 21:54:22.257  INFO call_offchain_worker(), block_number: 2    
+Dec 26 21:54:22.267  INFO Cosmos validators []    
+Dec 26 21:54:24.102  INFO 🙌 Starting consensus session on top of parent 0xa4a341ff39ecb9c2b85f384f4e80a25da3d3b3db0ad21005de60b47a28049b38    
+Dec 26 21:54:24.168  INFO 🎁 Prepared block for proposing at 4 [hash: 0xd3e12ab1ed4cf75402457f04246b52d064fb975dfe451ab0c97610bca812ce76; parent_hash: 0xa4a3…9b38; extrinsics (1): [0xa694…a31a]]    
+Dec 26 21:54:24.265  INFO 🔖 Pre-sealed block for proposal at 4. Hash now 0xe8dd4b8847117dc84c54bced5a801b9cd2ec1b9dec11eb4adb1e2e7b3503ffb9, previously 0xd3e12ab1ed4cf75402457f04246b52d064fb975dfe451ab0c97610bca812ce76.    
+Dec 26 21:54:24.267  INFO ✨ Imported #[1;37m4[0m (0xe8dd…ffb9)    
+Dec 26 21:54:24.268  INFO call_offchain_worker(), block_number: 3    
+Dec 26 21:54:24.278  INFO Cosmos validators []    
+Dec 26 21:54:24.912  INFO Accepted a new tcp connection from 127.0.0.1:63018.    
+Dec 26 21:54:26.102  INFO 🙌 Starting consensus session on top of parent 0xe8dd4b8847117dc84c54bced5a801b9cd2ec1b9dec11eb4adb1e2e7b3503ffb9    
+Dec 26 21:54:26.158  INFO 🎁 Prepared block for proposing at 5 [hash: 0x9946ebe1d85ed73fc59eb0c5173d0fccf11f4d81a1d53c5b96b0aff318974702; parent_hash: 0xe8dd…ffb9; extrinsics (1): [0xfd3a…6a4e]]    
+Dec 26 21:54:26.171  INFO 💤 [1;37mIdle[0m ([1;37m0[0m peers), best: #[1;37m4[0m (0xe8dd…ffb9), finalized #[1;37m1[0m (0xcb2d…7b44), [32m⬇ 0[0m [31m⬆ 0[0m    
+Dec 26 21:54:26.256  INFO 🔖 Pre-sealed block for proposal at 5. Hash now 0x54fcc07b9f1eed71843f920d5fbb3962a7c545a5b1bca0c0e8697c84a672cf74, previously 0x9946ebe1d85ed73fc59eb0c5173d0fccf11f4d81a1d53c5b96b0aff318974702.    
+Dec 26 21:54:26.257  INFO ✨ Imported #[1;37m5[0m (0x54fc…cf74)    
+Dec 26 21:54:26.258  INFO call_offchain_worker(), block_number: 4    
+Dec 26 21:54:26.266  INFO Cosmos validators []    
+Dec 26 21:54:28.102  INFO 🙌 Starting consensus session on top of parent 0x54fcc07b9f1eed71843f920d5fbb3962a7c545a5b1bca0c0e8697c84a672cf74    
+Dec 26 21:54:28.169  INFO 🎁 Prepared block for proposing at 6 [hash: 0x9f5052038b24cbb0cb2b8e0fe949f94079b203ba0a920440e870062ff0b84dc7; parent_hash: 0x54fc…cf74; extrinsics (1): [0xecb8…533c]]    
+Dec 26 21:54:28.267  INFO 🔖 Pre-sealed block for proposal at 6. Hash now 0xf26b14c0005324b62c796577df08e404e9e2892be299c256fe54ce6003e4909a, previously 0x9f5052038b24cbb0cb2b8e0fe949f94079b203ba0a920440e870062ff0b84dc7.    
+Dec 26 21:54:28.269  INFO ✨ Imported #[1;37m6[0m (0xf26b…909a)    
+Dec 26 21:54:28.270  INFO call_offchain_worker(), block_number: 5    
+Dec 26 21:54:28.279  INFO Cosmos validators []    
+Dec 26 21:54:30.100  INFO 🙌 Starting consensus session on top of parent 0xf26b14c0005324b62c796577df08e404e9e2892be299c256fe54ce6003e4909a    
+Dec 26 21:54:30.156  INFO 🎁 Prepared block for proposing at 7 [hash: 0x4e8587dc8f5cc5c99e4642b34af4f90b0b1fcd362fedea7abf0fd2258744710e; parent_hash: 0xf26b…909a; extrinsics (1): [0xb14e…612e]]    
+Dec 26 21:54:30.255  INFO 🔖 Pre-sealed block for proposal at 7. Hash now 0x903ddf6c3ec2fc077bdd04d00129cff09fb35c7d1bc07e5eb1ac8ee5a84e9acc, previously 0x4e8587dc8f5cc5c99e4642b34af4f90b0b1fcd362fedea7abf0fd2258744710e.    
+Dec 26 21:54:30.257  INFO ✨ Imported #[1;37m7[0m (0x903d…9acc)    
+Dec 26 21:54:30.258  INFO call_offchain_worker(), block_number: 6    
+Dec 26 21:54:30.269  INFO Cosmos validators []    
+Dec 26 21:54:31.173  INFO 💤 [1;37mIdle[0m ([1;37m0[0m peers), best: #[1;37m7[0m (0x903d…9acc), finalized #[1;37m4[0m (0xe8dd…ffb9), [32m⬇ 0[0m [31m⬆ 0[0m    
+Dec 26 21:54:31.238  INFO Accepted a new tcp connection from 127.0.0.1:63020.    
+Dec 26 21:54:32.101  INFO 🙌 Starting consensus session on top of parent 0x903ddf6c3ec2fc077bdd04d00129cff09fb35c7d1bc07e5eb1ac8ee5a84e9acc    
+Dec 26 21:54:32.195  INFO 🎁 Prepared block for proposing at 8 [hash: 0x812447140a259923b9ef785756bba4557a4525a6e67600a0d1876ad45d8ce084; parent_hash: 0x903d…9acc; extrinsics (1): [0xf515…c1ef]]    
+Dec 26 21:54:32.291  INFO 🔖 Pre-sealed block for proposal at 8. Hash now 0xd025a0d3df45484f3e1fae47b5cc90b2bff5ec65dd45dbd1859b2d4ac2fcd493, previously 0x812447140a259923b9ef785756bba4557a4525a6e67600a0d1876ad45d8ce084.    
+Dec 26 21:54:32.293  INFO ✨ Imported #[1;37m8[0m (0xd025…d493)    
+Dec 26 21:54:32.294  INFO call_offchain_worker(), block_number: 7    
+Dec 26 21:54:32.303  INFO Cosmos validators []    
+Dec 26 21:54:34.100  INFO 🙌 Starting consensus session on top of parent 0xd025a0d3df45484f3e1fae47b5cc90b2bff5ec65dd45dbd1859b2d4ac2fcd493    
+Dec 26 21:54:34.195  INFO 🎁 Prepared block for proposing at 9 [hash: 0xa72031a31a2640c9f35268b33df9ce4f30044627b6e18a14a824a29014fed616; parent_hash: 0xd025…d493; extrinsics (2): [0x6260…f48b, 0x6925…3a0e]]    
+Dec 26 21:54:34.292  INFO 🔖 Pre-sealed block for proposal at 9. Hash now 0xb2067ea915b665f47f57c5a36bc9bae78fc99bc636af1893f8e702e41b96575d, previously 0xa72031a31a2640c9f35268b33df9ce4f30044627b6e18a14a824a29014fed616.    
+Dec 26 21:54:34.294  INFO ✨ Imported #[1;37m9[0m (0xb206…575d)    
+Dec 26 21:54:34.295  INFO call_offchain_worker(), block_number: 8    
+Dec 26 21:54:34.305  INFO Cosmos validators []    
+Dec 26 21:54:36.102  INFO 🙌 Starting consensus session on top of parent 0xb2067ea915b665f47f57c5a36bc9bae78fc99bc636af1893f8e702e41b96575d    
+Dec 26 21:54:36.171  INFO 🎁 Prepared block for proposing at 10 [hash: 0x60c2d643770d3c95a7d67a4c2faa0b4f12ffeff6c2cd98f84320a0b03cab4616; parent_hash: 0xb206…575d; extrinsics (1): [0xa82f…a7ae]]    
+Dec 26 21:54:36.174  INFO 💤 [1;37mIdle[0m ([1;37m0[0m peers), best: #[1;37m9[0m (0xb206…575d), finalized #[1;37m6[0m (0xf26b…909a), [32m⬇ 0[0m [31m⬆ 0[0m    
+Dec 26 21:54:36.268  INFO 🔖 Pre-sealed block for proposal at 10. Hash now 0xb04770f5ccdaa07d053fedcdcd25f4dee4e9b934ce62319933f2a7e9ed85c22b, previously 0x60c2d643770d3c95a7d67a4c2faa0b4f12ffeff6c2cd98f84320a0b03cab4616.    
+Dec 26 21:54:36.270  INFO ✨ Imported #[1;37m10[0m (0xb047…c22b)    
+Dec 26 21:54:36.270  INFO call_offchain_worker(), block_number: 9    
+Dec 26 21:54:36.281  INFO Cosmos validators []    
+Dec 26 21:54:37.553  INFO Accepted a new tcp connection from 127.0.0.1:63022.    
+Dec 26 21:54:38.102  INFO 🙌 Starting consensus session on top of parent 0xb04770f5ccdaa07d053fedcdcd25f4dee4e9b934ce62319933f2a7e9ed85c22b    
+Dec 26 21:54:38.196  INFO 🎁 Prepared block for proposing at 11 [hash: 0x1695a6788aa32f9634a2b5a2a836b7c9e7b70c88087b801cf3448b494ee65903; parent_hash: 0xb047…c22b; extrinsics (2): [0x5b04…507d, 0xb845…82a1]]    
+Dec 26 21:54:38.292  INFO 🔖 Pre-sealed block for proposal at 11. Hash now 0xc0b12bfd457ef376f04bf2df5586dbc38bfcd79d829c92498ab308b818f8c0c4, previously 0x1695a6788aa32f9634a2b5a2a836b7c9e7b70c88087b801cf3448b494ee65903.    
+Dec 26 21:54:38.294  INFO ✨ Imported #[1;37m11[0m (0xc0b1…c0c4)    
+Dec 26 21:54:38.295  INFO call_offchain_worker(), block_number: 10    
+Dec 26 21:54:38.306  INFO Cosmos validators []    
+Dec 26 21:54:40.109  INFO 🙌 Starting consensus session on top of parent 0xc0b12bfd457ef376f04bf2df5586dbc38bfcd79d829c92498ab308b818f8c0c4    
+Dec 26 21:54:40.177  INFO 🎁 Prepared block for proposing at 12 [hash: 0x9b1c8899e45a920b5a7c54d6a2b07c4c2a26cf5f8f5f7ca9d99a4db5651d2571; parent_hash: 0xc0b1…c0c4; extrinsics (1): [0x9831…b850]]    
+Dec 26 21:54:40.272  INFO 🔖 Pre-sealed block for proposal at 12. Hash now 0x9b6be892afb7b2c0b6749dab01ff6150aeb643caf7678a52fb8e566111eb18b5, previously 0x9b1c8899e45a920b5a7c54d6a2b07c4c2a26cf5f8f5f7ca9d99a4db5651d2571.    
+Dec 26 21:54:40.274  INFO ✨ Imported #[1;37m12[0m (0x9b6b…18b5)    
+Dec 26 21:54:40.275  INFO call_offchain_worker(), block_number: 11    
+Dec 26 21:54:40.284  INFO Cosmos validators []    
+Dec 26 21:54:41.180  INFO 💤 [1;37mIdle[0m ([1;37m0[0m peers), best: #[1;37m12[0m (0x9b6b…18b5), finalized #[1;37m9[0m (0xb206…575d), [32m⬇ 0[0m [31m⬆ 0[0m    
+Dec 26 21:54:42.099  INFO 🙌 Starting consensus session on top of parent 0x9b6be892afb7b2c0b6749dab01ff6150aeb643caf7678a52fb8e566111eb18b5    
+Dec 26 21:54:42.157  INFO 🎁 Prepared block for proposing at 13 [hash: 0x5bfc1f05b27dcc9e3a1aefafdb1ce344f069cd9e5d54e829238c5dadc07decd8; parent_hash: 0x9b6b…18b5; extrinsics (1): [0xdc88…9e21]]    
+Dec 26 21:54:42.252  INFO 🔖 Pre-sealed block for proposal at 13. Hash now 0x143c4b9bea82e98c1b41ea5d62069d370d108324901786d05377fe276bea221e, previously 0x5bfc1f05b27dcc9e3a1aefafdb1ce344f069cd9e5d54e829238c5dadc07decd8.    
+Dec 26 21:54:42.253  INFO ✨ Imported #[1;37m13[0m (0x143c…221e)    
+Dec 26 21:54:42.254  INFO call_offchain_worker(), block_number: 12    
+Dec 26 21:54:42.263  INFO Cosmos validators []    
+Dec 26 21:54:43.840  INFO Accepted a new tcp connection from 127.0.0.1:63023.    
+Dec 26 21:54:44.099  INFO 🙌 Starting consensus session on top of parent 0x143c4b9bea82e98c1b41ea5d62069d370d108324901786d05377fe276bea221e    
+Dec 26 21:54:44.198  INFO 🎁 Prepared block for proposing at 14 [hash: 0x204c28e5a59e2ab388f56f47a942d3d435194c35233dfc762a19807a03f9993e; parent_hash: 0x143c…221e; extrinsics (1): [0xd0e2…a5f7]]    
+Dec 26 21:54:44.295  INFO 🔖 Pre-sealed block for proposal at 14. Hash now 0xaefde79ced3bbda474e8342f6a9780824579ed6bdea95028e358007e7df1d65b, previously 0x204c28e5a59e2ab388f56f47a942d3d435194c35233dfc762a19807a03f9993e.    
+Dec 26 21:54:44.296  INFO ✨ Imported #[1;37m14[0m (0xaefd…d65b)    
+Dec 26 21:54:44.297  INFO call_offchain_worker(), block_number: 13    
+Dec 26 21:54:44.306  INFO Cosmos validators []    
+Dec 26 21:54:46.109  INFO 🙌 Starting consensus session on top of parent 0xaefde79ced3bbda474e8342f6a9780824579ed6bdea95028e358007e7df1d65b    
+Dec 26 21:54:46.185  INFO 💤 [1;37mIdle[0m ([1;37m0[0m peers), best: #[1;37m14[0m (0xaefd…d65b), finalized #[1;37m11[0m (0xc0b1…c0c4), [32m⬇ 0[0m [31m⬆ 0[0m    
+Dec 26 21:54:46.204  INFO 🎁 Prepared block for proposing at 15 [hash: 0x27a696a1d413d151d671ae3a7318a43d117d1f01a24daa92dd598c21ff6c4923; parent_hash: 0xaefd…d65b; extrinsics (2): [0xbff3…d98a, 0xe7ad…1d8f]]    
+Dec 26 21:54:46.300  INFO 🔖 Pre-sealed block for proposal at 15. Hash now 0x7d06e3f5b4ddafbde30e0ed190602d97f0cbfd8b572e804c60d3f97d69fbc785, previously 0x27a696a1d413d151d671ae3a7318a43d117d1f01a24daa92dd598c21ff6c4923.    
+Dec 26 21:54:46.301  INFO ✨ Imported #[1;37m15[0m (0x7d06…c785)    
+Dec 26 21:54:46.302  INFO call_offchain_worker(), block_number: 14    
+Dec 26 21:54:46.311  INFO Cosmos validators []    
+Dec 26 21:54:48.109  INFO 🙌 Starting consensus session on top of parent 0x7d06e3f5b4ddafbde30e0ed190602d97f0cbfd8b572e804c60d3f97d69fbc785    
+Dec 26 21:54:48.179  INFO 🎁 Prepared block for proposing at 16 [hash: 0x2eafa0398cc6a8b7e18d55468427841c066ffb1c44aa7bfe4ab4ad14c3527745; parent_hash: 0x7d06…c785; extrinsics (1): [0xafdb…d2b4]]    
+Dec 26 21:54:48.275  INFO 🔖 Pre-sealed block for proposal at 16. Hash now 0x2bfb393081f9bf7714a46d7752248a6483aff926ca9052fc606ca869cae67265, previously 0x2eafa0398cc6a8b7e18d55468427841c066ffb1c44aa7bfe4ab4ad14c3527745.    
+Dec 26 21:54:48.276  INFO ✨ Imported #[1;37m16[0m (0x2bfb…7265)    
+Dec 26 21:54:48.277  INFO call_offchain_worker(), block_number: 15    
+Dec 26 21:54:48.285  INFO Cosmos validators []    
+Dec 26 21:54:50.103  INFO 🙌 Starting consensus session on top of parent 0x2bfb393081f9bf7714a46d7752248a6483aff926ca9052fc606ca869cae67265    
+Dec 26 21:54:50.163  INFO 🎁 Prepared block for proposing at 17 [hash: 0xe4264ded23cb4d16d8dfa310fe07da79a278ad71dc40c831c920f98b44c73fa1; parent_hash: 0x2bfb…7265; extrinsics (1): [0x5da6…2fcc]]    
+Dec 26 21:54:50.260  INFO 🔖 Pre-sealed block for proposal at 17. Hash now 0x8397f143ecc37f5cac53ff32e77fbebb57be268f8aae51d37226370bc1a20c0a, previously 0xe4264ded23cb4d16d8dfa310fe07da79a278ad71dc40c831c920f98b44c73fa1.    
+Dec 26 21:54:50.261  INFO ✨ Imported #[1;37m17[0m (0x8397…0c0a)    
+Dec 26 21:54:50.262  INFO call_offchain_worker(), block_number: 16    
+Dec 26 21:54:50.271  INFO Cosmos validators []    
+Dec 26 21:54:51.191  INFO 💤 [1;37mIdle[0m ([1;37m0[0m peers), best: #[1;37m17[0m (0x8397…0c0a), finalized #[1;37m14[0m (0xaefd…d65b), [32m⬇ 0[0m [31m⬆ 0[0m    
+Dec 26 21:54:52.106  INFO 🙌 Starting consensus session on top of parent 0x8397f143ecc37f5cac53ff32e77fbebb57be268f8aae51d37226370bc1a20c0a    
+Dec 26 21:54:52.175  INFO 🎁 Prepared block for proposing at 18 [hash: 0xe9215c94885b64a16f2afcef10cffe6a3f7e23d53edffeaa5b2bff79de86af8b; parent_hash: 0x8397…0c0a; extrinsics (1): [0x110f…7702]]    
+Dec 26 21:54:52.271  INFO 🔖 Pre-sealed block for proposal at 18. Hash now 0x08206673dccfc8cbe86756b7137edb94a1d1607451d25ab960d08a7dfc8addd7, previously 0xe9215c94885b64a16f2afcef10cffe6a3f7e23d53edffeaa5b2bff79de86af8b.    
+Dec 26 21:54:52.273  INFO ✨ Imported #[1;37m18[0m (0x0820…ddd7)    
+Dec 26 21:54:52.274  INFO call_offchain_worker(), block_number: 17    
+Dec 26 21:54:52.282  INFO Cosmos validators []    
+Dec 26 21:54:54.111  INFO 🙌 Starting consensus session on top of parent 0x08206673dccfc8cbe86756b7137edb94a1d1607451d25ab960d08a7dfc8addd7    
+Dec 26 21:54:54.172  INFO 🎁 Prepared block for proposing at 19 [hash: 0xf306c3f83c707eaecc20961e38a1f437622c885031f833a66e49f96813345998; parent_hash: 0x0820…ddd7; extrinsics (1): [0x18b1…4fac]]    
+Dec 26 21:54:54.269  INFO 🔖 Pre-sealed block for proposal at 19. Hash now 0xb1ee8fd668882528e8e7aa97a80ca728c18ffd106fadb42d1fd7ff61e57cfcdd, previously 0xf306c3f83c707eaecc20961e38a1f437622c885031f833a66e49f96813345998.    
+Dec 26 21:54:54.271  INFO ✨ Imported #[1;37m19[0m (0xb1ee…fcdd)    
+Dec 26 21:54:54.271  INFO call_offchain_worker(), block_number: 18    
+Dec 26 21:54:54.281  INFO Cosmos validators []    
+Dec 26 21:54:56.110  INFO 🙌 Starting consensus session on top of parent 0xb1ee8fd668882528e8e7aa97a80ca728c18ffd106fadb42d1fd7ff61e57cfcdd    
+Dec 26 21:54:56.181  INFO 🎁 Prepared block for proposing at 20 [hash: 0x44843d2f2bba3d405d4d6c3b0652c373e962118c8b48336b0c68c9b5f45b38a5; parent_hash: 0xb1ee…fcdd; extrinsics (1): [0x90ed…f06e]]    
+Dec 26 21:54:56.193  INFO 💤 [1;37mIdle[0m ([1;37m0[0m peers), best: #[1;37m19[0m (0xb1ee…fcdd), finalized #[1;37m16[0m (0x2bfb…7265), [32m⬇ 0[0m [31m⬆ 0[0m    
+Dec 26 21:54:56.278  INFO 🔖 Pre-sealed block for proposal at 20. Hash now 0x73dea5ef612142230f923a6d2ccfdefa94b9d8b9b819e275034eeefe8b338358, previously 0x44843d2f2bba3d405d4d6c3b0652c373e962118c8b48336b0c68c9b5f45b38a5.    
+Dec 26 21:54:56.279  INFO ✨ Imported #[1;37m20[0m (0x73de…8358)    
+Dec 26 21:54:56.280  INFO call_offchain_worker(), block_number: 19    
+Dec 26 21:54:56.289  INFO Cosmos validators []    
+Dec 26 21:54:58.108  INFO 🙌 Starting consensus session on top of parent 0x73dea5ef612142230f923a6d2ccfdefa94b9d8b9b819e275034eeefe8b338358    
+Dec 26 21:54:58.169  INFO 🎁 Prepared block for proposing at 21 [hash: 0xca04d7cc8c70d0e25fe98c99cfac077a586da5c32bc9075006ebf85625ee174b; parent_hash: 0x73de…8358; extrinsics (1): [0xfed5…e6db]]    
+Dec 26 21:54:58.264  INFO 🔖 Pre-sealed block for proposal at 21. Hash now 0x6f8db6ea259833a9d9f766c934032804718d3117e8460191d048931135d094fe, previously 0xca04d7cc8c70d0e25fe98c99cfac077a586da5c32bc9075006ebf85625ee174b.    
+Dec 26 21:54:58.266  INFO ✨ Imported #[1;37m21[0m (0x6f8d…94fe)    
+Dec 26 21:54:58.266  INFO call_offchain_worker(), block_number: 20    
+Dec 26 21:54:58.277  INFO Cosmos validators []    
+Dec 26 21:55:00.103  INFO 🙌 Starting consensus session on top of parent 0x6f8db6ea259833a9d9f766c934032804718d3117e8460191d048931135d094fe    
+Dec 26 21:55:00.176  INFO 🎁 Prepared block for proposing at 22 [hash: 0x3d350183fe8d7d7b1a64aa4d54106c952800e43801323e779dbda2f89337c92b; parent_hash: 0x6f8d…94fe; extrinsics (1): [0x5b18…1e11]]    
+Dec 26 21:55:00.271  INFO 🔖 Pre-sealed block for proposal at 22. Hash now 0x207490374a169971facc6295ba0ef274fb46bac30346a94a43a50e890a37a2c6, previously 0x3d350183fe8d7d7b1a64aa4d54106c952800e43801323e779dbda2f89337c92b.    
+Dec 26 21:55:00.273  INFO ✨ Imported #[1;37m22[0m (0x2074…a2c6)    
+Dec 26 21:55:00.274  INFO call_offchain_worker(), block_number: 21    
+Dec 26 21:55:00.283  INFO Cosmos validators []    
+Dec 26 21:55:01.197  INFO 💤 [1;37mIdle[0m ([1;37m0[0m peers), best: #[1;37m22[0m (0x2074…a2c6), finalized #[1;37m19[0m (0xb1ee…fcdd), [32m⬇ 0[0m [31m⬆ 0[0m    
+Dec 26 21:55:02.110  INFO 🙌 Starting consensus session on top of parent 0x207490374a169971facc6295ba0ef274fb46bac30346a94a43a50e890a37a2c6    
+Dec 26 21:55:02.173  INFO 🎁 Prepared block for proposing at 23 [hash: 0xa9778ea8292987fea2622fb46571ba7ecd8f6b708d8c9a76b9e0f1ba7952f724; parent_hash: 0x2074…a2c6; extrinsics (1): [0xf5c2…5c26]]    
+Dec 26 21:55:02.270  INFO 🔖 Pre-sealed block for proposal at 23. Hash now 0x5b8929766a2e361c456c47a4ed1ebda36609ed1462de509560357fb24dd335bf, previously 0xa9778ea8292987fea2622fb46571ba7ecd8f6b708d8c9a76b9e0f1ba7952f724.    
+Dec 26 21:55:02.271  INFO ✨ Imported #[1;37m23[0m (0x5b89…35bf)    
+Dec 26 21:55:02.272  INFO call_offchain_worker(), block_number: 22    
+Dec 26 21:55:02.281  INFO Cosmos validators []    
+Dec 26 21:55:04.110  INFO 🙌 Starting consensus session on top of parent 0x5b8929766a2e361c456c47a4ed1ebda36609ed1462de509560357fb24dd335bf    
+Dec 26 21:55:04.183  INFO 🎁 Prepared block for proposing at 24 [hash: 0x286da2d20a077c0c792ae4a374aff0226d7442834907d1a0e7e48c7f427763ad; parent_hash: 0x5b89…35bf; extrinsics (1): [0xdb09…0367]]    
+Dec 26 21:55:04.278  INFO 🔖 Pre-sealed block for proposal at 24. Hash now 0x44a52d663e9e9f3bf3fe20064885181efc4c3709280e819a0d208ef633d91982, previously 0x286da2d20a077c0c792ae4a374aff0226d7442834907d1a0e7e48c7f427763ad.    
+Dec 26 21:55:04.280  INFO ✨ Imported #[1;37m24[0m (0x44a5…1982)    
+Dec 26 21:55:04.280  INFO call_offchain_worker(), block_number: 23    
+Dec 26 21:55:04.290  INFO Cosmos validators []    
+Dec 26 21:55:06.108  INFO 🙌 Starting consensus session on top of parent 0x44a52d663e9e9f3bf3fe20064885181efc4c3709280e819a0d208ef633d91982    
+Dec 26 21:55:06.171  INFO 🎁 Prepared block for proposing at 25 [hash: 0xe95fc51d9ec3cf62d433e31760b159b301277d81d057bfca4462468a90efb187; parent_hash: 0x44a5…1982; extrinsics (1): [0xfca5…5a5e]]    
+Dec 26 21:55:06.202  INFO 💤 [1;37mIdle[0m ([1;37m0[0m peers), best: #[1;37m24[0m (0x44a5…1982), finalized #[1;37m22[0m (0x2074…a2c6), [32m⬇ 0[0m [31m⬆ 0[0m    
+Dec 26 21:55:06.267  INFO 🔖 Pre-sealed block for proposal at 25. Hash now 0xc93dea4d026ec8d0fef6face0a9c24019574138189740d906f0f313b64e506d8, previously 0xe95fc51d9ec3cf62d433e31760b159b301277d81d057bfca4462468a90efb187.    
+Dec 26 21:55:06.268  INFO ✨ Imported #[1;37m25[0m (0xc93d…06d8)    
+Dec 26 21:55:06.269  INFO call_offchain_worker(), block_number: 24    
+Dec 26 21:55:06.278  INFO Cosmos validators []    
+Dec 26 21:55:08.108  INFO 🙌 Starting consensus session on top of parent 0xc93dea4d026ec8d0fef6face0a9c24019574138189740d906f0f313b64e506d8    
+Dec 26 21:55:08.182  INFO 🎁 Prepared block for proposing at 26 [hash: 0x5422a71f6ce3e7f30c9920b601159bb5eff27867d8a326dcbdf229bfa7f691e1; parent_hash: 0xc93d…06d8; extrinsics (1): [0x9c22…fc5e]]    
+Dec 26 21:55:08.277  INFO 🔖 Pre-sealed block for proposal at 26. Hash now 0x2ac4d6b99dbc06b036c496763457e8858e6197ba699bb07c50c083558e75fa07, previously 0x5422a71f6ce3e7f30c9920b601159bb5eff27867d8a326dcbdf229bfa7f691e1.    
+Dec 26 21:55:08.278  INFO ✨ Imported #[1;37m26[0m (0x2ac4…fa07)    
+Dec 26 21:55:08.279  INFO call_offchain_worker(), block_number: 25    
+Dec 26 21:55:08.289  INFO Cosmos validators []    
+Dec 26 21:55:10.113  INFO 🙌 Starting consensus session on top of parent 0x2ac4d6b99dbc06b036c496763457e8858e6197ba699bb07c50c083558e75fa07    
+Dec 26 21:55:10.178  INFO 🎁 Prepared block for proposing at 27 [hash: 0xc8cc72b89b32f61465aeb6e05d9e0fef0973efb7341de10371cc5c7d2daa5e7b; parent_hash: 0x2ac4…fa07; extrinsics (1): [0xe38b…7639]]    
+Dec 26 21:55:10.274  INFO 🔖 Pre-sealed block for proposal at 27. Hash now 0xb15ab6cf8bde650b4da0fff61793ddf3d833781a370f669a0151c149926e42b7, previously 0xc8cc72b89b32f61465aeb6e05d9e0fef0973efb7341de10371cc5c7d2daa5e7b.    
+Dec 26 21:55:10.275  INFO ✨ Imported #[1;37m27[0m (0xb15a…42b7)    
+Dec 26 21:55:10.276  INFO call_offchain_worker(), block_number: 26    
+Dec 26 21:55:10.286  INFO Cosmos validators []    
+Dec 26 21:55:11.206  INFO 💤 [1;37mIdle[0m ([1;37m0[0m peers), best: #[1;37m27[0m (0xb15a…42b7), finalized #[1;37m24[0m (0x44a5…1982), [32m⬇ 0[0m [31m⬆ 0[0m    
+Dec 26 21:55:12.113  INFO 🙌 Starting consensus session on top of parent 0xb15ab6cf8bde650b4da0fff61793ddf3d833781a370f669a0151c149926e42b7    
+Dec 26 21:55:12.188  INFO 🎁 Prepared block for proposing at 28 [hash: 0xcf95da264370da7738165b950796f4797c498768e1b1756d76df26b05642d6d8; parent_hash: 0xb15a…42b7; extrinsics (1): [0xd5fc…1062]]    
+Dec 26 21:55:12.284  INFO 🔖 Pre-sealed block for proposal at 28. Hash now 0x13d17a8423d796c19ed4c5b6d22bde2a39e01e8534111dae865d1d0b44d1f0a1, previously 0xcf95da264370da7738165b950796f4797c498768e1b1756d76df26b05642d6d8.    
+Dec 26 21:55:12.285  INFO ✨ Imported #[1;37m28[0m (0x13d1…f0a1)    
+Dec 26 21:55:12.286  INFO call_offchain_worker(), block_number: 27    
+Dec 26 21:55:12.296  INFO Cosmos validators []    
+Dec 26 21:55:14.113  INFO 🙌 Starting consensus session on top of parent 0x13d17a8423d796c19ed4c5b6d22bde2a39e01e8534111dae865d1d0b44d1f0a1    
+Dec 26 21:55:14.180  INFO 🎁 Prepared block for proposing at 29 [hash: 0xdaa227825865a31af25748fa50f82e6e1d9ef328c37cabc14494520bd814d00b; parent_hash: 0x13d1…f0a1; extrinsics (1): [0x3a9e…b2aa]]    
+Dec 26 21:55:14.277  INFO 🔖 Pre-sealed block for proposal at 29. Hash now 0x729b82f4e6b2231b0e7541893d92e2f737084a7db1cbf013fcf7d44914c01ca4, previously 0xdaa227825865a31af25748fa50f82e6e1d9ef328c37cabc14494520bd814d00b.    
+Dec 26 21:55:14.279  INFO ✨ Imported #[1;37m29[0m (0x729b…1ca4)    
+Dec 26 21:55:14.280  INFO call_offchain_worker(), block_number: 28    
+Dec 26 21:55:14.290  INFO Cosmos validators []    
+Dec 26 21:55:15.094  INFO Accepted a new tcp connection from 127.0.0.1:63025.    
+Dec 26 21:55:16.110  INFO 🙌 Starting consensus session on top of parent 0x729b82f4e6b2231b0e7541893d92e2f737084a7db1cbf013fcf7d44914c01ca4    
+Dec 26 21:55:16.186  INFO 🎁 Prepared block for proposing at 30 [hash: 0x5e2aec002ddcdce31c70bce01e819250390bb0f425ae6eb6df926278011961f5; parent_hash: 0x729b…1ca4; extrinsics (1): [0xeb80…a6a8]]    
+Dec 26 21:55:16.209  INFO 💤 [1;37mIdle[0m ([1;37m0[0m peers), best: #[1;37m29[0m (0x729b…1ca4), finalized #[1;37m27[0m (0xb15a…42b7), [32m⬇ 0[0m [31m⬆ 0[0m    
+Dec 26 21:55:16.280  INFO 🔖 Pre-sealed block for proposal at 30. Hash now 0xa4e6e076575a3c957b31b89aeac074521c0caeb057d3ab334acf200bcd54ca3d, previously 0x5e2aec002ddcdce31c70bce01e819250390bb0f425ae6eb6df926278011961f5.    
+Dec 26 21:55:16.281  INFO ✨ Imported #[1;37m30[0m (0xa4e6…ca3d)    
+Dec 26 21:55:16.282  INFO call_offchain_worker(), block_number: 29    
+Dec 26 21:55:16.292  INFO Cosmos validators []    
+Dec 26 21:55:18.101  INFO 🙌 Starting consensus session on top of parent 0xa4e6e076575a3c957b31b89aeac074521c0caeb057d3ab334acf200bcd54ca3d    
+Dec 26 21:55:18.167  INFO 🎁 Prepared block for proposing at 31 [hash: 0x427cd5a3612c96abc9eca9e4452dd95921fc2b2df7d32b23ad6b63db375c8aa7; parent_hash: 0xa4e6…ca3d; extrinsics (1): [0x351f…4f10]]    
+Dec 26 21:55:18.262  INFO 🔖 Pre-sealed block for proposal at 31. Hash now 0x6ef321b982c933948409dd3a0688ffe43fd6a7614b27599550165a21e2a268c8, previously 0x427cd5a3612c96abc9eca9e4452dd95921fc2b2df7d32b23ad6b63db375c8aa7.    
+Dec 26 21:55:18.263  INFO ✨ Imported #[1;37m31[0m (0x6ef3…68c8)    
+Dec 26 21:55:18.264  INFO call_offchain_worker(), block_number: 30    
+Dec 26 21:55:18.273  INFO Cosmos validators []    
+Dec 26 21:55:20.110  INFO 🙌 Starting consensus session on top of parent 0x6ef321b982c933948409dd3a0688ffe43fd6a7614b27599550165a21e2a268c8    
+Dec 26 21:55:20.187  INFO 🎁 Prepared block for proposing at 32 [hash: 0xe33f2c7070b2e8f410f21cf106ae1b04a9a582812028021663bc3121d870dd33; parent_hash: 0x6ef3…68c8; extrinsics (1): [0xf1ff…af7e]]    
+Dec 26 21:55:20.283  INFO 🔖 Pre-sealed block for proposal at 32. Hash now 0xb22645858156538e66c1580d93d5edca501be7303d3777bc7e17ff1a9ddabaa7, previously 0xe33f2c7070b2e8f410f21cf106ae1b04a9a582812028021663bc3121d870dd33.    
+Dec 26 21:55:20.285  INFO ✨ Imported #[1;37m32[0m (0xb226…baa7)    
+Dec 26 21:55:20.286  INFO call_offchain_worker(), block_number: 31    
+Dec 26 21:55:20.294  INFO Cosmos validators []    
+Dec 26 21:55:21.214  INFO 💤 [1;37mIdle[0m ([1;37m0[0m peers), best: #[1;37m32[0m (0xb226…baa7), finalized #[1;37m29[0m (0x729b…1ca4), [32m⬇ 0[0m [31m⬆ 0[0m    
+Dec 26 21:55:22.107  INFO 🙌 Starting consensus session on top of parent 0xb22645858156538e66c1580d93d5edca501be7303d3777bc7e17ff1a9ddabaa7    
+Dec 26 21:55:22.174  INFO 🎁 Prepared block for proposing at 33 [hash: 0xc225b6101c3284a74b71756ea67d4859651fa48980820cb800935654f30aa6fc; parent_hash: 0xb226…baa7; extrinsics (1): [0x8c1a…6aae]]    
+Dec 26 21:55:22.270  INFO 🔖 Pre-sealed block for proposal at 33. Hash now 0xaaccd09e88df92d22f9610fe964f3d045b1679a2dadfee360ceed1c382cf15b9, previously 0xc225b6101c3284a74b71756ea67d4859651fa48980820cb800935654f30aa6fc.    
+Dec 26 21:55:22.272  INFO ✨ Imported #[1;37m33[0m (0xaacc…15b9)    
+Dec 26 21:55:22.272  INFO call_offchain_worker(), block_number: 32    
+Dec 26 21:55:22.282  INFO Cosmos validators []    
+Dec 26 21:55:24.111  INFO 🙌 Starting consensus session on top of parent 0xaaccd09e88df92d22f9610fe964f3d045b1679a2dadfee360ceed1c382cf15b9    
+Dec 26 21:55:24.191  INFO 🎁 Prepared block for proposing at 34 [hash: 0x949572712f50a24419f7d7fa5af050b200d60e81e20058cdc458012a3ce360c7; parent_hash: 0xaacc…15b9; extrinsics (1): [0x78ab…1452]]    
+Dec 26 21:55:24.288  INFO 🔖 Pre-sealed block for proposal at 34. Hash now 0xbe89bec067370ed16eae347f9bfdb1d036ca735b8bb1555b0ddf66bc8d252c8c, previously 0x949572712f50a24419f7d7fa5af050b200d60e81e20058cdc458012a3ce360c7.    
+Dec 26 21:55:24.290  INFO ✨ Imported #[1;37m34[0m (0xbe89…2c8c)    
+Dec 26 21:55:24.290  INFO call_offchain_worker(), block_number: 33    
+Dec 26 21:55:24.300  INFO Cosmos validators []    
+Dec 26 21:55:26.097  INFO 🙌 Starting consensus session on top of parent 0xbe89bec067370ed16eae347f9bfdb1d036ca735b8bb1555b0ddf66bc8d252c8c    
+Dec 26 21:55:26.165  INFO 🎁 Prepared block for proposing at 35 [hash: 0x951cc3e4b370a70ff3365f62663438afba46096670cc9d12b10e29e952f12a9c; parent_hash: 0xbe89…2c8c; extrinsics (1): [0xb47f…2b70]]    
+Dec 26 21:55:26.215  INFO 💤 [1;37mIdle[0m ([1;37m0[0m peers), best: #[1;37m34[0m (0xbe89…2c8c), finalized #[1;37m32[0m (0xb226…baa7), [32m⬇ 0[0m [31m⬆ 0[0m    
+Dec 26 21:55:26.261  INFO 🔖 Pre-sealed block for proposal at 35. Hash now 0x89f17e28db313585c54aadf3fd849b950bc00543c8768a74289dfb0dd5c46f61, previously 0x951cc3e4b370a70ff3365f62663438afba46096670cc9d12b10e29e952f12a9c.    
+Dec 26 21:55:26.262  INFO ✨ Imported #[1;37m35[0m (0x89f1…6f61)    
+Dec 26 21:55:26.263  INFO call_offchain_worker(), block_number: 34    
+Dec 26 21:55:26.272  INFO Cosmos validators []    
+Dec 26 21:55:28.112  INFO 🙌 Starting consensus session on top of parent 0x89f17e28db313585c54aadf3fd849b950bc00543c8768a74289dfb0dd5c46f61    
+Dec 26 21:55:28.191  INFO 🎁 Prepared block for proposing at 36 [hash: 0x27fb91a28ae1b20c2e731551bc4dd31fc2aaebbc87a76877d4bd1518e14c30d1; parent_hash: 0x89f1…6f61; extrinsics (1): [0xf90b…da34]]    
+Dec 26 21:55:28.287  INFO 🔖 Pre-sealed block for proposal at 36. Hash now 0x08630d6e8370385702839665ff5d952ae7167d86b86e72729a5f1cbf7ca2bb3b, previously 0x27fb91a28ae1b20c2e731551bc4dd31fc2aaebbc87a76877d4bd1518e14c30d1.    
+Dec 26 21:55:28.289  INFO ✨ Imported #[1;37m36[0m (0x0863…bb3b)    
+Dec 26 21:55:28.289  INFO call_offchain_worker(), block_number: 35    
+Dec 26 21:55:28.298  INFO Cosmos validators []    
+Dec 26 21:55:30.112  INFO 🙌 Starting consensus session on top of parent 0x08630d6e8370385702839665ff5d952ae7167d86b86e72729a5f1cbf7ca2bb3b    
+Dec 26 21:55:30.182  INFO 🎁 Prepared block for proposing at 37 [hash: 0x60fff16261877621a93ce20251a13b3ade1f4bba67e5fa1bb043cd671cc0ef25; parent_hash: 0x0863…bb3b; extrinsics (1): [0x5ce0…5e78]]    
+Dec 26 21:55:30.278  INFO 🔖 Pre-sealed block for proposal at 37. Hash now 0x10bd91f81720d432c2026f47792c86e056d9a8a5ccd1a12a9bbc843de229ad90, previously 0x60fff16261877621a93ce20251a13b3ade1f4bba67e5fa1bb043cd671cc0ef25.    
+Dec 26 21:55:30.279  INFO ✨ Imported #[1;37m37[0m (0x10bd…ad90)    
+Dec 26 21:55:30.280  INFO call_offchain_worker(), block_number: 36    
+Dec 26 21:55:30.289  INFO Cosmos validators []    
+Dec 26 21:55:31.219  INFO 💤 [1;37mIdle[0m ([1;37m0[0m peers), best: #[1;37m37[0m (0x10bd…ad90), finalized #[1;37m34[0m (0xbe89…2c8c), [32m⬇ 0[0m [31m⬆ 0[0m    
+Dec 26 21:55:32.112  INFO 🙌 Starting consensus session on top of parent 0x10bd91f81720d432c2026f47792c86e056d9a8a5ccd1a12a9bbc843de229ad90    
+Dec 26 21:55:32.193  INFO 🎁 Prepared block for proposing at 38 [hash: 0x232c39fe0f192ad87c12072aecfb5e0800aff18ce83e86ceb3a1a48b71847bc9; parent_hash: 0x10bd…ad90; extrinsics (1): [0x238f…f0a9]]    
+Dec 26 21:55:32.289  INFO 🔖 Pre-sealed block for proposal at 38. Hash now 0x321457af053a69b8c6ee7f5685e7deec2c6131d12cdb9c311c0e8606f3e745ca, previously 0x232c39fe0f192ad87c12072aecfb5e0800aff18ce83e86ceb3a1a48b71847bc9.    
+Dec 26 21:55:32.290  INFO ✨ Imported #[1;37m38[0m (0x3214…45ca)    
+Dec 26 21:55:32.291  INFO call_offchain_worker(), block_number: 37    
+Dec 26 21:55:32.300  INFO Cosmos validators []    
+Dec 26 21:55:34.111  INFO 🙌 Starting consensus session on top of parent 0x321457af053a69b8c6ee7f5685e7deec2c6131d12cdb9c311c0e8606f3e745ca    
+Dec 26 21:55:34.181  INFO 🎁 Prepared block for proposing at 39 [hash: 0x0b9f19fa1c36eb9ee4b6829aa9a26a12d9f2aa9c4679b2b7caf131f6469899a8; parent_hash: 0x3214…45ca; extrinsics (1): [0x6469…ffb5]]    
+Dec 26 21:55:34.278  INFO 🔖 Pre-sealed block for proposal at 39. Hash now 0x2b1b8fc055cd398f8874da5c2355a09abddbe6bb01ea1aa1ae0460e86fc3d9c2, previously 0x0b9f19fa1c36eb9ee4b6829aa9a26a12d9f2aa9c4679b2b7caf131f6469899a8.    
+Dec 26 21:55:34.279  INFO ✨ Imported #[1;37m39[0m (0x2b1b…d9c2)    
+Dec 26 21:55:34.280  INFO call_offchain_worker(), block_number: 38    
+Dec 26 21:55:34.289  INFO Cosmos validators []    
+Dec 26 21:55:36.105  INFO 🙌 Starting consensus session on top of parent 0x2b1b8fc055cd398f8874da5c2355a09abddbe6bb01ea1aa1ae0460e86fc3d9c2    
+Dec 26 21:55:36.187  INFO 🎁 Prepared block for proposing at 40 [hash: 0x010ff5ee466c9f9459cc99be320bb6ef3e07ed98a76108ba243bcd8c28c1ca77; parent_hash: 0x2b1b…d9c2; extrinsics (1): [0x6765…c89f]]    
+Dec 26 21:55:36.224  INFO 💤 [1;37mIdle[0m ([1;37m0[0m peers), best: #[1;37m39[0m (0x2b1b…d9c2), finalized #[1;37m37[0m (0x10bd…ad90), [32m⬇ 0[0m [31m⬆ 0[0m    
+Dec 26 21:55:36.283  INFO 🔖 Pre-sealed block for proposal at 40. Hash now 0x61065d72696a7e50828f29b357f3eba0ee95afdf58bd4fe6ed2018e775d8a19f, previously 0x010ff5ee466c9f9459cc99be320bb6ef3e07ed98a76108ba243bcd8c28c1ca77.    
+Dec 26 21:55:36.284  INFO ✨ Imported #[1;37m40[0m (0x6106…a19f)    
+Dec 26 21:55:36.285  INFO call_offchain_worker(), block_number: 39    
+Dec 26 21:55:36.293  INFO Cosmos validators []    
+Dec 26 21:55:38.110  INFO 🙌 Starting consensus session on top of parent 0x61065d72696a7e50828f29b357f3eba0ee95afdf58bd4fe6ed2018e775d8a19f    
+Dec 26 21:55:38.182  INFO 🎁 Prepared block for proposing at 41 [hash: 0xf926c65639991360f866118982dc985c3ad4b851a2b71e3d288cc58253375c80; parent_hash: 0x6106…a19f; extrinsics (1): [0xfd59…e2aa]]    
+Dec 26 21:55:38.279  INFO 🔖 Pre-sealed block for proposal at 41. Hash now 0xce97e52f646fd5fec5256825f3f6e613dd902a3db5178c210688758d9cbed0b8, previously 0xf926c65639991360f866118982dc985c3ad4b851a2b71e3d288cc58253375c80.    
+Dec 26 21:55:38.280  INFO ✨ Imported #[1;37m41[0m (0xce97…d0b8)    
+Dec 26 21:55:38.281  INFO call_offchain_worker(), block_number: 40    
+Dec 26 21:55:38.291  INFO Cosmos validators []    
+Dec 26 21:55:40.115  INFO 🙌 Starting consensus session on top of parent 0xce97e52f646fd5fec5256825f3f6e613dd902a3db5178c210688758d9cbed0b8    
+Dec 26 21:55:40.202  INFO 🎁 Prepared block for proposing at 42 [hash: 0x3353e488eff8c04f9b55e18c2e00d7680088e6e2a8f3108157c961e0aa6947a0; parent_hash: 0xce97…d0b8; extrinsics (1): [0x6f3e…e286]]    
+Dec 26 21:55:40.300  INFO 🔖 Pre-sealed block for proposal at 42. Hash now 0xa4453a3a02505b804f36cb60beb06365f952da694cef1efdeeff7508936af443, previously 0x3353e488eff8c04f9b55e18c2e00d7680088e6e2a8f3108157c961e0aa6947a0.    
+Dec 26 21:55:40.301  INFO ✨ Imported #[1;37m42[0m (0xa445…f443)    
+Dec 26 21:55:40.302  INFO call_offchain_worker(), block_number: 41    
+Dec 26 21:55:40.310  INFO Cosmos validators []    
+Dec 26 21:55:41.227  INFO 💤 [1;37mIdle[0m ([1;37m0[0m peers), best: #[1;37m42[0m (0xa445…f443), finalized #[1;37m40[0m (0x6106…a19f), [32m⬇ 0[0m [31m⬆ 0[0m    
+Dec 26 21:55:42.112  INFO 🙌 Starting consensus session on top of parent 0xa4453a3a02505b804f36cb60beb06365f952da694cef1efdeeff7508936af443    
+Dec 26 21:55:42.187  INFO 🎁 Prepared block for proposing at 43 [hash: 0x404ad0cbda64382a0142a0a955d8825f1938a11d85563f094971445ec1831e9d; parent_hash: 0xa445…f443; extrinsics (1): [0x1a92…5158]]    
+Dec 26 21:55:42.285  INFO 🔖 Pre-sealed block for proposal at 43. Hash now 0x9aa2d213744e72fb4e65b414e796cf7a6c975033a92a8d7beb650ca44df2fd1a, previously 0x404ad0cbda64382a0142a0a955d8825f1938a11d85563f094971445ec1831e9d.    
+Dec 26 21:55:42.286  INFO ✨ Imported #[1;37m43[0m (0x9aa2…fd1a)    
+Dec 26 21:55:42.287  INFO call_offchain_worker(), block_number: 42    
+Dec 26 21:55:42.296  INFO Cosmos validators []    
+Dec 26 21:55:44.104  INFO 🙌 Starting consensus session on top of parent 0x9aa2d213744e72fb4e65b414e796cf7a6c975033a92a8d7beb650ca44df2fd1a    
+Dec 26 21:55:44.192  INFO 🎁 Prepared block for proposing at 44 [hash: 0x9ebcf970fac21f284ee08365efcc75122347a6a951990c1cda80623a54a22167; parent_hash: 0x9aa2…fd1a; extrinsics (1): [0x4b26…3fe9]]    
+Dec 26 21:55:44.290  INFO 🔖 Pre-sealed block for proposal at 44. Hash now 0xe227b6fddee827fd0a24e17a5aa6e4d5d1161d97e4cfc7b626fe07b0ee388a61, previously 0x9ebcf970fac21f284ee08365efcc75122347a6a951990c1cda80623a54a22167.    
+Dec 26 21:55:44.291  INFO ✨ Imported #[1;37m44[0m (0xe227…8a61)    
+Dec 26 21:55:44.292  INFO call_offchain_worker(), block_number: 43    
+Dec 26 21:55:44.300  INFO Cosmos validators []    
+Dec 26 21:55:46.106  INFO 🙌 Starting consensus session on top of parent 0xe227b6fddee827fd0a24e17a5aa6e4d5d1161d97e4cfc7b626fe07b0ee388a61    
+Dec 26 21:55:46.181  INFO 🎁 Prepared block for proposing at 45 [hash: 0xd7198d517a284a9bf218055c0fcbc43dbb4192f32111d917b9f37ab38f74d6ed; parent_hash: 0xe227…8a61; extrinsics (1): [0x2f93…5c56]]    
+Dec 26 21:55:46.231  INFO 💤 [1;37mIdle[0m ([1;37m0[0m peers), best: #[1;37m44[0m (0xe227…8a61), finalized #[1;37m42[0m (0xa445…f443), [32m⬇ 0[0m [31m⬆ 0[0m    
+Dec 26 21:55:46.280  INFO 🔖 Pre-sealed block for proposal at 45. Hash now 0xc77eab8bff793fa3fac8230a678fc03d1cfd4ad289b56f922cafaaf829a5438e, previously 0xd7198d517a284a9bf218055c0fcbc43dbb4192f32111d917b9f37ab38f74d6ed.    
+Dec 26 21:55:46.281  INFO ✨ Imported #[1;37m45[0m (0xc77e…438e)    
+Dec 26 21:55:46.282  INFO call_offchain_worker(), block_number: 44    
+Dec 26 21:55:46.290  INFO Cosmos validators []    
+Dec 26 21:55:46.360  INFO Accepted a new tcp connection from 127.0.0.1:63028.    

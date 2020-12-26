@@ -176,6 +176,7 @@ decl_module! {
         // Simple tx.
         #[weight = 0]
         fn insert_cosmos_account(origin, cosmos_account_id: Vec<u8>) -> DispatchResult {
+            debug::info!("The transaction ${:?}", cosmos_account_id);
             let origin_signed = ensure_signed(origin)?;
             <AccountLedger<T>>::insert(&origin_signed, Some((&origin_signed, 0)));
             <CosmosAccounts<T>>::insert(&cosmos_account_id, &origin_signed);
