@@ -33,7 +33,7 @@ type SessionIndex = u32;
 type OptionalLedger<AccountId> = Option<(AccountId, Balance)>;
 
 /// The Period for one session for runtime that is 2 blocks.
-pub const SESSION_PERIOD: u32 = 2;
+pub const SESSION_PERIOD: u32 = 1;
 
 /// Priority for unsigned transaction.
 pub const UNSIGNED_TXS_PRIORITY: u64 = 100;
@@ -469,6 +469,8 @@ pub trait AbciInterface {
         let cosmos_validators = result.get_validator_updates();
         debug::info!("Cosmos validators {:?}", cosmos_validators);
 
+        debug::info!("Block height end_block() {:?}", &height);
+
         let bytes = pallet_abci::utils::serialize_vec(cosmos_validators)
             .map_err(|_| "cannot deserialize cosmos validators")?;
 
@@ -538,6 +540,8 @@ impl<T: Trait>
         new_index: SessionIndex,
     ) -> Option<Vec<(T::AccountId, utils::Exposure<T::AccountId, Balance>)>> {
         let new_substrate_validators = Self::on_new_session(new_index);
+        let current_block_height = new_index;
+        debug::info!("Block height on_new_session() {:?}", current_block_height);
         if let Some(validators) = new_substrate_validators {
             return Some(
                 validators
