@@ -295,14 +295,11 @@ impl<T: Trait> Module<T> {
     }
 
     pub fn on_new_session(new_index: SessionIndex) -> Option<Vec<T::AccountId>> {
-        let substrate_node_validators = <pallet_session::Module<T>>::validators();
-        debug::info!(
-            "Substrate validators after last on_finalize {:?}",
-            substrate_node_validators
-        );
+        // Period 2
+        let corresponding_height = (new_index - 2) * 2;
 
         let next_cosmos_validators =
-            abci_interface::get_cosmos_validators(new_index.into()).unwrap();
+            abci_interface::get_cosmos_validators(corresponding_height.into()).unwrap();
 
         if !next_cosmos_validators.is_empty() {
             let mut new_substrate_validators: Vec<T::AccountId> = vec![];
@@ -463,7 +460,6 @@ pub trait AbciInterface {
             .end_block(height)
             .map_err(|_| "end_block failed")?;
         let cosmos_validators = result.get_validator_updates();
-        debug::info!("Cosmos validators {:?}", cosmos_validators);
 
         let bytes = pallet_abci::utils::serialize_vec(cosmos_validators)
             .map_err(|_| "cannot deserialize cosmos validators")?;
