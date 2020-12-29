@@ -296,8 +296,14 @@ impl<T: Trait> Module<T> {
 
     pub fn on_new_session(new_index: SessionIndex) -> Option<Vec<T::AccountId>> {
         // Period 2
-        let corresponding_height = (new_index - 2) * 2;
+        let mut corresponding_height = 0;
 
+        // Sessions starts after end_block() with number 2.
+        // For some reason two first sessions is missed.
+        if new_index > 2 {
+            corresponding_height = (new_index - 2) * 2;
+        }
+    
         let next_cosmos_validators =
             abci_interface::get_cosmos_validators(corresponding_height.into()).unwrap();
 
