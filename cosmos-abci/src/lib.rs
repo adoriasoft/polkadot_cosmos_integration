@@ -303,7 +303,7 @@ impl<T: Trait> Module<T> {
         if new_index > 2 {
             corresponding_height = (new_index - 2) * 2;
         }
-    
+
         let next_cosmos_validators =
             abci_interface::get_cosmos_validators(corresponding_height.into()).unwrap();
 
