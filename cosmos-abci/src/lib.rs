@@ -280,19 +280,11 @@ impl<T: Trait> Module<T> {
 
     pub fn update_keys_for_account(validator_id: T::AccountId) {
         let proof = vec![];
-        let set_keys_response = <session::Module<T>>::set_keys(
+        let _response = <session::Module<T>>::set_keys(
             RawOrigin::Signed(validator_id.clone()).into(),
             T::Keys::default(),
             proof,
         );
-        match set_keys_response {
-            Ok(_) => {
-                debug::info!("Set new keys for validator {:?}", validator_id);
-            }
-            Err(err) => {
-                debug::info!("Set keys for validator error {:?}", err);
-            }
-        }
     }
 
     pub fn on_new_session(new_index: SessionIndex) -> Option<Vec<T::AccountId>> {
@@ -324,7 +316,7 @@ impl<T: Trait> Module<T> {
             }
             if !new_substrate_validators.is_empty() {
                 debug::info!(
-                    "Substrate validators for update {:?}",
+                    "Substrate validators on_new_session() {:?}",
                     new_substrate_validators
                 );
                 return Some(new_substrate_validators);

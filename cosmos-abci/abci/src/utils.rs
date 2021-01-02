@@ -2,6 +2,9 @@ use chrono::DateTime;
 use std::{fs, path::PathBuf};
 use serde::{Serialize, Deserialize};
 
+// TODO Do we need this type for conversion?
+pub struct CombinedValidator0 { }
+
 #[derive(Debug)]
 pub struct CombinedValidator {
     pub pub_key: Vec<u8>,
@@ -114,7 +117,7 @@ pub fn parse_cosmos_genesis_file(genesis: &str) -> Result<GenesisInfo, Box<dyn s
         .ok_or_else(|| "chain_id not found".to_owned())?
         .parse::<u64>()?;
     let app_state_bytes = genesis["app_state"].to_string().as_bytes().to_vec();
-    let validators = vec![];
+    let validators: Vec<CombinedValidator0> = vec![];
     // TODO Parse initial validators set.
 
     let time = DateTime::parse_from_rfc3339(genesis_time)?;
