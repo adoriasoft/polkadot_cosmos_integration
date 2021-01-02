@@ -404,27 +404,21 @@ pub trait AbciInterface {
 
     fn get_cosmos_validators_from_storage(height: i64) -> Result<Vec<Vec<u8>>, DispatchError> {
         match storage_get(height.to_ne_bytes().to_vec()) {
-            Ok(validators_response) => {
-                match validators_response {
-                    Some(bytes) => {
-                        let validators = pallet_abci::utils::deserialize_vec::<
-                            pallet_abci::utils::SerializableValidatorUpdate,
-                        >(&bytes)
-                            .map_err(|_| "cannot deserialize ValidatorUpdate vector")?;
-                        let mut res = Vec::new();
-                        for val in validators {
-                            res.push(val.key_data);
-                        }
-                        Ok(res)
-                    },
-                    None => {
-                        Ok(Vec::new())
-                    },
+            Ok(validators_response) => match validators_response {
+                Some(bytes) => {
+                    let validators = pallet_abci::utils::deserialize_vec::<
+                        pallet_abci::utils::SerializableValidatorUpdate,
+                    >(&bytes)
+                    .map_err(|_| "cannot deserialize ValidatorUpdate vector")?;
+                    let mut res = Vec::new();
+                    for val in validators {
+                        res.push(val.key_data);
+                    }
+                    Ok(res)
                 }
+                None => Ok(Vec::new()),
             },
-            Err(_err) => {
-                Ok(Vec::new())
-            },
+            Err(_err) => Ok(Vec::new()),
         }
     }
 
@@ -434,8 +428,13 @@ pub trait AbciInterface {
         last_block_id: Vec<u8>,
         proposer_address: Vec<u8>,
     ) -> DispatchResult {
-        let last_cosmos_validators = abci_interface::get_cosmos_validators_from_storage(height).unwrap();
-        debug::info!("Validators on begin_block(): {:?} with height {}", last_cosmos_validators, height);
+        let last_cosmos_validators =
+            abci_interface::get_cosmos_validators_from_storage(height).unwrap();
+        debug::info!(
+            "Validators on begin_block(): {:?} with height {}",
+            last_cosmos_validators,
+            height
+        );
 
         let byzantine_validators: Vec<pallet_abci::protos::Evidence> = last_cosmos_validators
             .iter()
@@ -456,7 +455,13 @@ pub trait AbciInterface {
             .collect();
         let _result = pallet_abci::get_abci_instance()
             .map_err(|_| "failed to setup connection")?
-            .begin_block(height, hash, last_block_id, proposer_address, byzantine_validators)
+            .begin_block(
+                height,
+                hash,
+                last_block_id,
+                proposer_address,
+                byzantine_validators,
+            )
             .map_err(|_| "begin_block failed")?;
 
         Ok(())
@@ -468,13 +473,14 @@ pub trait AbciInterface {
             .end_block(height)
             .map_err(|_| "end_block failed")?;
         let bytes = pallet_abci::utils::serialize_vec(
-            result.get_validator_updates()
+            result
+                .get_validator_updates()
                 .iter()
                 .map(|validator| {
                     let mut pub_key = vec![];
                     match &validator.pub_key {
                         Some(key) => pub_key = key.data.clone(),
-                        None => { },
+                        None => {}
                     }
                     pallet_abci::utils::SerializableValidatorUpdate {
                         key_data: pub_key,
@@ -482,8 +488,9 @@ pub trait AbciInterface {
                         power: validator.power,
                     }
                 })
-                .collect()
-        ).map_err(|_| "cannot serialize cosmos validators")?;
+                .collect(),
+        )
+        .map_err(|_| "cannot serialize cosmos validators")?;
 
         abci_storage::get_abci_storage_instance()
             .map_err(|_| "failed to get abci storage instance")?

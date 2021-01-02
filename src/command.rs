@@ -54,13 +54,14 @@ fn init_chain() -> sc_cli::Result<()> {
                 )
                 .map_err(|_| "init chain failed")?;
             let bytes = pallet_abci::utils::serialize_vec(
-                init_chain_response.get_validators()
+                init_chain_response
+                    .get_validators()
                     .iter()
                     .map(|validator| {
                         let mut pub_key = vec![];
                         match &validator.pub_key {
                             Some(key) => pub_key = key.data.clone(),
-                            None => { },
+                            None => {}
                         }
                         pallet_abci::utils::SerializableValidatorUpdate {
                             key_data: pub_key,
@@ -68,8 +69,9 @@ fn init_chain() -> sc_cli::Result<()> {
                             power: validator.power,
                         }
                     })
-                    .collect()
-            ).map_err(|_| "cannot serialize cosmos validators")?;
+                    .collect(),
+            )
+            .map_err(|_| "cannot serialize cosmos validators")?;
             abci_storage
                 .write(0_i64.to_ne_bytes().to_vec(), bytes)
                 .map_err(|_| "failed to write validators into the abci storage")?;

@@ -1,9 +1,9 @@
 use chrono::DateTime;
+use serde::{Deserialize, Serialize};
 use std::{fs, path::PathBuf};
-use serde::{Serialize, Deserialize};
 
 // TODO Do we need this type for conversion?
-pub struct CombinedValidator0 { }
+pub struct CombinedValidator0 {}
 
 #[derive(Debug)]
 pub struct CombinedValidator {
@@ -42,9 +42,7 @@ pub fn deserialize_vec<'a, T: serde::Deserialize<'a>>(
 ) -> Result<Vec<T>, Box<dyn std::error::Error>> {
     let res = bincode::deserialize(bytes);
     match res {
-        Ok(deserialized) => {
-            Ok(deserialized)
-        },
+        Ok(deserialized) => Ok(deserialized),
         Err(err) => {
             println!("cannot deserialize {:?}", err);
             Ok(Vec::new())
@@ -71,14 +69,11 @@ pub fn get_abci_genesis() -> String {
 
 pub fn get_validator_address(validator_pub_key: Vec<u8>) -> Option<Vec<u8>> {
     let genesis = parse_cosmos_genesis_file(&get_abci_genesis()).unwrap();
-    let addresses: Vec<Vec<u8>> = genesis.validators
+    let addresses: Vec<Vec<u8>> = genesis
+        .validators
         .iter()
-        .filter(|combined| {
-            combined.pub_key.clone() == validator_pub_key
-        })
-        .map(|combined| {
-            combined.address.clone()
-        })
+        .filter(|combined| combined.pub_key.clone() == validator_pub_key)
+        .map(|combined| combined.address.clone())
         .collect();
     if addresses.len() > 0 {
         return Some(addresses[0].clone());
@@ -134,13 +129,11 @@ pub fn parse_cosmos_genesis_file(genesis: &str) -> Result<GenesisInfo, Box<dyn s
         app_state_bytes,
         validators: validators
             .iter()
-            .map(|_validator| {
-                CombinedValidator {
-                    address: vec![],
-                    pub_key: vec![],
-                }
+            .map(|_validator| CombinedValidator {
+                address: vec![],
+                pub_key: vec![],
             })
-            .collect()
+            .collect(),
     };
 
     Ok(result)
