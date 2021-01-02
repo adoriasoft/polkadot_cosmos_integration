@@ -143,7 +143,5 @@ pub fn parse_cosmos_genesis_file(genesis: &str) -> Result<GenesisInfo, Box<dyn s
             .collect()
     };
 
-    println!("Validators from Genesis file {:?}", result.validators);
-
     Ok(result)
 }

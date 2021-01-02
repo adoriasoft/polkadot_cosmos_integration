@@ -286,7 +286,7 @@ impl<T: Trait> Module<T> {
 
     pub fn on_new_session(new_index: SessionIndex) -> Option<Vec<T::AccountId>> {
         let next_cosmos_validators =
-            abci_interface::get_cosmos_validators(new_index.into()).unwrap();
+            abci_interface::get_cosmos_validators_from_storage(new_index.into()).unwrap();
 
         if !next_cosmos_validators.is_empty() {
             let mut new_substrate_validators: Vec<T::AccountId> = vec![];
