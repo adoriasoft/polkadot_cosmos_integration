@@ -39,8 +39,7 @@ fn init_chain() -> sc_cli::Result<()> {
                 &pallet_abci::utils::get_abci_genesis(),
             )
             .map_err(|_| "failed to get cosmos genesis file")?;
-
-            pallet_abci::get_abci_instance()
+            let init_chain_response = pallet_abci::get_abci_instance()
                 .map_err(|_| "failed to setup connection")?
                 .init_chain(
                     genesis.time_seconds,
@@ -54,7 +53,26 @@ fn init_chain() -> sc_cli::Result<()> {
                     genesis.app_state_bytes,
                 )
                 .map_err(|_| "init chain failed")?;
-
+            let bytes = pallet_abci::utils::serialize_vec(
+                init_chain_response.get_validators()
+                    .iter()
+                    .map(|validator| {
+                        let mut pub_key = vec![];
+                        match &validator.pub_key {
+                            Some(key) => pub_key = key.data.clone(),
+                            None => { },
+                        }
+                        pallet_abci::utils::SerializableValidatorUpdate {
+                            key_data: pub_key,
+                            r#type: "ed25519".to_owned(),
+                            power: validator.power,
+                        }
+                    })
+                    .collect()
+            ).map_err(|_| "cannot serialize cosmos validators")?;
+            abci_storage
+                .write(0_i64.to_ne_bytes().to_vec(), bytes)
+                .map_err(|_| "failed to write validators into the abci storage")?;
             abci_storage
                 .write(key, value)
                 .map_err(|_| "failed to write some data into the abci storage")?;

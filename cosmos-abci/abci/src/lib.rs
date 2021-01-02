@@ -72,7 +72,9 @@ pub trait ResponseDeliverTx {
 
 /// Trait that specify fields of ResponseInitChain.
 #[automock]
-pub trait ResponseInitChain {}
+pub trait ResponseInitChain {
+    fn get_validators(&self) -> Vec<protos::ValidatorUpdate>;
+}
 
 /// Trait that specify fields for ResponseSetOption.
 #[automock]
@@ -168,6 +170,7 @@ pub trait AbciInterface {
         hash: Vec<u8>,
         last_block_id: Vec<u8>,
         proposer_address: Vec<u8>,
+        byzantine_validators: Vec<protos::Evidence>
     ) -> AbciResult<dyn ResponseBeginBlock>;
 
     fn end_block(&mut self, height: i64) -> AbciResult<dyn ResponseEndBlock>;

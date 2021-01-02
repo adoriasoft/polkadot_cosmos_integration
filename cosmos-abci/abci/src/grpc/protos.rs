@@ -22,6 +22,12 @@ pub use proto::abci_proto::*;
 use serde::{de::Visitor, ser::SerializeStruct, Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt;
 
+impl crate::ResponseInitChain for ResponseInitChain {
+    fn get_validators(&self) -> Vec<ValidatorUpdate> {
+        self.validators.clone()
+    }
+}
+
 impl crate::ResponseSetOption for ResponseSetOption {
     fn get_code(&self) -> u32 {
         self.code
@@ -161,8 +167,6 @@ impl crate::ResponseDeliverTx for ResponseDeliverTx {
         self.codespace = v
     }
 }
-
-impl crate::ResponseInitChain for ResponseInitChain {}
 
 impl crate::ResponseBeginBlock for ResponseBeginBlock {}
 

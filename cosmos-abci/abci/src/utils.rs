@@ -1,5 +1,19 @@
 use chrono::DateTime;
 use std::{fs, path::PathBuf};
+use serde::{Serialize, Deserialize};
+
+#[derive(Debug)]
+pub struct CombinedValidator {
+    pub pub_key: Vec<u8>,
+    pub address: Vec<u8>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct SerializableValidatorUpdate {
+    pub key_data: Vec<u8>,
+    pub r#type: String,
+    pub power: i64,
+}
 
 pub struct GenesisInfo {
     pub time_seconds: i64,
@@ -11,6 +25,7 @@ pub struct GenesisInfo {
     pub max_age_num_blocks: i64,
     pub max_age_duration: u64,
     pub app_state_bytes: Vec<u8>,
+    pub validators: Vec<CombinedValidator>,
 }
 
 pub fn serialize_vec<T: serde::Serialize>(
@@ -22,7 +37,16 @@ pub fn serialize_vec<T: serde::Serialize>(
 pub fn deserialize_vec<'a, T: serde::Deserialize<'a>>(
     bytes: &'a [u8],
 ) -> Result<Vec<T>, Box<dyn std::error::Error>> {
-    Ok(bincode::deserialize(bytes).map_err(|_| "cannot deserialize")?)
+    let res = bincode::deserialize(bytes);
+    match res {
+        Ok(response) => {
+            Ok(response)
+        },
+        Err(err) => {
+            println!("Cannot deserialize {:?}", err);
+            Ok(Vec::new())
+        }
+    }
 }
 
 fn get_genesis_from_file() -> Result<String, Box<dyn std::error::Error>> {
@@ -40,6 +64,23 @@ pub fn get_abci_genesis() -> String {
             .map_err(|_| "Failed to get abci genesis state file")
             .unwrap(),
     }
+}
+
+pub fn get_validator_address(validator_pub_key: Vec<u8>) -> Option<Vec<u8>> {
+    let genesis = parse_cosmos_genesis_file(&get_abci_genesis()).unwrap();
+    let addresses: Vec<Vec<u8>> = genesis.validators
+        .iter()
+        .filter(|combined| {
+            combined.pub_key.clone() == validator_pub_key
+        })
+        .map(|combined| {
+            combined.address.clone()
+        })
+        .collect();
+    if addresses.len() > 0 {
+        return Some(addresses[0].clone());
+    }
+    None
 }
 
 pub fn parse_cosmos_genesis_file(genesis: &str) -> Result<GenesisInfo, Box<dyn std::error::Error>> {
@@ -73,6 +114,8 @@ pub fn parse_cosmos_genesis_file(genesis: &str) -> Result<GenesisInfo, Box<dyn s
         .ok_or_else(|| "chain_id not found".to_owned())?
         .parse::<u64>()?;
     let app_state_bytes = genesis["app_state"].to_string().as_bytes().to_vec();
+    let validators = vec![];
+    // TODO Parse initial validators set.
 
     let time = DateTime::parse_from_rfc3339(genesis_time)?;
 
@@ -86,7 +129,18 @@ pub fn parse_cosmos_genesis_file(genesis: &str) -> Result<GenesisInfo, Box<dyn s
         max_age_num_blocks,
         max_age_duration,
         app_state_bytes,
+        validators: validators
+            .iter()
+            .map(|_validator| {
+                CombinedValidator {
+                    address: vec![],
+                    pub_key: vec![],
+                }
+            })
+            .collect()
     };
+
+    println!("Validators from genesis {:?}", result.validators);
 
     Ok(result)
 }

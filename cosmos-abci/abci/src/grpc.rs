@@ -115,6 +115,7 @@ impl crate::AbciInterface for AbciinterfaceGrpc {
         hash: Vec<u8>,
         last_block_id: Vec<u8>,
         data_hash: Vec<u8>,
+        byzantine_validators: Vec<protos::Evidence>
     ) -> crate::AbciResult<dyn crate::ResponseBeginBlock> {
         let chain_id: String = self.chain_id.clone();
         self.last_commit_hash = hash.clone();
@@ -144,7 +145,7 @@ impl crate::AbciInterface for AbciinterfaceGrpc {
                 proposer_address: vec![],
             }),
             last_commit_info: None,
-            byzantine_validators: vec![],
+            byzantine_validators,
         });
         let future = self.client.begin_block(request);
         let response = wait(&self.rt, future)?;

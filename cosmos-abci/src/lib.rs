@@ -23,7 +23,8 @@ use sp_runtime::{
     DispatchError, RuntimeDebug,
 };
 use sp_runtime_interface::runtime_interface;
-use sp_std::prelude::*;
+use sp_std::{prelude::*, str};
+// use pallet_abci;
 
 /// Balance type for pallet.
 pub type Balance = u64;
@@ -304,13 +305,12 @@ impl<T: Trait> Module<T> {
             corresponding_height = (new_index - 2) * 2;
         }
 
-        let next_cosmos_validators =
-            abci_interface::get_cosmos_validators(corresponding_height.into()).unwrap();
+        let next_cosmos_validators = abci_interface::get_cosmos_validators_from_storage(corresponding_height.into()).unwrap();
 
         if !next_cosmos_validators.is_empty() {
             let mut new_substrate_validators: Vec<T::AccountId> = vec![];
             for cosmos_validator_id in &next_cosmos_validators {
-                let substrate_account_id = <CosmosAccounts<T>>::get(&cosmos_validator_id);
+                let substrate_account_id = <CosmosAccounts<T>>::get(cosmos_validator_id);
                 if substrate_account_id.is_some() {
                     if let Some(full_substrate_account_id) = substrate_account_id {
                         new_substrate_validators.push(full_substrate_account_id);
@@ -318,9 +318,7 @@ impl<T: Trait> Module<T> {
                         sp_runtime::print(
                             "WARNING: Not able to found Substrate account to Cosmos for ID \n",
                         );
-                        for &byte in cosmos_validator_id {
-                            sp_runtime::print(byte);
-                        }
+                        sp_runtime::print(str::from_utf8(cosmos_validator_id).unwrap());
                     }
                 }
             }
@@ -397,30 +395,6 @@ pub trait AbciInterface {
         Ok(value)
     }
 
-    fn get_cosmos_validators(height: i64) -> Result<Vec<Vec<u8>>, DispatchError> {
-        match abci_storage::get_abci_storage_instance()
-            .map_err(|_| "failed to get abci storage instance")?
-            .get(height.to_ne_bytes().to_vec())
-            .map_err(|_| "failed to get value from the abci storage")?
-        {
-            Some(bytes) => {
-                let validators = pallet_abci::utils::deserialize_vec::<
-                    pallet_abci::protos::ValidatorUpdate,
-                >(&bytes)
-                .map_err(|_| "cannot deserialize ValidatorUpdate vector")?;
-
-                let mut res = Vec::new();
-                for val in validators {
-                    if let Some(key) = val.pub_key {
-                        res.push(key.data);
-                    }
-                }
-                Ok(res)
-            }
-            None => Ok(Vec::new()),
-        }
-    }
-
     fn check_tx(data: Vec<u8>) -> Result<u64, DispatchError> {
         let result = pallet_abci::get_abci_instance()
             .map_err(|_| "failed to setup connection")?
@@ -447,16 +421,64 @@ pub trait AbciInterface {
         Ok(())
     }
 
+    fn get_cosmos_validators_from_storage(height: i64) -> Result<Vec<Vec<u8>>, DispatchError> {
+        match storage_get(height.to_ne_bytes().to_vec()) {
+            Ok(validators_response) => {
+                match validators_response {
+                    Some(bytes) => {
+                        let validators = pallet_abci::utils::deserialize_vec::<
+                            pallet_abci::utils::SerializableValidatorUpdate,
+                        >(&bytes)
+                            .map_err(|_| "cannot deserialize ValidatorUpdate vector")?;
+                        let mut res = Vec::new();
+                        for val in validators {
+                            res.push(val.key_data);
+                        }
+                        Ok(res)
+                    },
+                    None => {
+                        Ok(Vec::new())
+                    },
+                }
+            },
+            Err(_err) => {
+                Ok(Vec::new())
+            },
+        }
+    }
+
     fn begin_block(
         height: i64,
         hash: Vec<u8>,
         last_block_id: Vec<u8>,
         proposer_address: Vec<u8>,
     ) -> DispatchResult {
+        let last_cosmos_validators = abci_interface::get_cosmos_validators_from_storage(height).unwrap();
+        debug::info!("Validators on begin_block(): {:?} with height {}", last_cosmos_validators, height);
+
+        let byzantine_validators: Vec<pallet_abci::protos::Evidence> = last_cosmos_validators
+            .iter()
+            .map(|validator| {
+                let address = pallet_abci::utils::get_validator_address(validator.clone()).unwrap();
+                // TODO
+                // Do we need specify `type` and `power` from origin?
+                pallet_abci::protos::Evidence {
+                    r#type: "ed25519".to_owned(),
+                    validator: Some(pallet_abci::protos::Validator {
+                        power: 100,
+                        address,
+                    }),
+                    height,
+                    time: None,
+                    total_voting_power: 100,
+                }
+            })
+            .collect();
         let _result = pallet_abci::get_abci_instance()
             .map_err(|_| "failed to setup connection")?
-            .begin_block(height, hash, last_block_id, proposer_address)
+            .begin_block(height, hash, last_block_id, proposer_address, byzantine_validators)
             .map_err(|_| "begin_block failed")?;
+
         Ok(())
     }
 
@@ -465,12 +487,24 @@ pub trait AbciInterface {
             .map_err(|_| "failed to setup connection")?
             .end_block(height)
             .map_err(|_| "end_block failed")?;
-        let cosmos_validators = result.get_validator_updates();
+        let bytes = pallet_abci::utils::serialize_vec(
+            result.get_validator_updates()
+                .iter()
+                .map(|validator| {
+                    let mut pub_key = vec![];
+                    match &validator.pub_key {
+                        Some(key) => pub_key = key.data.clone(),
+                        None => { },
+                    }
+                    pallet_abci::utils::SerializableValidatorUpdate {
+                        key_data: pub_key,
+                        r#type: "ed25519".to_owned(),
+                        power: validator.power,
+                    }
+                })
+                .collect()
+        ).map_err(|_| "cannot serialize cosmos validators")?;
 
-        let bytes = pallet_abci::utils::serialize_vec(cosmos_validators)
-            .map_err(|_| "cannot deserialize cosmos validators")?;
-
-        // save it in the storage
         abci_storage::get_abci_storage_instance()
             .map_err(|_| "failed to get abci storage instance")?
             .write(height.to_ne_bytes().to_vec(), bytes)
