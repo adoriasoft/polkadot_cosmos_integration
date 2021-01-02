@@ -275,11 +275,11 @@ impl<T: Trait> Module<T> {
         }
     }
 
-    pub fn update_keys_for_account(validator_id: T::AccountId) {
+    pub fn update_keys_for_account(validator_id: T::AccountId, keys: T::Keys) {
         let proof = vec![];
         let _response = <session::Module<T>>::set_keys(
-            RawOrigin::Signed(validator_id.clone()).into(),
-            T::Keys::default(),
+            RawOrigin::Signed(validator_id).into(),
+            keys,
             proof,
         );
     }
