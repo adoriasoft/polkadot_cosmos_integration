@@ -42,11 +42,11 @@ pub fn deserialize_vec<'a, T: serde::Deserialize<'a>>(
 ) -> Result<Vec<T>, Box<dyn std::error::Error>> {
     let res = bincode::deserialize(bytes);
     match res {
-        Ok(response) => {
-            Ok(response)
+        Ok(deserialized) => {
+            Ok(deserialized)
         },
         Err(err) => {
-            println!("Cannot deserialize {:?}", err);
+            println!("cannot deserialize {:?}", err);
             Ok(Vec::new())
         }
     }
@@ -143,7 +143,7 @@ pub fn parse_cosmos_genesis_file(genesis: &str) -> Result<GenesisInfo, Box<dyn s
             .collect()
     };
 
-    println!("Validators from genesis {:?}", result.validators);
+    println!("Validators from Genesis file {:?}", result.validators);
 
     Ok(result)
 }

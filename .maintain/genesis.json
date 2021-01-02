@@ -244,14 +244,5 @@
         "supply": [],
         "denom_metadata": null
       }
-    },
-    "validators": [
-      {
-        "pub_key": {
-          "type": "ed25519",
-          "value": "dacf6e056bbefeb9333f35aec1a0a4c507afc4ce17552e0409fc72cf7e728bf0"
-        },
-        "power": "10"
-      }
-    ]
+    }
 }

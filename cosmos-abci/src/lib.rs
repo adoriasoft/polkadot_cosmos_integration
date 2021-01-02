@@ -24,7 +24,6 @@ use sp_runtime::{
 };
 use sp_runtime_interface::runtime_interface;
 use sp_std::{prelude::*, str};
-// use pallet_abci;
 
 /// Balance type for pallet.
 pub type Balance = u64;
@@ -176,8 +175,6 @@ decl_module! {
             let origin_signed = ensure_signed(origin)?;
             <AccountLedger<T>>::insert(&origin_signed, Some((&origin_signed, 0)));
             <CosmosAccounts<T>>::insert(&cosmos_account_id, &origin_signed);
-            // todo
-            // Save cosmos node accounts into rocks_db storage.
             Ok(())
         }
 
@@ -452,8 +449,7 @@ pub trait AbciInterface {
             .iter()
             .map(|validator| {
                 let address = pallet_abci::utils::get_validator_address(validator.clone()).unwrap();
-                // TODO
-                // Do we need specify `type` and `power` from origin?
+                // TODO Do we need specify `type` and `power` from origin?
                 pallet_abci::protos::Evidence {
                     r#type: "ed25519".to_owned(),
                     validator: Some(pallet_abci::protos::Validator {

@@ -255,7 +255,11 @@ pub const TEST_GENESIS: &str = r#"
             "supply": [],
             "denom_metadata": null
         }
-    },
+    }
+}"#;
+
+// TODO Example of validators to add to Genesis.
+/*
     "validators": [
         {
           "address": "B547AB87E79F75A4A3198C57A8C2FDAF8628CB47",
@@ -267,7 +271,7 @@ pub const TEST_GENESIS: &str = r#"
           "name": "Alice"
         }
     ]
-}"#;
+*/
 
 /// App version type.
 pub type AppVersion = String;
