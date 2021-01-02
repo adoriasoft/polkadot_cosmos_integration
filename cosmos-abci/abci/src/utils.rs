@@ -75,7 +75,7 @@ pub fn get_validator_address(validator_pub_key: Vec<u8>) -> Option<Vec<u8>> {
         .filter(|combined| combined.pub_key.clone() == validator_pub_key)
         .map(|combined| combined.address.clone())
         .collect();
-    if !addresses.clone().is_empty() {
+    if !addresses.is_empty() {
         return Some(addresses[0].clone());
     }
     None
