@@ -113,7 +113,7 @@ pub fn parse_cosmos_genesis_file(genesis: &str) -> Result<GenesisInfo, Box<dyn s
         max_gas,
         max_age_num_blocks,
         max_age_duration,
-        app_state_bytes
+        app_state_bytes,
     };
 
     Ok(result)
