@@ -432,24 +432,8 @@ pub trait AbciInterface {
             last_cosmos_validators,
             height
         );
-
-        let byzantine_validators: Vec<pallet_abci::protos::Evidence> = last_cosmos_validators
-            .iter()
-            .map(|validator| {
-                let address = pallet_abci::utils::get_validator_address(validator.clone()).unwrap();
-                // TODO Do we need specify `type` and `power` from origin?
-                pallet_abci::protos::Evidence {
-                    r#type: "ed25519".to_owned(),
-                    validator: Some(pallet_abci::protos::Validator {
-                        power: 100,
-                        address,
-                    }),
-                    height,
-                    time: None,
-                    total_voting_power: 100,
-                }
-            })
-            .collect();
+        // TODO Get evidence validators.
+        let byzantine_validators: Vec<pallet_abci::protos::Evidence> = vec![];
         let _result = pallet_abci::get_abci_instance()
             .map_err(|_| "failed to setup connection")?
             .begin_block(

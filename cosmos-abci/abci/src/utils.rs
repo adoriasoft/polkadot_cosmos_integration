@@ -2,15 +2,6 @@ use chrono::DateTime;
 use serde::{Deserialize, Serialize};
 use std::{fs, path::PathBuf};
 
-// TODO Do we need this type for conversion?
-pub struct CombinedValidator0 {}
-
-#[derive(Debug)]
-pub struct CombinedValidator {
-    pub pub_key: Vec<u8>,
-    pub address: Vec<u8>,
-}
-
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SerializableValidatorUpdate {
     pub key_data: Vec<u8>,
@@ -28,7 +19,6 @@ pub struct GenesisInfo {
     pub max_age_num_blocks: i64,
     pub max_age_duration: u64,
     pub app_state_bytes: Vec<u8>,
-    pub validators: Vec<CombinedValidator>,
 }
 
 pub fn serialize_vec<T: serde::Serialize>(
@@ -67,7 +57,7 @@ pub fn get_abci_genesis() -> String {
     }
 }
 
-pub fn get_validator_address(validator_pub_key: Vec<u8>) -> Option<Vec<u8>> {
+/* pub fn get_validator_address(validator_pub_key: Vec<u8>) -> Option<Vec<u8>> {
     let genesis = parse_cosmos_genesis_file(&get_abci_genesis()).unwrap();
     let addresses: Vec<Vec<u8>> = genesis
         .validators
@@ -79,7 +69,7 @@ pub fn get_validator_address(validator_pub_key: Vec<u8>) -> Option<Vec<u8>> {
         return Some(addresses[0].clone());
     }
     None
-}
+} */
 
 pub fn parse_cosmos_genesis_file(genesis: &str) -> Result<GenesisInfo, Box<dyn std::error::Error>> {
     let genesis: serde_json::Value = serde_json::from_str(genesis).map_err(|e| e.to_string())?;
@@ -112,9 +102,6 @@ pub fn parse_cosmos_genesis_file(genesis: &str) -> Result<GenesisInfo, Box<dyn s
         .ok_or_else(|| "chain_id not found".to_owned())?
         .parse::<u64>()?;
     let app_state_bytes = genesis["app_state"].to_string().as_bytes().to_vec();
-    let validators: Vec<CombinedValidator0> = vec![];
-    // TODO Parse initial validators set.
-
     let time = DateTime::parse_from_rfc3339(genesis_time)?;
 
     let result: GenesisInfo = GenesisInfo {
@@ -126,14 +113,7 @@ pub fn parse_cosmos_genesis_file(genesis: &str) -> Result<GenesisInfo, Box<dyn s
         max_gas,
         max_age_num_blocks,
         max_age_duration,
-        app_state_bytes,
-        validators: validators
-            .iter()
-            .map(|_validator| CombinedValidator {
-                address: vec![],
-                pub_key: vec![],
-            })
-            .collect(),
+        app_state_bytes
     };
 
     Ok(result)
