@@ -541,11 +541,11 @@ impl<T: Trait> pallet_session::ShouldEndSession<T::BlockNumber> for Module<T> {
     fn should_end_session(now: T::BlockNumber) -> bool {
         debug::info!("should_end_session() now: {:?}", now);
         match <SessionHeight<T>>::get(now) {
-            Some(height) => {
+            Some(height) => now > height,
+            None => {
                 <SessionHeight<T>>::insert(now, now);
-                now > height
+                true
             }
-            None => false,
         }
     }
 }
