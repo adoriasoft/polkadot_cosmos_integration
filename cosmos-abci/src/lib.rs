@@ -541,7 +541,7 @@ impl<T: Trait> pallet_session::SessionManager<T::AccountId> for Module<T> {
 }
 
 impl<T: Trait> pallet_session::ShouldEndSession<T::BlockNumber> for Module<T> {
-    fn should_end_session(now: T::BlockNumber) -> bool {
+    fn should_end_session(_: T::BlockNumber) -> bool {
         true
     }
 }
