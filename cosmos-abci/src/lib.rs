@@ -155,6 +155,7 @@ decl_storage! {
         ABCITxStorage get(fn abci_tx): map hasher(blake2_128_concat) T::BlockNumber => ABCITxs;
         CosmosAccounts get(fn cosmos_accounts): map hasher(blake2_128_concat) utils::CosmosAccountId => Option<T::AccountId> = None;
         AccountLedger get(fn account_ledgers): map hasher(blake2_128_concat) T::AccountId => OptionalLedger<T::AccountId>;
+        SessionHeight get(fn current_session_height): map hasher(blake2_128_concat) T::BlockNumber => Option<T::BlockNumber> = None;
     }
 }
 
@@ -162,11 +163,13 @@ decl_module! {
     pub struct Module<T: Trait> for enum Call where origin: T::Origin {
         // Block initialization.
         fn on_initialize(block_number: T::BlockNumber) -> Weight {
+            debug::info!("on_initialize() block_number: {:?}", block_number);
             0
         }
 
         // Block finalization.
         fn on_finalize(block_number: T::BlockNumber) {
+            debug::info!("on_finalize() block_number: {:?}", block_number);
         }
 
         // Simple tx.
@@ -461,6 +464,7 @@ pub trait AbciInterface {
     }
 
     fn end_block(height: i64) -> DispatchResult {
+        debug::info!("end_block() height: {:?}", height);
         let result = pallet_abci::get_abci_instance()
             .map_err(|_| "failed to setup connection")?
             .end_block(height)
@@ -520,43 +524,28 @@ impl<T: Trait> Convert<T::AccountId, Option<utils::Exposure<T::AccountId, Balanc
 
 impl<T: Trait> pallet_session::SessionManager<T::AccountId> for Module<T> {
     fn new_session(new_index: SessionIndex) -> Option<Vec<T::AccountId>> {
+        debug::info!("new_session() end_index: {:?}", new_index);
         Self::on_new_session(new_index)
     }
 
-    fn end_session(_end_index: SessionIndex) {}
-
-    fn start_session(_start_index: SessionIndex) {}
-}
-
-impl<T: Trait>
-    pallet_session::historical::SessionManager<T::AccountId, utils::Exposure<T::AccountId, Balance>>
-    for Module<T>
-{
-    fn new_session(
-        new_index: SessionIndex,
-    ) -> Option<Vec<(T::AccountId, utils::Exposure<T::AccountId, Balance>)>> {
-        let new_substrate_validators = Self::on_new_session(new_index);
-        if let Some(validators) = new_substrate_validators {
-            return Some(
-                validators
-                    .iter()
-                    .map(|validator| {
-                        (
-                            validator.clone(),
-                            utils::Exposure {
-                                total: 0,
-                                own: 0,
-                                others: vec![],
-                            },
-                        )
-                    })
-                    .collect(),
-            );
-        }
-        None
+    fn end_session(_end_index: SessionIndex) {
+        debug::info!("end_session() end_index: {:?}", _end_index);
     }
 
-    fn end_session(_end_index: SessionIndex) {}
+    fn start_session(_start_index: SessionIndex) {
+        debug::info!("start_session() start_index: {:?}", _start_index);
+    }
+}
 
-    fn start_session(_start_index: SessionIndex) {}
+impl<T: Trait> pallet_session::ShouldEndSession<T::BlockNumber> for Module<T> {
+    fn should_end_session(now: T::BlockNumber) -> bool {
+        debug::info!("should_end_session() now: {:?}", now);
+        match <SessionHeight<T>>::get(now) {
+            Some(height) => {
+                <SessionHeight<T>>::insert(now, now);
+                now > height
+            }
+            None => false,
+        }
+    }
 }
