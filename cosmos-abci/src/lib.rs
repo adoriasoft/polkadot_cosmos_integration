@@ -298,14 +298,17 @@ impl<T: Trait> Module<T> {
     }
 
     pub fn on_new_session(new_index: SessionIndex) -> Option<Vec<T::AccountId>> {
-        // Period 2
-        let mut corresponding_height = 0;
-
         // Sessions starts after end_block() with number 2.
         // For some reason two first sessions is missed.
+        let mut corresponding_height = 0;
         if new_index > 2 {
-            corresponding_height = (new_index - 2) * 2;
+            corresponding_height = new_index - 3;
         }
+
+        debug::info!(
+            "on_new_session() corresponding_height: {:?}",
+            corresponding_height
+        );
 
         let next_cosmos_validators =
             abci_interface::get_cosmos_validators(corresponding_height.into()).unwrap();
@@ -539,13 +542,6 @@ impl<T: Trait> pallet_session::SessionManager<T::AccountId> for Module<T> {
 
 impl<T: Trait> pallet_session::ShouldEndSession<T::BlockNumber> for Module<T> {
     fn should_end_session(now: T::BlockNumber) -> bool {
-        debug::info!("should_end_session() now: {:?}", now);
-        match <SessionHeight<T>>::get(now) {
-            Some(height) => now > height,
-            None => {
-                <SessionHeight<T>>::insert(now, now);
-                true
-            }
-        }
+        true
     }
 }
