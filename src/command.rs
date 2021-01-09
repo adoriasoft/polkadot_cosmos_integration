@@ -51,6 +51,7 @@ fn init_chain() -> sc_cli::Result<()> {
                     genesis.max_age_num_blocks,
                     genesis.max_age_duration,
                     genesis.app_state_bytes,
+                    vec![]
                 )
                 .map_err(|_| "init chain failed")?;
             let bytes = pallet_abci::utils::serialize_vec(

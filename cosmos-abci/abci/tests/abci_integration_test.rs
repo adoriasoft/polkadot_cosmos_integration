@@ -42,6 +42,7 @@ fn test_abci_begin_block() {
         genesis.max_age_num_blocks,
         genesis.max_age_duration,
         genesis.app_state_bytes,
+        vec![]
     );
     assert!(result.is_ok(), "should successfully call init chain");
 

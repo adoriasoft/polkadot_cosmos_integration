@@ -160,6 +160,7 @@ pub trait AbciInterface {
         max_age_num_blocks: i64,
         max_age_duration: u64,
         app_state_bytes: Vec<u8>,
+        validators: Vec<protos::ValidatorUpdate>,
     ) -> AbciResult<dyn ResponseInitChain>;
 
     fn set_option(&mut self, key: &str, value: &str) -> AbciResult<dyn ResponseSetOption>;

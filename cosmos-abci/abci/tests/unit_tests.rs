@@ -12,7 +12,6 @@ fn test_abci_echo() {
         Ok(Box::new(ret))
     });
 
-    //
     set_abci_instance(Box::new(abci_mock)).unwrap();
 
     assert_eq!(

@@ -19,7 +19,7 @@ mod proto {
 pub use crypto::merkle::*;
 pub use libs::kv::*;
 pub use proto::abci_proto::*;
-use serde::{de::Visitor, ser::SerializeStruct, Deserialize, Deserializer, Serialize, Serializer};
+use serde::{de::{Visitor, Error, MapAccess}, ser::SerializeStruct, Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt;
 
 impl crate::ResponseInitChain for ResponseInitChain {
@@ -176,17 +176,18 @@ impl Serialize for PubKey {
         S: Serializer,
     {
         let mut state = serializer.serialize_struct("PubKey", 2)?;
-        state.serialize_field("type", &self.r#type)?;
+        state.serialize_field("r#type", &self.r#type)?;
         state.serialize_field("data", &self.data)?;
         state.end()
     }
 }
 
 impl<'de> Deserialize<'de> for PubKey {
-    fn deserialize<D>(deserialize: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
+    fn deserialize<D>(deserialize: D) -> Result<Self, D::Error> where D: Deserializer<'de> {
+        #[derive(Deserialize)]
+        #[serde(field_identifier, rename_all = "lowercase")]
+        enum Field { Data, Type }
+    
         struct PubKeyVisitor;
 
         impl<'de> Visitor<'de> for PubKeyVisitor {
@@ -194,6 +195,27 @@ impl<'de> Deserialize<'de> for PubKey {
 
             fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
                 formatter.write_str("struct PubKey")
+            }
+
+            fn visit_map<V>(self, mut map: V) -> Result<PubKey, V::Error>
+            where
+                V: MapAccess<'de>,
+            {
+                let mut r_type = None;
+                let mut data = None;
+                while let Some(key) = map.next_key()? {
+                    match key {
+                        Field::Data => {
+                            data = Some(map.next_value()?);
+                        }
+                        Field::Type => {
+                            r_type = Some(map.next_value()?);
+                        }
+                    }
+                }
+                let r_type = r_type.ok_or_else(|| Error::missing_field("type"))?;
+                let data = data.ok_or_else(|| Error::missing_field("data"))?;
+                Ok(PubKey { r#type: r_type, data })
             }
         }
 

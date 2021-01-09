@@ -1,8 +1,9 @@
 use chrono::DateTime;
 use serde::{Deserialize, Serialize};
 use std::{fs, path::PathBuf};
+use core::cmp::PartialEq;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct SerializableValidatorUpdate {
     pub key_data: Vec<u8>,
     pub r#type: String,
@@ -19,6 +20,12 @@ pub struct GenesisInfo {
     pub max_age_num_blocks: i64,
     pub max_age_duration: u64,
     pub app_state_bytes: Vec<u8>,
+}
+
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
+pub struct PubKeyInfo {
+    pub data: Vec<u8>,
+    pub r#type: String
 }
 
 pub fn serialize_vec<T: serde::Serialize>(
