@@ -89,7 +89,7 @@ fn remove_abci_storage(config: &Configuration) -> sc_cli::Result<()> {
     io::stdin().read_line(&mut input)?;
     let input = input.trim();
 
-    match input.chars().nth(0) {
+    match input.chars().next() {
         Some('y') | Some('Y') => {}
         _ => {
             println!("Aborted");
