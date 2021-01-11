@@ -163,13 +163,13 @@ decl_module! {
     pub struct Module<T: Trait> for enum Call where origin: T::Origin {
         // Block initialization.
         fn on_initialize(block_number: T::BlockNumber) -> Weight {
-            debug::info!("on_initialize() block_number: {:?}", block_number);
+            // debug::info!("on_initialize() block_number: {:?}", block_number);
             0
         }
 
         // Block finalization.
         fn on_finalize(block_number: T::BlockNumber) {
-            debug::info!("on_finalize() block_number: {:?}", block_number);
+            // debug::info!("on_finalize() block_number: {:?}", block_number);
         }
 
         // Simple tx.
@@ -219,6 +219,7 @@ decl_module! {
 impl<T: Trait> Module<T> {
     // The abci transaction call.
     pub fn call_abci_transaction(data: Vec<u8>) -> DispatchResult {
+        debug::info!("call_abci_transaction()");
         let block_number = <system::Module<T>>::block_number();
         let mut abci_txs: ABCITxs = <ABCITxStorage<T>>::get(block_number);
         abci_txs.data_array.push(data);
@@ -233,13 +234,13 @@ impl<T: Trait> Module<T> {
         parent_hash: T::Hash,
         extrinsics_root: T::Hash,
     ) {
-        debug::info!("call_offchain_worker(), block_number: {:?}", block_number);
+        // debug::info!("call_offchain_worker(), block_number: {:?}", block_number);
 
         Self::call_on_initialize(block_number, block_hash, parent_hash, extrinsics_root);
 
         let abci_txs: ABCITxs = <ABCITxStorage<T>>::get(block_number);
         for abci_tx in abci_txs.data_array {
-            debug::info!("call_offchain_worker(), abci_tx: {:?}", abci_tx);
+            // debug::info!("call_offchain_worker(), abci_tx: {:?}", abci_tx);
             let _ = <Self as CosmosAbci>::deliver_tx(abci_tx)
                 .map_err(|e| debug::error!("deliver_tx() error: {:?}", e))
                 .unwrap();
@@ -305,10 +306,10 @@ impl<T: Trait> Module<T> {
             corresponding_height = new_index - 3;
         }
 
-        debug::info!(
-            "on_new_session() corresponding_height: {:?}",
-            corresponding_height
-        );
+        // debug::info!(
+        //     "on_new_session() corresponding_height: {:?}",
+        //     corresponding_height
+        // );
 
         let next_cosmos_validators =
             abci_interface::get_cosmos_validators(corresponding_height.into()).unwrap();
@@ -366,11 +367,13 @@ impl<T: Trait> frame_support::unsigned::ValidateUnsigned for Module<T> {
 /// The implementation for CosmosAbci trait for pallet.
 impl<T: Trait> CosmosAbci for Module<T> {
     fn check_tx(data: Vec<u8>) -> Result<u64, DispatchError> {
+        debug::info!("check_tx called");
         <T::Subscription as SubscriptionManager>::on_check_tx(data.clone())?;
         abci_interface::check_tx(data)
     }
 
     fn deliver_tx(data: Vec<u8>) -> DispatchResult {
+        debug::info!("deliver_tx called");
         <T::Subscription as SubscriptionManager>::on_deliver_tx(data.clone())?;
         abci_interface::deliver_tx(data)
     }
@@ -467,7 +470,7 @@ pub trait AbciInterface {
     }
 
     fn end_block(height: i64) -> DispatchResult {
-        debug::info!("end_block() height: {:?}", height);
+        // debug::info!("end_block() height: {:?}", height);
         let result = pallet_abci::get_abci_instance()
             .map_err(|_| "failed to setup connection")?
             .end_block(height)
@@ -527,16 +530,16 @@ impl<T: Trait> Convert<T::AccountId, Option<utils::Exposure<T::AccountId, Balanc
 
 impl<T: Trait> pallet_session::SessionManager<T::AccountId> for Module<T> {
     fn new_session(new_index: SessionIndex) -> Option<Vec<T::AccountId>> {
-        debug::info!("new_session() end_index: {:?}", new_index);
+        // debug::info!("new_session() end_index: {:?}", new_index);
         Self::on_new_session(new_index)
     }
 
     fn end_session(_end_index: SessionIndex) {
-        debug::info!("end_session() end_index: {:?}", _end_index);
+        // debug::info!("end_session() end_index: {:?}", _end_index);
     }
 
     fn start_session(_start_index: SessionIndex) {
-        debug::info!("start_session() start_index: {:?}", _start_index);
+        // debug::info!("start_session() start_index: {:?}", _start_index);
     }
 }
 
