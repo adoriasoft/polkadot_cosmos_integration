@@ -254,31 +254,33 @@ impl crate::ResponseQuery for ResponseQuery {
 mod tests {
     #[test]
     fn abci_pub_key_serde() {
-        let pub_key = PubKey {
+        let pub_key = crate::protos::PubKey {
             data: vec![10, 12, 15],
             r#type: "ed25519".to_string(),
         };
         let bytes_from_pub_key = bincode::serialize(&pub_key).unwrap();
         println!("{:?}", bytes_from_pub_key);
-        let pub_key_deserialized: Result<PubKey, Box<bincode::ErrorKind>> =
+        let pub_key_deserialized: Result<crate::protos::PubKey, Box<bincode::ErrorKind>> =
             bincode::deserialize(&bytes_from_pub_key);
         assert_eq!(pub_key, pub_key_deserialized.unwrap());
     }
 
     #[test]
     fn validation_update_serde() {
-        let pub_key = PubKey {
+        let pub_key = crate::protos::PubKey {
             data: vec![10, 12, 15],
             r#type: "ed25519".to_string(),
         };
-        let validator_update = ValidatorUpdate {
+        let validator_update = crate::protos::ValidatorUpdate {
             pub_key: Some(pub_key),
             power: 14515,
         };
         let bytes_from_pub_key = bincode::serialize(&validator_update).unwrap();
         println!("{:?}", bytes_from_pub_key);
-        let validator_update_deserialized: Result<ValidatorUpdate, Box<bincode::ErrorKind>> =
-            bincode::deserialize(&bytes_from_pub_key);
+        let validator_update_deserialized: Result<
+            crate::protos::ValidatorUpdate,
+            Box<bincode::ErrorKind>,
+        > = bincode::deserialize(&bytes_from_pub_key);
         assert_eq!(validator_update, validator_update_deserialized.unwrap());
     }
 }
