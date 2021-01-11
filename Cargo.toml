@@ -79,5 +79,5 @@ default = []
 runtime-benchmarks = ['node-template-runtime/runtime-benchmarks']
 
 [patch.crates-io]
-prost = { git = "https://github.com/adoriasoft/prost", rev = "389010a0a79ef2a5805f510a76108e531c1fb621" }
-prost-types = { git = "https://github.com/adoriasoft/prost", rev = "389010a0a79ef2a5805f510a76108e531c1fb621" }
+prost = { git = 'https://github.com/adoriasoft/prost', rev = '389010a0a79ef2a5805f510a76108e531c1fb621' }
+prost-types = { git = 'https://github.com/adoriasoft/prost', rev = '389010a0a79ef2a5805f510a76108e531c1fb621' }
