@@ -108,7 +108,6 @@ pub fn new_partial(
 
 fn init_chain() -> Result<(), ServiceError> {
     let key = b"init_chain_info".to_vec();
-    let value = b"init_chain_info".to_vec();
 
     let mut abci_storage = abci_storage::get_abci_storage_instance()
         .map_err(|_| "failed to get abci storage instance")?;
@@ -141,7 +140,7 @@ fn init_chain() -> Result<(), ServiceError> {
                 .map_err(|_| "init chain failed")?;
 
             abci_storage
-                .write(key, value)
+                .write(key.clone(), key)
                 .map_err(|_| "failed to write some data into the abci storage")?;
         }
     }

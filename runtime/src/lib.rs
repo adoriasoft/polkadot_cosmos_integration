@@ -267,7 +267,7 @@ impl pallet_transaction_payment::Trait for Runtime {
 parameter_types! {
     pub const DisabledValidatorsThreshold: Perbill = Perbill::from_percent(33);
     /// 2 blocks = session duration.
-    pub const Period: BlockNumber = 1;
+    pub const Period: BlockNumber = 2;
     pub const Offset: BlockNumber = 0;
 }
 
@@ -283,7 +283,7 @@ impl pallet_session::Trait for Runtime {
     type Event = Event;
     type ValidatorId = <Self as frame_system::Trait>::AccountId;
     type ValidatorIdOf = pallet_cosmos_abci::utils::StashOf<Self>;
-    type ShouldEndSession = CosmosAbci;
+    type ShouldEndSession = pallet_session::PeriodicSessions<Period, Offset>;
     type NextSessionRotation = pallet_session::PeriodicSessions<Period, Offset>;
     type SessionManager = CosmosAbci;
     type SessionHandler = <opaque::SessionKeys as OpaqueKeys>::KeyTypeIdProviders;

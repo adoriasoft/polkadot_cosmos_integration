@@ -14,7 +14,7 @@ use frame_system::{
     RawOrigin,
 };
 use pallet_session as session;
-use sp_core::crypto::KeyTypeId;
+use sp_core::{crypto::KeyTypeId, Hasher};
 use sp_runtime::{
     traits::{Convert, SaturatedConversion},
     transaction_validity::{
@@ -23,7 +23,7 @@ use sp_runtime::{
     DispatchError, RuntimeDebug,
 };
 use sp_runtime_interface::runtime_interface;
-use sp_std::prelude::*;
+use sp_std::{convert::TryInto, prelude::*};
 
 /// Balance type for pallet.
 pub type Balance = u64;
@@ -155,7 +155,6 @@ decl_storage! {
         ABCITxStorage get(fn abci_tx): map hasher(blake2_128_concat) T::BlockNumber => ABCITxs;
         CosmosAccounts get(fn cosmos_accounts): map hasher(blake2_128_concat) utils::CosmosAccountId => Option<T::AccountId> = None;
         AccountLedger get(fn account_ledgers): map hasher(blake2_128_concat) T::AccountId => OptionalLedger<T::AccountId>;
-        SessionHeight get(fn current_session_height): map hasher(blake2_128_concat) T::BlockNumber => Option<T::BlockNumber> = None;
     }
 }
 
@@ -202,15 +201,28 @@ decl_module! {
 
         // Offchain worker logic.
         fn offchain_worker(block_number: T::BlockNumber) {
-            if block_number.saturated_into() as i64 != 0 {
-                // hash of the current block
-                let block_hash = <system::Module<T>>::block_hash(block_number);
-                // hash of the previous block
-                let parent_hash = <system::Module<T>>::parent_hash();
-                // hash of the extrinsics root
-                let extrinsics_root = <system::Module<T>>::extrinsics_root();
-                Self::call_offchain_worker(block_number, block_hash, parent_hash, extrinsics_root);
-            }
+            match abci_interface::storage_get("abci_current_height".as_bytes().to_vec()).unwrap() {
+                Some(bytes) => {
+                    let mut height: u32 = u32::from_ne_bytes(bytes.as_slice().try_into().unwrap());
+                    while height != block_number.saturated_into() as u32 {
+                        height += 1;
+                        if height !=0 {
+                            let block_hash = <system::Module<T>>::block_hash(T::BlockNumber::from(height));
+                            let parent_hash = <system::Module<T>>::block_hash(T::BlockNumber::from(height - 1));
+                            let extrinsic_data = <system::Module<T>>::extrinsic_data(block_number.saturated_into() as u32);
+                            // TODO: fix it, calculate the original extrinsics_root of the block
+                            let extrinsics_root = T::Hashing::hash(extrinsic_data.as_slice());
+
+                            Self::call_offchain_worker(T::BlockNumber::from(height), block_hash, parent_hash, extrinsics_root);
+                        }
+                    }
+
+                }
+                None => {}
+            };
+
+            abci_interface::storage_write("abci_current_height".as_bytes().to_vec(),
+             (block_number.saturated_into() as u32).to_ne_bytes().to_vec()).unwrap();
         }
     }
 }
@@ -234,13 +246,12 @@ impl<T: Trait> Module<T> {
         parent_hash: T::Hash,
         extrinsics_root: T::Hash,
     ) {
-        // debug::info!("call_offchain_worker(), block_number: {:?}", block_number);
+        debug::info!("call_offchain_worker(), block_number: {:?}", block_number);
 
         Self::call_on_initialize(block_number, block_hash, parent_hash, extrinsics_root);
 
         let abci_txs: ABCITxs = <ABCITxStorage<T>>::get(block_number);
         for abci_tx in abci_txs.data_array {
-            // debug::info!("call_offchain_worker(), abci_tx: {:?}", abci_tx);
             let _ = <Self as CosmosAbci>::deliver_tx(abci_tx)
                 .map_err(|e| debug::error!("deliver_tx() error: {:?}", e))
                 .unwrap();
