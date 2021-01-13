@@ -201,27 +201,23 @@ decl_module! {
 
         // Offchain worker logic.
         fn offchain_worker(block_number: T::BlockNumber) {
-            match abci_interface::storage_get("abci_current_height".as_bytes().to_vec()).unwrap() {
-                Some(bytes) => {
-                    let mut height: u32 = u32::from_ne_bytes(bytes.as_slice().try_into().unwrap());
-                    while height != block_number.saturated_into() as u32 {
-                        height += 1;
-                        if height !=0 {
-                            let block_hash = <system::Module<T>>::block_hash(T::BlockNumber::from(height));
-                            let parent_hash = <system::Module<T>>::block_hash(T::BlockNumber::from(height - 1));
-                            let extrinsic_data = <system::Module<T>>::extrinsic_data(block_number.saturated_into() as u32);
-                            // TODO: fix it, calculate the original extrinsics_root of the block
-                            let extrinsics_root = T::Hashing::hash(extrinsic_data.as_slice());
+            if let Some(bytes) = abci_interface::storage_get(b"abci_current_height".to_vec()).unwrap() {
+                let mut height: u32 = u32::from_ne_bytes(bytes.as_slice().try_into().unwrap());
+                while height != block_number.saturated_into() as u32 {
+                    height += 1;
+                    if height !=0 {
+                        let block_hash = <system::Module<T>>::block_hash(T::BlockNumber::from(height));
+                        let parent_hash = <system::Module<T>>::block_hash(T::BlockNumber::from(height - 1));
+                        // TODO: fix it, calculate the original extrinsics_root of the block
+                        let extrinsic_data = <system::Module<T>>::extrinsic_data(0);
+                        let extrinsics_root = T::Hashing::hash(extrinsic_data.as_slice());
 
-                            Self::call_offchain_worker(T::BlockNumber::from(height), block_hash, parent_hash, extrinsics_root);
-                        }
+                        Self::call_offchain_worker(T::BlockNumber::from(height), block_hash, parent_hash, extrinsics_root);
                     }
-
                 }
-                None => {}
-            };
+            }
 
-            abci_interface::storage_write("abci_current_height".as_bytes().to_vec(),
+            abci_interface::storage_write(b"abci_current_height".to_vec(),
              (block_number.saturated_into() as u32).to_ne_bytes().to_vec()).unwrap();
         }
     }
@@ -231,7 +227,6 @@ decl_module! {
 impl<T: Trait> Module<T> {
     // The abci transaction call.
     pub fn call_abci_transaction(data: Vec<u8>) -> DispatchResult {
-        debug::info!("call_abci_transaction()");
         let block_number = <system::Module<T>>::block_number();
         let mut abci_txs: ABCITxs = <ABCITxStorage<T>>::get(block_number);
         abci_txs.data_array.push(data);
@@ -378,13 +373,11 @@ impl<T: Trait> frame_support::unsigned::ValidateUnsigned for Module<T> {
 /// The implementation for CosmosAbci trait for pallet.
 impl<T: Trait> CosmosAbci for Module<T> {
     fn check_tx(data: Vec<u8>) -> Result<u64, DispatchError> {
-        debug::info!("check_tx called");
         <T::Subscription as SubscriptionManager>::on_check_tx(data.clone())?;
         abci_interface::check_tx(data)
     }
 
     fn deliver_tx(data: Vec<u8>) -> DispatchResult {
-        debug::info!("deliver_tx called");
         <T::Subscription as SubscriptionManager>::on_deliver_tx(data.clone())?;
         abci_interface::deliver_tx(data)
     }

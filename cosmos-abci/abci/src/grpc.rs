@@ -56,7 +56,6 @@ impl crate::AbciInterface for AbciinterfaceGrpc {
         });
         let future = self.client.check_tx(request);
         let response = wait(&self.rt, future)?;
-        println!("check_tx response: {:?}", response);
         Ok(Box::new(response.into_inner()))
     }
 
@@ -64,7 +63,6 @@ impl crate::AbciInterface for AbciinterfaceGrpc {
         let request = tonic::Request::new(protos::RequestDeliverTx { tx });
         let future = self.client.deliver_tx(request);
         let response = wait(&self.rt, future)?;
-        println!("deliver_tx response: {:?}", response);
         Ok(Box::new(response.into_inner()))
     }
 

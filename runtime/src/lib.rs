@@ -468,7 +468,6 @@ impl_runtime_apis! {
         ) -> TransactionValidity {
             let mut res = Executive::validate_transaction(source, tx.clone())?;
             if let Some(&pallet_cosmos_abci::Call::abci_transaction(ref val)) = IsSubType::<CallableCallFor<CosmosAbci, Runtime>>::is_sub_type(&tx.function) {
-                debug::info!("check_tx validate_transaction called here");
                 let diff = <CosmosAbci as pallet_cosmos_abci::CosmosAbci>::check_tx(val.clone()).map_err(|_e| {
                     match _e {
                         sp_runtime::DispatchError::Module { error, .. } => InvalidTransaction::Custom(error),
