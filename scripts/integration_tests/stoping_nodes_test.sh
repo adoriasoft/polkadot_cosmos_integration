@@ -20,7 +20,9 @@ sleep 20s
 value=$(nscli query nameservice resolve jack.id)
 assert_eq "$value" "value: hello_world"
 
-
+for i in {1..100}
+do 
+echo "Iteration " $i
 stop_all
 
 clean_tmp
@@ -31,5 +33,6 @@ sleep 5s
 
 value=$(nscli query nameservice resolve jack.id)
 assert_eq "$value" "value: hello_world"
+done 
 
 test_passed "stoping nodes test"
