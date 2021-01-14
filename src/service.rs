@@ -106,8 +106,88 @@ pub fn new_partial(
     })
 }
 
+fn init_chain() -> Result<(), ServiceError> {
+    let key = b"init_chain_info".to_vec();
+
+    let mut abci_storage = abci_storage::get_abci_storage_instance()
+        .map_err(|_| "failed to get abci storage instance")?;
+
+    match abci_storage
+        .get(key.clone())
+        .map_err(|_| "failed to get value from the abci storage")?
+    {
+        // Just check that in storage exists some value to the following key
+        Some(_) => {}
+        None => {
+            let genesis = pallet_abci::utils::parse_cosmos_genesis_file(
+                &pallet_abci::utils::get_abci_genesis(),
+            )
+            .map_err(|_| "failed to get cosmos genesis file")?;
+
+            pallet_abci::get_abci_instance()
+                .map_err(|_| "failed to setup connection")?
+                .init_chain(
+                    genesis.time_seconds,
+                    genesis.time_nanos,
+                    &genesis.chain_id,
+                    genesis.pub_key_types,
+                    genesis.max_bytes,
+                    genesis.max_gas,
+                    genesis.max_age_num_blocks,
+                    genesis.max_age_duration,
+                    genesis.app_state_bytes,
+                )
+                .map_err(|_| "init chain failed")?;
+
+            abci_storage
+                .write(key.clone(), key)
+                .map_err(|_| "failed to write some data into the abci storage")?;
+        }
+    }
+
+    Ok(())
+}
+
 /// Builds a new service for a full client.
 pub fn new_full(config: Configuration) -> Result<TaskManager, ServiceError> {
+    // TODO: fix it afer substarte update
+    let config_dir = config
+        .base_path
+        .as_ref()
+        .ok_or_else(|| "base_path has not been set")
+        .unwrap()
+        .path()
+        .to_path_buf()
+        .join("chains")
+        .join(config.chain_spec.id());
+
+    // Init Abci instance
+    let abci_server_url = &pallet_abci::get_server_url();
+    pallet_abci::set_abci_instance(Box::new(
+        pallet_abci::grpc::AbciinterfaceGrpc::connect(abci_server_url)
+            .map_err(|_| "failed to connect")
+            .unwrap(),
+    ))
+    .map_err(|_| "failed to set abci instance")
+    .unwrap();
+
+    let abci_storage_name = &pallet_abci::get_storage_name();
+    abci_storage::set_abci_storage_instance(Box::new(
+        abci_storage::rocksdb::AbciStorageRocksdb::init(
+            config_dir
+                .join(abci_storage_name)
+                .to_str()
+                .ok_or_else(|| "failed to set abci storage instance")
+                .unwrap(),
+        )
+        .map_err(|_| "failed to open abci storage")
+        .unwrap(),
+    ))
+    .map_err(|_| "failed to set abci storage instance")
+    .unwrap();
+
+    init_chain()?;
+
     let sc_service::PartialComponents {
         client,
         backend,

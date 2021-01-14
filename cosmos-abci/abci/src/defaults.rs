@@ -6,8 +6,18 @@ pub fn get_server_url() -> String {
     }
 }
 
+pub fn get_storage_name() -> String {
+    match std::env::var("ABCI_STORAGE_NAME") {
+        Ok(val) => val,
+        Err(_) => DEFAULT_ABCI_STORAGE_NAME.to_owned(),
+    }
+}
+
 /// Default ABCI RPC url.
 pub const DEFAULT_ABCI_URL: &str = "tcp://localhost:26658";
+
+/// Default ABCI storage name.
+pub const DEFAULT_ABCI_STORAGE_NAME: &str = "abci_storage_rocksdb";
 
 /// Genesis initial state.
 pub const TEST_GENESIS: &str = r#"

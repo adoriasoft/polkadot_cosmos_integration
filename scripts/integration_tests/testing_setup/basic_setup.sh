@@ -11,7 +11,6 @@ function clean_tmp() {
 
 function clean_substrate() {
     echo "Clean Substrate"
-    rm -rf abci_storage_rocksdb
     export ABCI_GENESIS_STATE_PATH=$HOME/.nsd/config/genesis.json
     ./../../target/debug/node-template purge-chain --dev -y
 }

@@ -19,8 +19,6 @@ mod proto {
 pub use crypto::merkle::*;
 pub use libs::kv::*;
 pub use proto::abci_proto::*;
-use serde::{de::{Visitor, Error, MapAccess}, ser::SerializeStruct, Deserialize, Deserializer, Serialize, Serializer};
-use std::fmt;
 
 impl crate::ResponseInitChain for ResponseInitChain {
     fn get_validators(&self) -> Vec<ValidatorUpdate> {
@@ -170,94 +168,6 @@ impl crate::ResponseDeliverTx for ResponseDeliverTx {
 
 impl crate::ResponseBeginBlock for ResponseBeginBlock {}
 
-impl Serialize for PubKey {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut state = serializer.serialize_struct("PubKey", 2)?;
-        state.serialize_field("r#type", &self.r#type)?;
-        state.serialize_field("data", &self.data)?;
-        state.end()
-    }
-}
-
-impl<'de> Deserialize<'de> for PubKey {
-    fn deserialize<D>(deserialize: D) -> Result<Self, D::Error> where D: Deserializer<'de> {
-        #[derive(Deserialize)]
-        #[serde(field_identifier, rename_all = "lowercase")]
-        enum Field { Data, Type }
-    
-        struct PubKeyVisitor;
-
-        impl<'de> Visitor<'de> for PubKeyVisitor {
-            type Value = PubKey;
-
-            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                formatter.write_str("struct PubKey")
-            }
-
-            fn visit_map<V>(self, mut map: V) -> Result<PubKey, V::Error>
-            where
-                V: MapAccess<'de>,
-            {
-                let mut r_type = None;
-                let mut data = None;
-                while let Some(key) = map.next_key()? {
-                    match key {
-                        Field::Data => {
-                            data = Some(map.next_value()?);
-                        }
-                        Field::Type => {
-                            r_type = Some(map.next_value()?);
-                        }
-                    }
-                }
-                let r_type = r_type.ok_or_else(|| Error::missing_field("type"))?;
-                let data = data.ok_or_else(|| Error::missing_field("data"))?;
-                Ok(PubKey { r#type: r_type, data })
-            }
-        }
-
-        deserialize.deserialize_struct("PubKey", &["type", "data"], PubKeyVisitor)
-    }
-}
-
-impl Serialize for ValidatorUpdate {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut state = serializer.serialize_struct("ValidatorUpdate", 2)?;
-        state.serialize_field("pub_key", &self.pub_key)?;
-        state.serialize_field("power", &self.power)?;
-        state.end()
-    }
-}
-
-impl<'de> Deserialize<'de> for ValidatorUpdate {
-    fn deserialize<D>(deserialize: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        struct ValidatorUpdateVisitor;
-
-        impl<'de> Visitor<'de> for ValidatorUpdateVisitor {
-            type Value = ValidatorUpdate;
-
-            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                formatter.write_str("struct PubKey")
-            }
-        }
-
-        deserialize.deserialize_struct(
-            "ValidatorUpdate",
-            &["pub_key", "power"],
-            ValidatorUpdateVisitor,
-        )
-    }
-}
-
 impl crate::ResponseEndBlock for ResponseEndBlock {
     fn get_validator_updates(&self) -> Vec<ValidatorUpdate> {
         self.validator_updates.clone()
@@ -341,5 +251,40 @@ impl crate::ResponseQuery for ResponseQuery {
     }
     fn set_codespace(&mut self, v: String) {
         self.codespace = v
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn abci_pub_key_serde() {
+        let pub_key = crate::protos::PubKey {
+            data: vec![10, 12, 15],
+            r#type: "ed25519".to_string(),
+        };
+        let bytes_from_pub_key = bincode::serialize(&pub_key).unwrap();
+        println!("{:?}", bytes_from_pub_key);
+        let pub_key_deserialized: Result<crate::protos::PubKey, Box<bincode::ErrorKind>> =
+            bincode::deserialize(&bytes_from_pub_key);
+        assert_eq!(pub_key, pub_key_deserialized.unwrap());
+    }
+
+    #[test]
+    fn validation_update_serde() {
+        let pub_key = crate::protos::PubKey {
+            data: vec![10, 12, 15],
+            r#type: "ed25519".to_string(),
+        };
+        let validator_update = crate::protos::ValidatorUpdate {
+            pub_key: Some(pub_key),
+            power: 14515,
+        };
+        let bytes_from_pub_key = bincode::serialize(&validator_update).unwrap();
+        println!("{:?}", bytes_from_pub_key);
+        let validator_update_deserialized: Result<
+            crate::protos::ValidatorUpdate,
+            Box<bincode::ErrorKind>,
+        > = bincode::deserialize(&bytes_from_pub_key);
+        assert_eq!(validator_update, validator_update_deserialized.unwrap());
     }
 }

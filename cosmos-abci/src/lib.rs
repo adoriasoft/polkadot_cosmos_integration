@@ -14,7 +14,7 @@ use frame_system::{
     RawOrigin,
 };
 use pallet_session as session;
-use sp_core::crypto::KeyTypeId;
+use sp_core::{crypto::KeyTypeId, Hasher};
 use sp_runtime::{
     traits::{Convert, SaturatedConversion},
     transaction_validity::{
@@ -23,7 +23,7 @@ use sp_runtime::{
     DispatchError, RuntimeDebug,
 };
 use sp_runtime_interface::runtime_interface;
-use sp_std::{prelude::*, str};
+use sp_std::{convert::TryInto, prelude::*, str};
 use sha2::{Digest, Sha256};
 
 /// Balance type for pallet.
@@ -165,11 +165,13 @@ decl_module! {
     pub struct Module<T: Trait> for enum Call where origin: T::Origin {
         // Block initialization.
         fn on_initialize(block_number: T::BlockNumber) -> Weight {
+            // debug::info!("on_initialize() block_number: {:?}", block_number);
             0
         }
 
         // Block finalization.
         fn on_finalize(block_number: T::BlockNumber) {
+            // debug::info!("on_finalize() block_number: {:?}", block_number);
         }
 
         // Insert Cosmos node account.
@@ -202,15 +204,24 @@ decl_module! {
 
         // Offchain worker logic.
         fn offchain_worker(block_number: T::BlockNumber) {
-            if block_number.saturated_into() as i64 != 0 {
-                // hash of the current block
-                let block_hash = <system::Module<T>>::block_hash(block_number);
-                // hash of the previous block
-                let parent_hash = <system::Module<T>>::parent_hash();
-                // hash of the extrinsics root
-                let extrinsics_root = <system::Module<T>>::extrinsics_root();
-                Self::call_offchain_worker(block_number, block_hash, parent_hash, extrinsics_root);
+            if let Some(bytes) = abci_interface::storage_get(b"abci_current_height".to_vec()).unwrap() {
+                let mut height: u32 = u32::from_ne_bytes(bytes.as_slice().try_into().unwrap());
+                while height != block_number.saturated_into() as u32 {
+                    height += 1;
+                    if height !=0 {
+                        let block_hash = <system::Module<T>>::block_hash(T::BlockNumber::from(height));
+                        let parent_hash = <system::Module<T>>::block_hash(T::BlockNumber::from(height - 1));
+                        // TODO: fix it, calculate the original extrinsics_root of the block
+                        let extrinsic_data = <system::Module<T>>::extrinsic_data(0);
+                        let extrinsics_root = T::Hashing::hash(extrinsic_data.as_slice());
+
+                        Self::call_offchain_worker(T::BlockNumber::from(height), block_hash, parent_hash, extrinsics_root);
+                    }
+                }
             }
+
+            abci_interface::storage_write(b"abci_current_height".to_vec(),
+             (block_number.saturated_into() as u32).to_ne_bytes().to_vec()).unwrap();
         }
     }
 }
@@ -239,7 +250,6 @@ impl<T: Trait> Module<T> {
 
         let abci_txs: ABCITxs = <ABCITxStorage<T>>::get(block_number);
         for abci_tx in abci_txs.data_array {
-            debug::info!("call_offchain_worker(), abci_tx: {:?}", abci_tx);
             let _ = <Self as CosmosAbci>::deliver_tx(abci_tx)
                 .map_err(|e| debug::error!("deliver_tx() error: {:?}", e))
                 .unwrap();
@@ -310,8 +320,20 @@ impl<T: Trait> Module<T> {
     }
 
     pub fn on_new_session(new_index: SessionIndex) -> Option<Vec<T::AccountId>> {
+        // Sessions starts after end_block() with number 2.
+        // For some reason two first sessions is missed.
+        let mut corresponding_height = 0;
+        if new_index > 2 {
+            corresponding_height = new_index - 3;
+        }
+
+        // debug::info!(
+        //     "on_new_session() corresponding_height: {:?}",
+        //     corresponding_height
+        // );
+
         let next_cosmos_validators =
-            abci_interface::get_cosmos_validators_from_storage(new_index.into()).unwrap();
+            abci_interface::get_cosmos_validators(corresponding_height.into()).unwrap();
 
         if !next_cosmos_validators.is_empty() {
             let mut new_substrate_validators: Vec<T::AccountId> = vec![];
@@ -477,29 +499,15 @@ pub trait AbciInterface {
     }
 
     fn end_block(height: i64) -> DispatchResult {
+        // debug::info!("end_block() height: {:?}", height);
         let result = pallet_abci::get_abci_instance()
             .map_err(|_| "failed to setup connection")?
             .end_block(height)
             .map_err(|_| "end_block failed")?;
-        let bytes = pallet_abci::utils::serialize_vec(
-            result
-                .get_validator_updates()
-                .iter()
-                .map(|validator| {
-                    let mut pub_key = vec![];
-                    match &validator.pub_key {
-                        Some(key) => pub_key = key.data.clone(),
-                        None => {}
-                    }
-                    pallet_abci::utils::SerializableValidatorUpdate {
-                        key_data: pub_key,
-                        r#type: "ed25519".to_owned(),
-                        power: validator.power,
-                    }
-                })
-                .collect(),
-        )
-        .map_err(|_| "cannot serialize cosmos validators")?;
+        let cosmos_validators = result.get_validator_updates();
+
+        let bytes = pallet_abci::utils::serialize_vec(cosmos_validators)
+            .map_err(|_| "cannot deserialize cosmos validators")?;
 
         abci_storage::get_abci_storage_instance()
             .map_err(|_| "failed to get abci storage instance")?
@@ -550,43 +558,21 @@ impl<T: Trait> Convert<T::AccountId, Option<utils::Exposure<T::AccountId, Balanc
 
 impl<T: Trait> pallet_session::SessionManager<T::AccountId> for Module<T> {
     fn new_session(new_index: SessionIndex) -> Option<Vec<T::AccountId>> {
+        // debug::info!("new_session() end_index: {:?}", new_index);
         Self::on_new_session(new_index)
     }
 
-    fn end_session(_end_index: SessionIndex) {}
-
-    fn start_session(_start_index: SessionIndex) {}
-}
-
-impl<T: Trait>
-    pallet_session::historical::SessionManager<T::AccountId, utils::Exposure<T::AccountId, Balance>>
-    for Module<T>
-{
-    fn new_session(
-        new_index: SessionIndex,
-    ) -> Option<Vec<(T::AccountId, utils::Exposure<T::AccountId, Balance>)>> {
-        let new_substrate_validators = Self::on_new_session(new_index);
-        if let Some(validators) = new_substrate_validators {
-            return Some(
-                validators
-                    .iter()
-                    .map(|validator| {
-                        (
-                            validator.clone(),
-                            utils::Exposure {
-                                total: 0,
-                                own: 0,
-                                others: vec![],
-                            },
-                        )
-                    })
-                    .collect(),
-            );
-        }
-        None
+    fn end_session(_end_index: SessionIndex) {
+        // debug::info!("end_session() end_index: {:?}", _end_index);
     }
 
-    fn end_session(_end_index: SessionIndex) {}
+    fn start_session(_start_index: SessionIndex) {
+        // debug::info!("start_session() start_index: {:?}", _start_index);
+    }
+}
 
-    fn start_session(_start_index: SessionIndex) {}
+impl<T: Trait> pallet_session::ShouldEndSession<T::BlockNumber> for Module<T> {
+    fn should_end_session(_: T::BlockNumber) -> bool {
+        true
+    }
 }
