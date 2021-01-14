@@ -1,7 +1,7 @@
 use chrono::DateTime;
-use serde::{Deserialize, Serialize};
 use std::{fs, path::PathBuf};
 use core::cmp::PartialEq;
+use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct SerializableValidatorUpdate {
