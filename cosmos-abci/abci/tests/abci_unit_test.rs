@@ -1,5 +1,4 @@
 use pallet_abci::*;
-use std::boxed::*;
 
 #[test]
 fn test_abci_echo() {
@@ -12,7 +11,8 @@ fn test_abci_echo() {
         });
         Ok(Box::new(ret))
     });
-    
+
+    //
     set_abci_instance(Box::new(abci_mock)).unwrap();
 
     assert_eq!(
@@ -205,28 +205,4 @@ fn test_abci_flush() {
     set_abci_instance(Box::new(abci_mock)).unwrap();
 
     assert_eq!(get_abci_instance().unwrap().flush().is_ok(), true);
-}
-
-#[test]
-fn abci_pub_key_proto_must_serialized() {
-    let pub_key = protos::PubKey {
-        data: vec![10, 12, 15],
-        r#type: "ed25519".to_string(),
-    };
-    let bytes_from_pub_key = bincode::serialize(&pub_key).unwrap();
-    println!("{:?}", bytes_from_pub_key);
-    let pub_key_repaired: Result<protos::PubKey, Box<bincode::ErrorKind>> = bincode::deserialize(&bytes_from_pub_key);
-    assert_eq!(pub_key, pub_key_repaired.unwrap());
-}
-
-#[test]
-fn abci_pub_key_util_must_serialized() {
-    let pub_key_util = utils::PubKeyInfo {
-        data: vec![10, 12, 15],
-        r#type: "ed25519".to_string(),
-    };
-    let bytes_from_pub_key = bincode::serialize(&pub_key_util).unwrap();
-    println!("{:?}", bytes_from_pub_key);
-    let pub_key_repaired: Result<utils::PubKeyInfo, Box<bincode::ErrorKind>> = bincode::deserialize(&bytes_from_pub_key);
-    assert_eq!(pub_key_util, pub_key_repaired.unwrap());
 }

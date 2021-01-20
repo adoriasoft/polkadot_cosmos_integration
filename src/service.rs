@@ -136,7 +136,7 @@ fn init_chain() -> Result<(), ServiceError> {
                     genesis.max_age_num_blocks,
                     genesis.max_age_duration,
                     genesis.app_state_bytes,
-                    vec![]
+                    vec![],
                 )
                 .map_err(|_| "init chain failed")?;
             let bytes = pallet_abci::utils::serialize_vec(response.get_validators())

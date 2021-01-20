@@ -1,3 +1,4 @@
+use base64;
 use frame_support::{impl_outer_origin, parameter_types, weights::Weight};
 use pallet_cosmos_abci::{crypto, Call, Module, Trait, KEY_TYPE};
 use pallet_session::*;
@@ -16,7 +17,6 @@ use sp_runtime::{
 };
 use sp_std::boxed::*;
 use std::cell::RefCell;
-use base64;
 
 impl_opaque_keys! {
     pub struct MockSessionKeys {
@@ -290,7 +290,7 @@ fn should_begin_block_on_initialize() {
         genesis.max_age_num_blocks,
         genesis.max_age_duration,
         genesis.app_state_bytes,
-        vec![]
+        vec![],
     );
     assert!(result.is_ok(), "should successfully call init chain");
 

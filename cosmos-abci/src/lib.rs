@@ -140,7 +140,8 @@ tuple_impls! { A B C D E F G H I J K L M N O}
 tuple_impls! { A B C D E F G H I J K L M N O P }
 
 impl<T: Trait> sp_runtime::BoundToRuntimeAppPublic for Module<T>
-where <T as Trait>::AuthorityId: sp_runtime::RuntimeAppPublic,
+where
+    <T as Trait>::AuthorityId: sp_runtime::RuntimeAppPublic,
 {
     type Public = T::AuthorityId;
 }
@@ -287,7 +288,7 @@ impl<T: Trait> Module<T> {
                 let power = <SubstrateAccountPowers<T>>::get(validator).unwrap_or(0);
                 (pub_key, power)
             })
-            .filter(|validator| { validator.0.len() > 0 })
+            .filter(|validator| validator.0.len() > 0)
             .collect();
         if let Err(err) = abci_interface::begin_block(
             block_number.saturated_into() as i64,
@@ -486,7 +487,10 @@ pub trait AbciInterface {
                 current_substrate_validators
                     .iter()
                     .map(|validator| {
-                        let address = crypto_transform::get_address_from_pub_key(&validator.clone().0, crypto_transform::PubKeyTypes::Ed25519);
+                        let address = crypto_transform::get_address_from_pub_key(
+                            &validator.clone().0,
+                            crypto_transform::PubKeyTypes::Ed25519,
+                        );
                         pallet_abci::protos::VoteInfo {
                             validator: Some(pallet_abci::protos::Validator {
                                 address,
@@ -496,7 +500,7 @@ pub trait AbciInterface {
                             signed_last_block: true,
                         }
                     })
-                    .collect()
+                    .collect(),
             )
         }
         let _result = pallet_abci::get_abci_instance()
