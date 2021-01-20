@@ -24,7 +24,8 @@ use sp_runtime::{
 };
 use sp_runtime_interface::runtime_interface;
 use sp_std::{convert::TryInto, prelude::*, str};
-use sha2::{Digest, Sha256};
+
+pub mod crypto_transform;
 
 /// Balance type for pallet.
 pub type Balance = u64;
@@ -74,6 +75,8 @@ pub mod crypto {
     }
 }
 
+// impl codec::EncodeLike<(u32, u32)> for <T as frame_system::Trait>::AccountId { }
+
 /// The CosmosAbci trait.
 pub trait CosmosAbci {
     fn check_tx(data: Vec<u8>) -> Result<u64, DispatchError>;
@@ -82,7 +85,7 @@ pub trait CosmosAbci {
 
 /// The pallet configuration trait.
 pub trait Trait:
-    CreateSignedTransaction<Call<Self>> + pallet_session::Trait + pallet_grandpa::Trait + pallet_sudo::Trait
+    CreateSignedTransaction<Call<Self>> + pallet_session::Trait + pallet_sudo::Trait + frame_system::Trait
 {
     type AuthorityId: AppCrypto<Self::Public, Self::Signature> + Default + Decode;
     type Call: From<Call<Self>>;
@@ -139,8 +142,7 @@ tuple_impls! { A B C D E F G H I J K L M N O}
 tuple_impls! { A B C D E F G H I J K L M N O P }
 
 impl<T: Trait> sp_runtime::BoundToRuntimeAppPublic for Module<T>
-where
-    <T as Trait>::AuthorityId: sp_runtime::RuntimeAppPublic,
+where <T as Trait>::AuthorityId: sp_runtime::RuntimeAppPublic,
 {
     type Public = T::AuthorityId;
 }
@@ -155,8 +157,8 @@ decl_storage! {
     trait Store for Module<T: Trait> as ABCITxStorage {
         ABCITxStorage get(fn abci_tx): map hasher(blake2_128_concat) T::BlockNumber => ABCITxs;
         CosmosAccounts get(fn cosmos_accounts): map hasher(blake2_128_concat) utils::CosmosAccountId => Option<T::AccountId> = None;
-        SubstrateAccounts get(fn substrate_accounts): map hasher(blake2_128_concat) i64 => Option<utils::CosmosAccountId> = None;
-        SubstrateAccountPowers get(fn substrate_account_powers): map hasher(blake2_128_concat) i64 => Option<i64> = None;
+        SubstrateAccounts get(fn substrate_accounts): map hasher(blake2_128_concat) <T as pallet_session::Trait>::ValidatorId => Option<utils::CosmosAccountId> = None;
+        SubstrateAccountPowers get(fn substrate_account_powers): map hasher(blake2_128_concat) <T as pallet_session::Trait>::ValidatorId => Option<i64> = None;
         AccountLedger get(fn account_ledgers): map hasher(blake2_128_concat) T::AccountId => OptionalLedger<T::AccountId>;
     }
 }
@@ -176,11 +178,14 @@ decl_module! {
 
         // Insert Cosmos node account.
         #[weight = 0]
-        fn insert_cosmos_account(origin, cosmos_account_id: Vec<u8>) -> DispatchResult {
+        fn insert_cosmos_account(origin, cosmos_account_id: Vec<u8>, power: i64) -> DispatchResult {
             let origin_signed = ensure_signed(origin)?;
             <AccountLedger<T>>::insert(&origin_signed, Some((&origin_signed, 0)));
             <CosmosAccounts<T>>::insert(&cosmos_account_id, &origin_signed);
-            // <SubstrateAccounts<T>>::insert(0, &cosmos_account_id);
+            let convertable = <T as pallet_session::Trait>::ValidatorIdOf::convert(origin_signed)
+                .unwrap();
+            <SubstrateAccounts<T>>::insert(&convertable, &cosmos_account_id);
+            <SubstrateAccountPowers<T>>::insert(&convertable, &power);
             Ok(())
         }
 
@@ -189,7 +194,20 @@ decl_module! {
         fn remove_cosmos_account(origin, cosmos_account_id: Vec<u8>) -> DispatchResult {
             let origin_signed = ensure_signed(origin)?;
             <CosmosAccounts<T>>::remove(&cosmos_account_id);
-            // <SubstrateAccounts<T>>::remove(0);
+            let convertable = <T as pallet_session::Trait>::ValidatorIdOf::convert(origin_signed)
+                .unwrap();
+            <SubstrateAccounts<T>>::remove(&convertable);
+            <SubstrateAccountPowers<T>>::remove(&convertable);
+            Ok(())
+        }
+
+        // Update Cosmos node account power.
+        #[weight = 0]
+        fn update_comsos_account_power(origin, new_power: i64) -> DispatchResult {
+            let origin_signed = ensure_signed(origin)?;
+            let convertable = <T as pallet_session::Trait>::ValidatorIdOf::convert(origin_signed)
+                .unwrap();
+            <SubstrateAccountPowers<T>>::insert(&convertable, new_power);
             Ok(())
         }
 
@@ -221,7 +239,7 @@ decl_module! {
             }
 
             abci_interface::storage_write(b"abci_current_height".to_vec(),
-             (block_number.saturated_into() as u32).to_ne_bytes().to_vec()).unwrap();
+            (block_number.saturated_into() as u32).to_ne_bytes().to_vec()).unwrap();
         }
     }
 }
@@ -264,34 +282,21 @@ impl<T: Trait> Module<T> {
         parent_hash: T::Hash,
         extrinsics_root: T::Hash,
     ) -> bool {
-            /* .iter()
+        let active_validators: Vec<(Vec<u8>, i64)> = <pallet_session::Module<T>>::validators()
+            .iter()
             .map(|validator| {
-                let pub_key = vec![];// <SubstrateAccounts<T>>::get(validator).unwrap_or(vec![]);
-                let power = 0;// <SubstrateAccountPowers<T>>::get(validator).unwrap_or(0);
-                let mut origin_validator: Option<pallet_abci::protos::Validator> = None;
-                // TODO Add SHA256 there.
-                if pub_key.len() > 0 {
-                    let mut address_hash = Sha256::new();
-                    address_hash.update(pub_key);
-                    address_hash.finalize();
-                    origin_validator = Some(pallet_abci::protos::Validator {
-                        address: vec![],
-                        power,
-                    });
-                }
-                pallet_abci::protos::VoteInfo {
-                    validator: origin_validator,
-                    signed_last_block: true, // TODO how to check it?
-                }
+                let pub_key = <SubstrateAccounts<T>>::get(validator).unwrap_or(vec![]);
+                let power = <SubstrateAccountPowers<T>>::get(validator).unwrap_or(0);
+                (pub_key, power)
             })
-            .filter(|vote| { vote.validator.is_some() })
-            .collect(); */
+            .filter(|validator| { validator.0.len() > 0 })
+            .collect();
         if let Err(err) = abci_interface::begin_block(
             block_number.saturated_into() as i64,
             block_hash.as_ref().to_vec(),
             parent_hash.as_ref().to_vec(),
             extrinsics_root.as_ref().to_vec(),
-            vec![],
+            active_validators,
         ) {
             panic!("Begin block failed: {:?}", err);
         }
@@ -326,11 +331,6 @@ impl<T: Trait> Module<T> {
         if new_index > 2 {
             corresponding_height = new_index - 3;
         }
-
-        // debug::info!(
-        //     "on_new_session() corresponding_height: {:?}",
-        //     corresponding_height
-        // );
 
         let next_cosmos_validators =
             abci_interface::get_cosmos_validators(corresponding_height.into()).unwrap();
@@ -449,7 +449,7 @@ pub trait AbciInterface {
         Ok(())
     }
 
-    fn get_cosmos_validators_from_storage(height: i64) -> Result<Vec<Vec<u8>>, DispatchError> {
+    fn get_cosmos_validators(height: i64) -> Result<Vec<Vec<u8>>, DispatchError> {
         match storage_get(height.to_ne_bytes().to_vec()) {
             Ok(validators_response) => match validators_response {
                 Some(bytes) => {
@@ -474,14 +474,29 @@ pub trait AbciInterface {
         hash: Vec<u8>,
         last_block_id: Vec<u8>,
         proposer_address: Vec<u8>,
-        current_substrate_validators: Vec<Vec<u8>>,
+        current_substrate_validators: Vec<(Vec<u8>, i64)>,
     ) -> DispatchResult {
         // TODO Get evidence validators.
         let byzantine_validators: Vec<pallet_abci::protos::Evidence> = vec![];
         let mut active_validators: Option<Vec<pallet_abci::protos::VoteInfo>> = None;
         if !current_substrate_validators.is_empty() {
-            active_validators = Some(vec![]);
-            // pallet_abci::utils::deserialize_vec::<pallet_abci::protos::VoteInfo>(current_cosmos_validators)
+            active_validators = Some(
+                current_substrate_validators
+                    .iter()
+                    .map(|validator| {
+                        let address = crypto_transform::get_address_from_pub_key(&validator.clone().0, crypto_transform::PubKeyTypes::Ed25519);
+                        debug::info!("Active validator address on begin_block() {:?}", address);
+                        // debug::info!("Active validator power on begin_block() {:?}", validator.clone().1);
+                        pallet_abci::protos::VoteInfo {
+                            validator: Some(pallet_abci::protos::Validator {
+                                address,
+                                power: validator.clone().1,
+                            }),
+                            signed_last_block: true,
+                        }
+                    })
+                    .collect()
+            )
         }
         let _result = pallet_abci::get_abci_instance()
             .map_err(|_| "failed to setup connection")?

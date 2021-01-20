@@ -6,7 +6,7 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-use codec::Encode;
+use codec::{Encode};
 use pallet_grandpa::{
     fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
 };
@@ -140,6 +140,8 @@ parameter_types! {
 }
 
 // Configure FRAME pallets to include in runtime.
+
+// impl codec::EncodeLike<<T as frame_system::Trait>::AccountId> for <T as pallet_session::Trait>::ValidatorId { }
 
 impl frame_system::Trait for Runtime {
     /// The basic call filter to use in dispatchable.
@@ -301,6 +303,7 @@ impl pallet_cosmos_abci::Trait for Runtime {
     type AuthorityId = pallet_cosmos_abci::crypto::ABCIAuthId;
     type Call = Call;
     type Subscription = ();
+    // type AccountId = <Self as frame_system::Trait>::AccountId;
 }
 
 /// The payload being signed in transactions.

@@ -20,72 +20,7 @@ use crate::{chain_spec, service};
 use node_template_runtime::Block;
 use sc_cli::{ChainSpec, Role, RuntimeVersion, SubstrateCli};
 use sc_service::{Configuration, PartialComponents};
-use std::fs;
-use std::io::{self, Write};
-
-fn init_chain() -> sc_cli::Result<()> {
-    let key = b"init_chain_info".to_vec();
-    let value = b"init_chain_info".to_vec();
-
-    let mut abci_storage = abci_storage::get_abci_storage_instance()
-        .map_err(|_| "failed to get abci storage instance")?;
-
-    match abci_storage
-        .get(key.clone())
-        .map_err(|_| "failed to get value from the abci storage")?
-    {
-        // Just check that in storage exists some value to the following key
-        Some(_) => {}
-        None => {
-            let genesis = pallet_abci::utils::parse_cosmos_genesis_file(
-                &pallet_abci::utils::get_abci_genesis(),
-            )
-            .map_err(|_| "failed to get cosmos genesis file")?;
-            let init_chain_response = pallet_abci::get_abci_instance()
-                .map_err(|_| "failed to setup connection")?
-                .init_chain(
-                    genesis.time_seconds,
-                    genesis.time_nanos,
-                    &genesis.chain_id,
-                    genesis.pub_key_types,
-                    genesis.max_bytes,
-                    genesis.max_gas,
-                    genesis.max_age_num_blocks,
-                    genesis.max_age_duration,
-                    genesis.app_state_bytes,
-                    vec![]
-                )
-                .map_err(|_| "init chain failed")?;
-            let bytes = pallet_abci::utils::serialize_vec(
-                init_chain_response
-                    .get_validators()
-                    .iter()
-                    .map(|validator| {
-                        let mut pub_key = vec![];
-                        match &validator.pub_key {
-                            Some(key) => pub_key = key.data.clone(),
-                            None => {}
-                        }
-                        pallet_abci::utils::SerializableValidatorUpdate {
-                            key_data: pub_key,
-                            r#type: "ed25519".to_owned(),
-                            power: validator.power,
-                        }
-                    })
-                    .collect(),
-            )
-            .map_err(|_| "cannot serialize cosmos validators")?;
-            abci_storage
-                .write(0_i64.to_ne_bytes().to_vec(), bytes)
-                .map_err(|_| "failed to write validators into the abci storage")?;
-            abci_storage
-                .write(key, value)
-                .map_err(|_| "failed to write some data into the abci storage")?;
-        }
-    }
-
-    Ok(())
-}
+use std::{fs, io::{self, Write}};
 
 impl SubstrateCli for Cli {
     fn impl_name() -> String {

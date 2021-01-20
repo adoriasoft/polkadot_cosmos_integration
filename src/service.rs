@@ -124,7 +124,7 @@ fn init_chain() -> Result<(), ServiceError> {
             )
             .map_err(|_| "failed to get cosmos genesis file")?;
 
-            pallet_abci::get_abci_instance()
+            let response = pallet_abci::get_abci_instance()
                 .map_err(|_| "failed to setup connection")?
                 .init_chain(
                     genesis.time_seconds,
@@ -136,9 +136,17 @@ fn init_chain() -> Result<(), ServiceError> {
                     genesis.max_age_num_blocks,
                     genesis.max_age_duration,
                     genesis.app_state_bytes,
+                    vec![]
                 )
                 .map_err(|_| "init chain failed")?;
-
+            for v in &response.get_validators() {
+                println!("The validator {:?}", v.pub_key.as_ref().unwrap().data);
+            }
+            let bytes = pallet_abci::utils::serialize_vec(response.get_validators())
+                .map_err(|_| "cannot serialize cosmos validators")?;
+            abci_storage
+                .write(0_i64.to_ne_bytes().to_vec(), bytes)
+                .map_err(|_| "failed to write validators into the abci storage")?;
             abci_storage
                 .write(key.clone(), key)
                 .map_err(|_| "failed to write some data into the abci storage")?;

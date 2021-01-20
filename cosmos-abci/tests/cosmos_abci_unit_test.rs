@@ -16,6 +16,7 @@ use sp_runtime::{
 };
 use sp_std::boxed::*;
 use std::cell::RefCell;
+use base64;
 
 impl_opaque_keys! {
     pub struct MockSessionKeys {
@@ -302,3 +303,13 @@ fn should_begin_block_on_initialize() {
     // AbciModule::deliver_tx(Origin::signed(AccountId32::from(Into::<[u8; 32]>::into(hash))), vec![]);
     // todo
 }
+
+/* #[test]
+fn should_get_address_from_pub_key() {
+    const PUB_KEY: &str = "4MQ5aiE4zs1IqkLU3C0vWHUYhZcg40AX4k/wlsgcLCY=";
+    const ADDRESS: &str = "1AD4A13D8239FB9C6917DF0C52DACE3DC3D9C046";
+    let pub_key_bytes = base64::decode(PUB_KEY).unwrap();
+    let address = pallet_cosmos_abci::crypto_transform::get_address_from_pub_key(&pub_key_bytes, pallet_cosmos_abci::crypto_transform::PubKeyTypes::Ed25519);
+    let address_str = hex::encode(address);
+    assert_eq!(address_str, ADDRESS);
+} */

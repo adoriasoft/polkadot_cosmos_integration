@@ -46,6 +46,7 @@ sp-session = { default-features = false, version = '2.0.0' }
 sp-std = { default-features = false, version = '2.0.0' }
 sp-transaction-pool = { default-features = false, version = '2.0.0' }
 sp-version = { default-features = false, version = '2.0.0' }
+sp-authority-discovery = { default-features = false, version = '2.0.0' }
 
 [build-dependencies]
 wasm-builder-runner = { package = 'substrate-wasm-builder-runner', version = '2.0.0' }
@@ -90,4 +91,5 @@ std = [
     'sp-transaction-pool/std',
     'sp-version/std',
     'pallet-cosmos-abci/std',
+    'sp-authority-discovery/std'
 ]
