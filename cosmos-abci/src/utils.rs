@@ -1,6 +1,5 @@
 use codec::{Decode, Encode};
 use sp_runtime::RuntimeDebug;
-
 use sp_std::{fmt, prelude::*};
 
 pub struct AbciCommitResponse {

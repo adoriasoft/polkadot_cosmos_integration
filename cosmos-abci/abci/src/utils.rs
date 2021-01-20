@@ -1,14 +1,5 @@
 use chrono::DateTime;
 use std::{fs, path::PathBuf};
-use core::cmp::PartialEq;
-use serde::{Serialize, Deserialize};
-
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
-pub struct SerializableValidatorUpdate {
-    pub key_data: Vec<u8>,
-    pub r#type: String,
-    pub power: i64,
-}
 
 pub struct GenesisInfo {
     pub time_seconds: i64,
@@ -22,12 +13,6 @@ pub struct GenesisInfo {
     pub app_state_bytes: Vec<u8>,
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
-pub struct PubKeyInfo {
-    pub data: Vec<u8>,
-    pub r#type: String
-}
-
 pub fn serialize_vec<T: serde::Serialize>(
     validators: Vec<T>,
 ) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
@@ -37,14 +22,7 @@ pub fn serialize_vec<T: serde::Serialize>(
 pub fn deserialize_vec<'a, T: serde::Deserialize<'a>>(
     bytes: &'a [u8],
 ) -> Result<Vec<T>, Box<dyn std::error::Error>> {
-    let res = bincode::deserialize(bytes);
-    match res {
-        Ok(deserialized) => Ok(deserialized),
-        Err(err) => {
-            println!("cannot deserialize {:?}", err);
-            Ok(Vec::new())
-        }
-    }
+    Ok(bincode::deserialize(bytes).map_err(|_| "cannot deserialize")?)
 }
 
 fn get_genesis_from_file() -> Result<String, Box<dyn std::error::Error>> {
@@ -63,20 +41,6 @@ pub fn get_abci_genesis() -> String {
             .unwrap(),
     }
 }
-
-/* pub fn get_validator_address(validator_pub_key: Vec<u8>) -> Option<Vec<u8>> {
-    let genesis = parse_cosmos_genesis_file(&get_abci_genesis()).unwrap();
-    let addresses: Vec<Vec<u8>> = genesis
-        .validators
-        .iter()
-        .filter(|combined| combined.pub_key.clone() == validator_pub_key)
-        .map(|combined| combined.address.clone())
-        .collect();
-    if !addresses.is_empty() {
-        return Some(addresses[0].clone());
-    }
-    None
-} */
 
 pub fn parse_cosmos_genesis_file(genesis: &str) -> Result<GenesisInfo, Box<dyn std::error::Error>> {
     let genesis: serde_json::Value = serde_json::from_str(genesis).map_err(|e| e.to_string())?;
@@ -109,6 +73,7 @@ pub fn parse_cosmos_genesis_file(genesis: &str) -> Result<GenesisInfo, Box<dyn s
         .ok_or_else(|| "chain_id not found".to_owned())?
         .parse::<u64>()?;
     let app_state_bytes = genesis["app_state"].to_string().as_bytes().to_vec();
+
     let time = DateTime::parse_from_rfc3339(genesis_time)?;
 
     let result: GenesisInfo = GenesisInfo {

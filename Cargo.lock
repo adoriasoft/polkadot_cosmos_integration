@@ -3727,7 +3727,6 @@ dependencies = [
  "parity-scale-codec",
  "serde",
  "sp-api",
- "sp-authority-discovery",
  "sp-block-builder",
  "sp-consensus-aura",
  "sp-core",
@@ -6505,19 +6504,6 @@ dependencies = [
  "parity-scale-codec",
  "serde",
  "sp-debug-derive",
- "sp-std",
-]
-
-[[package]]
-name = "sp-authority-discovery"
-version = "2.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bc36db170dcd8c23c9f63238bbce148a541f2fb8bba548544ee840c71310f1d4"
-dependencies = [
- "parity-scale-codec",
- "sp-api",
- "sp-application-crypto",
- "sp-runtime",
  "sp-std",
 ]
 

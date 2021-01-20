@@ -20,7 +20,6 @@ use crate::{chain_spec, service};
 use node_template_runtime::Block;
 use sc_cli::{ChainSpec, Role, RuntimeVersion, SubstrateCli};
 use sc_service::{Configuration, PartialComponents};
-use std::{fs, io::{self, Write}};
 
 impl SubstrateCli for Cli {
     fn impl_name() -> String {
@@ -61,6 +60,9 @@ impl SubstrateCli for Cli {
         &node_template_runtime::VERSION
     }
 }
+
+use std::fs;
+use std::io::{self, Write};
 
 // TODO: make it as a separate cmd command
 fn remove_abci_storage(config: &Configuration) -> sc_cli::Result<()> {

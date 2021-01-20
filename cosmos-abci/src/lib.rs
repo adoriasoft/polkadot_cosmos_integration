@@ -75,8 +75,6 @@ pub mod crypto {
     }
 }
 
-// impl codec::EncodeLike<(u32, u32)> for <T as frame_system::Trait>::AccountId { }
-
 /// The CosmosAbci trait.
 pub trait CosmosAbci {
     fn check_tx(data: Vec<u8>) -> Result<u64, DispatchError>;
@@ -85,7 +83,7 @@ pub trait CosmosAbci {
 
 /// The pallet configuration trait.
 pub trait Trait:
-    CreateSignedTransaction<Call<Self>> + pallet_session::Trait + pallet_sudo::Trait + frame_system::Trait
+    CreateSignedTransaction<Call<Self>> + pallet_session::Trait + pallet_sudo::Trait
 {
     type AuthorityId: AppCrypto<Self::Public, Self::Signature> + Default + Decode;
     type Call: From<Call<Self>>;
@@ -450,22 +448,26 @@ pub trait AbciInterface {
     }
 
     fn get_cosmos_validators(height: i64) -> Result<Vec<Vec<u8>>, DispatchError> {
-        match storage_get(height.to_ne_bytes().to_vec()) {
-            Ok(validators_response) => match validators_response {
-                Some(bytes) => {
-                    let validators = pallet_abci::utils::deserialize_vec::<
-                        pallet_abci::utils::SerializableValidatorUpdate,
-                    >(&bytes)
-                        .map_err(|_| "cannot deserialize ValidatorUpdate vector")?;
-                    let mut res = Vec::new();
-                    for val in validators {
-                        res.push(val.key_data);
+        match abci_storage::get_abci_storage_instance()
+            .map_err(|_| "failed to get abci storage instance")?
+            .get(height.to_ne_bytes().to_vec())
+            .map_err(|_| "failed to get value from the abci storage")?
+        {
+            Some(bytes) => {
+                let validators = pallet_abci::utils::deserialize_vec::<
+                    pallet_abci::protos::ValidatorUpdate,
+                >(&bytes)
+                .map_err(|_| "cannot deserialize ValidatorUpdate vector")?;
+
+                let mut res = Vec::new();
+                for val in validators {
+                    if let Some(key) = val.pub_key {
+                        res.push(key.data);
                     }
-                    Ok(res)
                 }
-                None => Ok(Vec::new()),
-            },
-            Err(_err) => Ok(Vec::new()),
+                Ok(res)
+            }
+            None => Ok(Vec::new()),
         }
     }
 
@@ -485,13 +487,12 @@ pub trait AbciInterface {
                     .iter()
                     .map(|validator| {
                         let address = crypto_transform::get_address_from_pub_key(&validator.clone().0, crypto_transform::PubKeyTypes::Ed25519);
-                        debug::info!("Active validator address on begin_block() {:?}", address);
-                        // debug::info!("Active validator power on begin_block() {:?}", validator.clone().1);
                         pallet_abci::protos::VoteInfo {
                             validator: Some(pallet_abci::protos::Validator {
                                 address,
                                 power: validator.clone().1,
                             }),
+                            // TODO Check if validator is author of last block or not.
                             signed_last_block: true,
                         }
                     })
