@@ -284,11 +284,11 @@ impl<T: Trait> Module<T> {
         let active_validators: Vec<(Vec<u8>, i64)> = <pallet_session::Module<T>>::validators()
             .iter()
             .map(|validator| {
-                let pub_key = <SubstrateAccounts<T>>::get(validator).unwrap_or(vec![]);
+                let pub_key = <SubstrateAccounts<T>>::get(validator).unwrap_or_default();
                 let power = <SubstrateAccountPowers<T>>::get(validator).unwrap_or(0);
                 (pub_key, power)
             })
-            .filter(|validator| validator.0.len() > 0)
+            .filter(|validator| !validator.0.is_empty())
             .collect();
         if let Err(err) = abci_interface::begin_block(
             block_number.saturated_into() as i64,

@@ -12,7 +12,7 @@ pub fn get_address_from_pub_key(pub_key: &[u8], key_type: PubKeyTypes) -> Vec<u8
     match key_type {
         PubKeyTypes::Ed25519 => {
             let sha_digest = &sha256_transform::get_sha_value(pub_key)[0..20];
-            sha_digest.to_vec().clone()
+            sha_digest.to_vec()
         }
         PubKeyTypes::Secp256k1 => {
             let sha_digest = sha256_transform::get_sha_value(pub_key);
