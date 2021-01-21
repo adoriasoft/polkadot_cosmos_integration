@@ -1,3 +1,6 @@
+// extern crate base64_url;
+// use base64::{encode, decode};
+
 use sp_std::vec::Vec;
 
 pub mod ripemd160_transform;
@@ -20,4 +23,10 @@ pub fn get_address_from_pub_key(pub_key: &[u8], key_type: PubKeyTypes) -> Vec<u8
             ripemd160_digest.clone()
         }
     }
+}
+
+pub fn encode_value_from_base64(value: &[u8]) -> Vec<u8> {
+    // TODO Complete import of base64.
+    // base64::decode(value).unwrap().to_vec()
+    value.to_vec()
 }

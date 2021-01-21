@@ -180,10 +180,10 @@ decl_module! {
             let origin_signed = ensure_signed(origin)?;
             <AccountLedger<T>>::insert(&origin_signed, Some((&origin_signed, 0)));
             <CosmosAccounts<T>>::insert(&cosmos_account_id, &origin_signed);
-            // todo
-            // Save cosmos node accounts into rocks_db storage.
             let convertable = <T as pallet_session::Trait>::ValidatorIdOf::convert(origin_signed)
                 .unwrap();
+            // TODO Convert cosmos node pub_key from base64 before saving.
+            let cosmos_pubkey_from_base64 = crypto_transform::encode_value_from_base64(&cosmos_account_id);
             <SubstrateAccounts<T>>::insert(&convertable, &cosmos_account_id);
             <SubstrateAccountPowers<T>>::insert(&convertable, &power);
             Ok(())
