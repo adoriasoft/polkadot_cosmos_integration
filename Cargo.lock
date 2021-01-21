@@ -3975,6 +3975,7 @@ version = "0.0.3"
 dependencies = [
  "abci-storage",
  "alt_serde",
+ "base64 0.13.0",
  "frame-support",
  "frame-system",
  "hex",
@@ -3984,7 +3985,8 @@ dependencies = [
  "pallet-sudo",
  "parity-scale-codec",
  "parking_lot 0.10.2",
- "serde",
+ "ripemd160",
+ "sha2 0.9.2",
  "sp-api",
  "sp-core",
  "sp-io",
@@ -5132,6 +5134,17 @@ dependencies = [
  "untrusted",
  "web-sys",
  "winapi 0.3.9",
+]
+
+[[package]]
+name = "ripemd160"
+version = "0.9.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2eca4ecc81b7f313189bf73ce724400a07da2a6dac19588b03c8bd76a2dcc251"
+dependencies = [
+ "block-buffer 0.9.0",
+ "digest 0.9.0",
+ "opaque-debug 0.3.0",
 ]
 
 [[package]]
