@@ -9,6 +9,7 @@ license = 'Apache-2.0'
 version = '0.0.3'
 
 [dependencies]
+serde = { version = "1.0", optional = true }
 abci-storage = { path = 'abci_storage', version = '0.0.3', optional = true}
 pallet-abci = { path = 'abci', version = '0.0.3', optional = true }
 pallet-session = { version = '2.0.0', features = ["historical" ], default-features = false }
@@ -36,6 +37,7 @@ testcontainers = '0.10'
 [features]
 default = ['std']
 std = [
+	'serde',
 	'parking_lot',
 	'codec/std',
 	'pallet-session/std',
