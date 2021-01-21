@@ -140,8 +140,9 @@ fn init_chain() -> Result<(), ServiceError> {
                 )
                 .map_err(|_| "init chain failed")?;
 
-            let initial_validators_set = pallet_abci::utils::serialize_vec(response.get_validators())
-                .map_err(|_| "cannot serialize cosmos validators")?;
+            let initial_validators_set =
+                pallet_abci::utils::serialize_vec(response.get_validators())
+                    .map_err(|_| "cannot serialize cosmos validators")?;
             abci_storage
                 .write(0_i64.to_ne_bytes().to_vec(), initial_validators_set)
                 .map_err(|_| "failed to write validators into the abci storage")?;
