@@ -1,11 +1,13 @@
+use codec::{Decode, Encode};
 use sp_std::vec::Vec;
 
 pub mod ripemd160_transform;
 pub mod sha256_transform;
 
+#[derive(Encode, Decode, Clone, Debug, PartialEq)]
 pub enum PubKeyTypes {
-    Ed25519,
-    Secp256k1,
+    Ed25519 = 0,
+    Secp256k1 = 1,
 }
 
 pub fn get_address_from_pub_key(pub_key: &[u8], key_type: PubKeyTypes) -> Vec<u8> {

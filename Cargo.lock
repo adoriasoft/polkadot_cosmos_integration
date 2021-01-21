@@ -3986,6 +3986,7 @@ dependencies = [
  "parity-scale-codec",
  "parking_lot 0.10.2",
  "ripemd160",
+ "serde",
  "sha2 0.9.2",
  "sp-api",
  "sp-core",

@@ -1,6 +1,7 @@
 //! The pallet for interact with cosmos abci interface.
 
 #![cfg_attr(not(feature = "std"), no_std)]
+#![allow(unused_assignments)]
 #![warn(unused_must_use)]
 use frame_support::{
     codec::{Decode, Encode},
@@ -37,6 +38,7 @@ type SessionIndex = u32;
 /// The optional ledger type.
 type OptionalLedger<AccountId> = Option<(AccountId, Balance)>;
 
+pub const COSMOS_ACCOUNT_DEFAULT_PUB_KEY_TYPE: &str = "ed25519";
 /// Priority for unsigned transaction.
 pub const UNSIGNED_TXS_PRIORITY: u64 = 100;
 
@@ -154,9 +156,9 @@ pub struct ABCITxs {
 decl_storage! {
     trait Store for Module<T: Trait> as ABCITxStorage {
         ABCITxStorage get(fn abci_tx): map hasher(blake2_128_concat) T::BlockNumber => ABCITxs;
-        CosmosAccounts get(fn cosmos_accounts): map hasher(blake2_128_concat) utils::CosmosAccountId => Option<T::AccountId> = None;
+        CosmosAccounts get(fn cosmos_accounts): map hasher(blake2_128_concat) utils::CosmosAccountPubKey => Option<T::AccountId> = None;
         AccountLedger get(fn account_ledgers): map hasher(blake2_128_concat) T::AccountId => OptionalLedger<T::AccountId>;
-        SubstrateAccounts get(fn substrate_accounts): map hasher(blake2_128_concat) <T as pallet_session::Trait>::ValidatorId => Option<utils::CosmosAccountId> = None;
+        SubstrateAccounts get(fn substrate_accounts): map hasher(blake2_128_concat) <T as pallet_session::Trait>::ValidatorId => Option<utils::CosmosAccount> = None;
         SubstrateAccountPowers get(fn substrate_account_powers): map hasher(blake2_128_concat) <T as pallet_session::Trait>::ValidatorId => Option<i64> = None;
     }
 }
@@ -175,16 +177,25 @@ decl_module! {
         }
 
         // Insert Cosmos node account.
+        // r#type = `0` then pub_key type is Ed25519.
+        // r#type = `1` then pub_key type is Secp256k1.
         #[weight = 0]
-        fn insert_cosmos_account(origin, cosmos_account_id: Vec<u8>, power: i64) -> DispatchResult {
+        fn insert_cosmos_account(
+            origin,
+            cosmos_account_pub_key: Vec<u8>,
+            r#type: u64,
+            power: i64
+        ) -> DispatchResult {
             let origin_signed = ensure_signed(origin)?;
             <AccountLedger<T>>::insert(&origin_signed, Some((&origin_signed, 0)));
-            <CosmosAccounts<T>>::insert(&cosmos_account_id, &origin_signed);
+            let cosmos_account = utils::CosmosAccount {
+                pub_key: cosmos_account_pub_key.clone(),
+                pub_key_type: r#type,
+            };
+            <CosmosAccounts<T>>::insert(&cosmos_account_pub_key, &origin_signed);
             let convertable = <T as pallet_session::Trait>::ValidatorIdOf::convert(origin_signed)
                 .unwrap();
-            // TODO Convert cosmos node pub_key from base64 before saving.
-            let cosmos_pubkey_from_base64 = crypto_transform::encode_value_from_base64(&cosmos_account_id);
-            <SubstrateAccounts<T>>::insert(&convertable, &cosmos_account_id);
+            <SubstrateAccounts<T>>::insert(&convertable, &cosmos_account);
             <SubstrateAccountPowers<T>>::insert(&convertable, &power);
             Ok(())
         }
@@ -282,21 +293,24 @@ impl<T: Trait> Module<T> {
         parent_hash: T::Hash,
         extrinsics_root: T::Hash,
     ) -> bool {
-        let active_validators: Vec<(Vec<u8>, i64)> = <pallet_session::Module<T>>::validators()
-            .iter()
-            .map(|validator| {
-                let pub_key = <SubstrateAccounts<T>>::get(validator).unwrap_or_default();
-                let power = <SubstrateAccountPowers<T>>::get(validator).unwrap_or(0);
-                (pub_key, power)
-            })
-            .filter(|validator| !validator.0.is_empty())
-            .collect();
+        let active_cosmos_validators: Vec<(Vec<u8>, u64, i64)> =
+            <pallet_session::Module<T>>::validators()
+                .iter()
+                .map(|validator| {
+                    let account = <SubstrateAccounts<T>>::get(validator).unwrap_or_default();
+                    let pub_key = account.pub_key;
+                    let pub_key_type = account.pub_key_type;
+                    let power = <SubstrateAccountPowers<T>>::get(validator).unwrap_or(0);
+                    (pub_key, pub_key_type, power)
+                })
+                .filter(|validator| !validator.0.is_empty())
+                .collect();
         if let Err(err) = abci_interface::begin_block(
             block_number.saturated_into() as i64,
             block_hash.as_ref().to_vec(),
             parent_hash.as_ref().to_vec(),
             extrinsics_root.as_ref().to_vec(),
-            active_validators,
+            active_cosmos_validators,
         ) {
             panic!("Begin block failed: {:?}", err);
         }
@@ -487,33 +501,39 @@ pub trait AbciInterface {
         hash: Vec<u8>,
         last_block_id: Vec<u8>,
         proposer_address: Vec<u8>,
-        current_substrate_validators: Vec<(Vec<u8>, i64)>,
+        current_cosmos_validators: Vec<(Vec<u8>, u64, i64)>,
     ) -> DispatchResult {
         // TODO Get evidence validators.
         let byzantine_validators: Vec<pallet_abci::protos::Evidence> = vec![];
-        let mut active_validators: Option<Vec<pallet_abci::protos::VoteInfo>> = None;
-
-        if !current_substrate_validators.is_empty() {
-            active_validators = Some(
-                current_substrate_validators
-                    .iter()
-                    .map(|validator| {
-                        let address = crypto_transform::get_address_from_pub_key(
-                            &validator.clone().0,
-                            crypto_transform::PubKeyTypes::Ed25519,
-                        );
-                        pallet_abci::protos::VoteInfo {
-                            validator: Some(pallet_abci::protos::Validator {
-                                address,
-                                power: validator.clone().1,
-                            }),
-                            // TODO Check if validator is author of last block or not.
-                            signed_last_block: true,
+        let cosmos_validators: Option<Vec<pallet_abci::protos::VoteInfo>> = Some(
+            current_cosmos_validators
+                .iter()
+                .map(|validator| {
+                    let mut pub_key_type = crypto_transform::PubKeyTypes::Ed25519;
+                    match validator.clone().1 {
+                        0 => {
+                            pub_key_type = crypto_transform::PubKeyTypes::Ed25519;
                         }
-                    })
-                    .collect(),
-            )
-        }
+                        1 => {
+                            pub_key_type = crypto_transform::PubKeyTypes::Secp256k1;
+                        }
+                        _ => {}
+                    }
+                    let address = crypto_transform::get_address_from_pub_key(
+                        &validator.clone().0,
+                        pub_key_type,
+                    );
+                    pallet_abci::protos::VoteInfo {
+                        validator: Some(pallet_abci::protos::Validator {
+                            address,
+                            power: validator.clone().2,
+                        }),
+                        // TODO Check if validator is author of last block or not.
+                        signed_last_block: true,
+                    }
+                })
+                .collect(),
+        );
 
         let _result = pallet_abci::get_abci_instance()
             .map_err(|_| "failed to setup connection")?
@@ -523,7 +543,7 @@ pub trait AbciInterface {
                 last_block_id,
                 proposer_address,
                 byzantine_validators,
-                active_validators,
+                cosmos_validators,
             )
             .map_err(|_| "begin_block failed")?;
 
