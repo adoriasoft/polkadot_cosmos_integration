@@ -1,6 +1,3 @@
-// extern crate base64_url;
-// use base64::{encode, decode};
-
 use sp_std::vec::Vec;
 
 pub mod ripemd160_transform;
