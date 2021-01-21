@@ -77,6 +77,7 @@ impl crate::AbciInterface for AbciinterfaceGrpc {
         max_age_num_blocks: i64,
         max_age_duration: u64,
         app_state_bytes: Vec<u8>,
+        validators: Vec<protos::ValidatorUpdate>,
     ) -> crate::AbciResult<dyn crate::ResponseInitChain> {
         let evidence = protos::EvidenceParams {
             max_age_num_blocks,
@@ -100,7 +101,7 @@ impl crate::AbciInterface for AbciinterfaceGrpc {
             }),
             chain_id: chain_id.to_owned(),
             consensus_params: Some(consensus_params),
-            validators: vec![],
+            validators,
             app_state_bytes,
         });
 
