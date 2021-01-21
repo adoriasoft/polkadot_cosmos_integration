@@ -25,10 +25,10 @@ use sp_runtime::{
 use sp_runtime_interface::runtime_interface;
 use sp_std::{convert::TryInto, prelude::*, str};
 
-/// Import `utils` module.
-pub mod utils;
 /// Import `crypto_transform` module.
 pub mod crypto_transform;
+/// Import `utils` module.
+pub mod utils;
 
 /// Balance type for pallet.
 pub type Balance = u64;
@@ -318,8 +318,13 @@ impl<T: Trait> Module<T> {
         }
     }
 
-    pub fn update_keys_for_account(validator_id: T::AccountId, keys: T::Keys, proof: Vec<u8>) -> DispatchResult {
-        let _response = <session::Module<T>>::set_keys(RawOrigin::Signed(validator_id).into(), keys, proof);
+    pub fn update_keys_for_account(
+        validator_id: T::AccountId,
+        keys: T::Keys,
+        proof: Vec<u8>,
+    ) -> DispatchResult {
+        let _response =
+            <session::Module<T>>::set_keys(RawOrigin::Signed(validator_id).into(), keys, proof);
         Ok(())
     }
 
@@ -518,10 +523,10 @@ pub trait AbciInterface {
                 last_block_id,
                 proposer_address,
                 byzantine_validators,
-                active_validators
+                active_validators,
             )
             .map_err(|_| "begin_block failed")?;
-    
+
         Ok(())
     }
 
