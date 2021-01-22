@@ -159,7 +159,6 @@ decl_storage! {
         CosmosAccounts get(fn cosmos_accounts): map hasher(blake2_128_concat) utils::CosmosAccountPubKey => Option<T::AccountId> = None;
         AccountLedger get(fn account_ledgers): map hasher(blake2_128_concat) T::AccountId => OptionalLedger<T::AccountId>;
         SubstrateAccounts get(fn substrate_accounts): map hasher(blake2_128_concat) <T as pallet_session::Trait>::ValidatorId => Option<utils::CosmosAccount> = None;
-        SubstrateAccountPowers get(fn substrate_account_powers): map hasher(blake2_128_concat) <T as pallet_session::Trait>::ValidatorId => Option<i64> = None;
     }
 }
 
@@ -191,12 +190,12 @@ decl_module! {
             let cosmos_account = utils::CosmosAccount {
                 pub_key: cosmos_account_pub_key.clone(),
                 pub_key_type: r#type,
+                power: power,
             };
             <CosmosAccounts<T>>::insert(&cosmos_account_pub_key, &origin_signed);
             let convertable = <T as pallet_session::Trait>::ValidatorIdOf::convert(origin_signed)
                 .unwrap();
             <SubstrateAccounts<T>>::insert(&convertable, &cosmos_account);
-            <SubstrateAccountPowers<T>>::insert(&convertable, &power);
             Ok(())
         }
 
@@ -208,17 +207,20 @@ decl_module! {
             let convertable = <T as pallet_session::Trait>::ValidatorIdOf::convert(origin_signed)
                 .unwrap();
             <SubstrateAccounts<T>>::remove(&convertable);
-            <SubstrateAccountPowers<T>>::remove(&convertable);
             Ok(())
         }
 
-        // Update Cosmos node account power.
+        // Update Cosmos node account.
         #[weight = 0]
         fn update_comsos_account_power(origin, new_power: i64) -> DispatchResult {
             let origin_signed = ensure_signed(origin)?;
             let convertable = <T as pallet_session::Trait>::ValidatorIdOf::convert(origin_signed)
                 .unwrap();
-            <SubstrateAccountPowers<T>>::insert(&convertable, new_power);
+            let existed_account = <SubstrateAccounts<T>>::get(&convertable);
+            if let Some(mut account) = existed_account {
+                account.power = new_power;
+                <SubstrateAccounts<T>>::insert(&convertable, &account);
+            }
             Ok(())
         }
 
@@ -300,7 +302,7 @@ impl<T: Trait> Module<T> {
                     let account = <SubstrateAccounts<T>>::get(validator).unwrap_or_default();
                     let pub_key = account.pub_key;
                     let pub_key_type = account.pub_key_type;
-                    let power = <SubstrateAccountPowers<T>>::get(validator).unwrap_or(0);
+                    let power = account.power;
                     (pub_key, pub_key_type, power)
                 })
                 .filter(|validator| !validator.0.is_empty())
@@ -503,8 +505,6 @@ pub trait AbciInterface {
         proposer_address: Vec<u8>,
         current_cosmos_validators: Vec<(Vec<u8>, u64, i64)>,
     ) -> DispatchResult {
-        // TODO Get evidence validators.
-        let byzantine_validators: Vec<pallet_abci::protos::Evidence> = vec![];
         let cosmos_validators: Option<Vec<pallet_abci::protos::VoteInfo>> = Some(
             current_cosmos_validators
                 .iter()
@@ -542,7 +542,6 @@ pub trait AbciInterface {
                 hash,
                 last_block_id,
                 proposer_address,
-                byzantine_validators,
                 cosmos_validators,
             )
             .map_err(|_| "begin_block failed")?;

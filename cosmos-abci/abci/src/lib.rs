@@ -168,7 +168,6 @@ pub trait AbciInterface {
         hash: Vec<u8>,
         last_block_id: Vec<u8>,
         proposer_address: Vec<u8>,
-        byzantine_validators: Vec<protos::Evidence>,
         active_validators: Option<Vec<protos::VoteInfo>>,
     ) -> AbciResult<dyn ResponseBeginBlock>;
 

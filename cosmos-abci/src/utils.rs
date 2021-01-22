@@ -29,4 +29,5 @@ pub type CosmosAccountPubKey = Vec<u8>;
 pub struct CosmosAccount {
     pub pub_key: CosmosAccountPubKey,
     pub pub_key_type: u64,
+    pub power: i64,
 }
