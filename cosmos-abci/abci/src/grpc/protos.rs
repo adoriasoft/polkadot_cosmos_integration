@@ -160,7 +160,11 @@ impl crate::ResponseDeliverTx for ResponseDeliverTx {
     }
 }
 
-impl crate::ResponseInitChain for ResponseInitChain {}
+impl crate::ResponseInitChain for ResponseInitChain {
+    fn get_validators(&self) -> Vec<ValidatorUpdate> {
+        self.validators.clone()
+    }
+}
 
 impl crate::ResponseBeginBlock for ResponseBeginBlock {}
 
