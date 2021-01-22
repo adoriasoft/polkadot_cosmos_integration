@@ -188,8 +188,6 @@ pub trait AbciInterface {
     fn flush(&mut self) -> AbciResult<dyn ResponseFlush>;
 }
 
-/// TODO
-
 /// Method that set abci instance.
 pub fn set_abci_instance<'ret>(
     new_instance: AIType,
