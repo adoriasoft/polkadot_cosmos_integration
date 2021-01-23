@@ -526,7 +526,7 @@ pub trait AbciInterface {
                     );
                     pallet_abci::protos::VoteInfo {
                         validator: Some(pallet_abci::protos::Validator {
-                            address: address,
+                            address,
                             power: validator.clone().2,
                         }),
                         // TODO Check if validator is author of last block or does not.
