@@ -1,5 +1,5 @@
-use sha2::*;
 use ripemd160;
+use sha2::*;
 use sp_std::vec::Vec;
 
 /// Method for generate sha256 hash from value.

@@ -51,7 +51,7 @@ mod tests {
     fn should_get_address_from_secp256k1_pub_key() {
         const ADDRESS: &str = "2jLQaRKYMH6Sukx97FZRPqn494Ar";
         const PUB_KEY: &str = "02950e1cdfcb133d6024109fd489f734eeb4502418e538c28481f22bce276f248c";
-    
+
         let pub_key = hex::decode(PUB_KEY).unwrap();
         let address = crate::crypto_transform::get_address_from_pub_key(
             &pub_key,

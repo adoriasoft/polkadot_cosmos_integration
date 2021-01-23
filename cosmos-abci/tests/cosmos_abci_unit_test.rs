@@ -9,8 +9,7 @@ use sp_runtime::{
     generic, impl_opaque_keys,
     testing::{TestXt, UintAuthorityId},
     traits::{
-        BlakeTwo256, Extrinsic as ExtrinsicT, IdentifyAccount, IdentityLookup,
-        OpaqueKeys, Verify,
+        BlakeTwo256, Extrinsic as ExtrinsicT, IdentifyAccount, IdentityLookup, OpaqueKeys, Verify,
     },
     AccountId32, MultiSignature, Perbill, RuntimeAppPublic,
 };

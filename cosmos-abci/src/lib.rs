@@ -305,11 +305,12 @@ impl<T: Trait> Module<T> {
             <pallet_session::Module<T>>::validators()
                 .iter()
                 .map(|validator| {
-                    let account = <SubstrateAccounts<T>>::get(validator).unwrap_or(utils::CosmosAccount {
-                        pub_key: vec![],
-                        pub_key_type: crate::crypto_transform::PubKeyTypes::Ed25519,
-                        power: 0,
-                    });
+                    let account =
+                        <SubstrateAccounts<T>>::get(validator).unwrap_or(utils::CosmosAccount {
+                            pub_key: vec![],
+                            pub_key_type: crate::crypto_transform::PubKeyTypes::Ed25519,
+                            power: 0,
+                        });
                     let pub_key = account.pub_key;
                     let pub_key_type = account.pub_key_type;
                     let power = account.power;
