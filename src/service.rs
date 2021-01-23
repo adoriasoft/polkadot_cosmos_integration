@@ -139,6 +139,7 @@ fn init_chain() -> Result<(), ServiceError> {
                     vec![],
                 )
                 .map_err(|_| "init chain failed")?;
+
             let initial_validators_set =
                 pallet_abci::utils::serialize_vec(response.get_validators())
                     .map_err(|_| "cannot serialize cosmos validators")?;
