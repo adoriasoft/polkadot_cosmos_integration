@@ -1,8 +1,8 @@
 use codec::{Decode, Encode};
 use sp_std::vec::Vec;
 
-pub mod sha_hasher;
 pub mod ripe_hasher;
+pub mod sha_hasher;
 
 /// Curves for convert nodes pub keys.
 #[derive(Encode, Decode, Clone, Debug, PartialEq)]
