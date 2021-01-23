@@ -1,4 +1,4 @@
-use ripemd160;
+use ripemd160::*;
 use sha2::*;
 use sp_std::vec::Vec;
 
