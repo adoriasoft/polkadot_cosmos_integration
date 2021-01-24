@@ -26,6 +26,3 @@ pub struct CosmosAccount {
     pub pub_key_type: crate::crypto_transform::PubKeyTypes,
     pub power: i64,
 }
-
-/// Cosmos account as tuple.
-pub type CosmosAccountOf = (Vec<u8>, crate::crypto_transform::PubKeyTypes, i64);
