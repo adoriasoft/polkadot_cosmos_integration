@@ -19,16 +19,15 @@ mod tests {
 
     #[test]
     fn should_get_address_from_secp256k1_pub_key() {
-        // TODO Address must be `1CKZ9Nx4zgds8tU7nJHotKSDr4a9bYJCa3`.
-        const ADDRESS: &str = "2jLQaRKYMH6Sukx97FZRPqn494Ar";
         const PUB_KEY: &str = "02950e1cdfcb133d6024109fd489f734eeb4502418e538c28481f22bce276f248c";
+        const ADDRESS: &str = "7c2bb42a8be69791ec763e51f5a49bcd41e82237";
 
         let pub_key = hex::decode(PUB_KEY).unwrap();
         let address = crate::crypto_transform::get_address_from_pub_key(
             &pub_key,
             crate::crypto_transform::PubKeyTypes::Secp256k1,
         );
-        let address_str = bs58::encode(address).into_string();
+        let address_str = hex::encode(address);
 
         assert_eq!(address_str, ADDRESS);
     }
