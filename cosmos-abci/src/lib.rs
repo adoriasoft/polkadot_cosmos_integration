@@ -195,21 +195,20 @@ decl_module! {
                     <SubstrateAccounts<T>>::insert(&convertable, utils::CosmosAccount {
                         pub_key: cosmos_account_pub_key.clone(),
                         pub_key_type: crypto_transform::PubKeyTypes::Ed25519,
-                        power: power,
+                        power,
                     });
                     Ok(())
                 },
-
                 1 => {
                     <CosmosAccounts<T>>::insert(&cosmos_account_pub_key, origin_signed);
                     <SubstrateAccounts<T>>::insert(convertable, utils::CosmosAccount {
                         pub_key: cosmos_account_pub_key.clone(),
-                        pub_key_type: crypto_transform::PubKeyTypes::Ed25519,
-                        power: power,
+                        pub_key_type: crypto_transform::PubKeyTypes::Secp256k1,
+                        power,
                     });
                     Ok(())
                 },
-                _ => Err(DispatchError::Other("invalid pub key type")),
+                _ => Err(DispatchError::Other("invalid pub_key type")),
             }
         }
 
