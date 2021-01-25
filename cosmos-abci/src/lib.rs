@@ -193,7 +193,7 @@ decl_module! {
                 0 => {
                     <CosmosAccounts<T>>::insert(&cosmos_account_pub_key, &origin_signed);
                     <SubstrateAccounts<T>>::insert(&convertable, utils::CosmosAccount {
-                        pub_key: cosmos_account_pub_key.clone(),
+                        pub_key: cosmos_account_pub_key,
                         pub_key_type: crypto_transform::PubKeyTypes::Ed25519,
                         power,
                     });
@@ -202,7 +202,7 @@ decl_module! {
                 1 => {
                     <CosmosAccounts<T>>::insert(&cosmos_account_pub_key, origin_signed);
                     <SubstrateAccounts<T>>::insert(convertable, utils::CosmosAccount {
-                        pub_key: cosmos_account_pub_key.clone(),
+                        pub_key: cosmos_account_pub_key,
                         pub_key_type: crypto_transform::PubKeyTypes::Secp256k1,
                         power,
                     });
@@ -310,9 +310,8 @@ impl<T: Trait> Module<T> {
     ) -> bool {
         let mut active_cosmos_validators = Vec::<utils::CosmosAccount>::new();
         for validator in <pallet_session::Module<T>>::validators() {
-            match <SubstrateAccounts<T>>::get(validator) {
-                Some(value) => active_cosmos_validators.push(value),
-                None => {}
+            if let Some(value) = <SubstrateAccounts<T>>::get(validator) {
+                active_cosmos_validators.push(value);
             };
         }
 
