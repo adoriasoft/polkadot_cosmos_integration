@@ -42,11 +42,12 @@ fn test_abci_begin_block() {
         genesis.max_age_num_blocks,
         genesis.max_age_duration,
         genesis.app_state_bytes,
+        vec![],
     );
     assert!(result.is_ok(), "should successfully call init chain");
 
     let height = 1;
-    let result = client.begin_block(height, vec![], vec![], vec![]);
+    let result = client.begin_block(height, vec![], vec![], vec![], None);
     assert!(result.is_ok(), "should successfully call begin block");
 
     let result = client.check_tx(vec![]);

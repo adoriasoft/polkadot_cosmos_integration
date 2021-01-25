@@ -285,7 +285,7 @@ impl pallet_session::Trait for Runtime {
     type ValidatorIdOf = pallet_cosmos_abci::utils::StashOf<Self>;
     type ShouldEndSession = pallet_session::PeriodicSessions<Period, Offset>;
     type NextSessionRotation = pallet_session::PeriodicSessions<Period, Offset>;
-    type SessionManager = pallet_session::historical::NoteHistoricalRoot<Self, CosmosAbci>;
+    type SessionManager = CosmosAbci;
     type SessionHandler = <opaque::SessionKeys as OpaqueKeys>::KeyTypeIdProviders;
     type Keys = opaque::SessionKeys;
     type DisabledValidatorsThreshold = DisabledValidatorsThreshold;

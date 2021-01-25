@@ -34,3 +34,5 @@ token_datas
 
 abci_storage_test/
 abci_storage_rocksdb/
+
+/logs

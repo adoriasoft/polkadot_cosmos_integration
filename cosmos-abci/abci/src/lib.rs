@@ -72,7 +72,9 @@ pub trait ResponseDeliverTx {
 
 /// Trait that specify fields of ResponseInitChain.
 #[automock]
-pub trait ResponseInitChain {}
+pub trait ResponseInitChain {
+    fn get_validators(&self) -> Vec<protos::ValidatorUpdate>;
+}
 
 /// Trait that specify fields for ResponseSetOption.
 #[automock]
@@ -158,6 +160,7 @@ pub trait AbciInterface {
         max_age_num_blocks: i64,
         max_age_duration: u64,
         app_state_bytes: Vec<u8>,
+        validators: Vec<protos::ValidatorUpdate>,
     ) -> AbciResult<dyn ResponseInitChain>;
 
     fn set_option(&mut self, key: &str, value: &str) -> AbciResult<dyn ResponseSetOption>;
@@ -168,6 +171,7 @@ pub trait AbciInterface {
         hash: Vec<u8>,
         last_block_id: Vec<u8>,
         proposer_address: Vec<u8>,
+        active_validators: Option<Vec<protos::VoteInfo>>,
     ) -> AbciResult<dyn ResponseBeginBlock>;
 
     fn end_block(&mut self, height: i64) -> AbciResult<dyn ResponseEndBlock>;
