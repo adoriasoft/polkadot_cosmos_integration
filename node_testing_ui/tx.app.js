@@ -14,13 +14,13 @@ async function init() {
     const provider = new WsProvider(WS_URL);
     const api = await ApiPromise.create({ provider });
 
-    const _s = await new Promise(resovle => {
+    const response = await new Promise(resovle => {
         setTimeout(async () => {
             if (substrate_address && cosmos_address) {
                 const signer = getBlockchainAccount(substrate_address);
                 try {
                     const txHash = await api.tx.cosmosAbci
-                        .insertCosmosAccount(cosmos_address)
+                        .insertCosmosAccount(cosmos_address, 0, 10)
                         .signAndSend(signer);
                     resovle(txHash.toString());
                 } catch (err) {
@@ -31,7 +31,7 @@ async function init() {
         }, 5000);
     });
 
-    console.log(_s);
+    console.log(response);
 }
 
 init()

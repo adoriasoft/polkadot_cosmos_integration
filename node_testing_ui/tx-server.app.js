@@ -13,9 +13,7 @@ async function startServer() {
     const WS_URL = process.env.NODE_ENV === 'production' ? appConstants.ENDPOINT_PROD : appConstants.ENDPOINT_LOCAL;
     const provider = new WsProvider(WS_URL);
     const api = await ApiPromise.create({ provider });
-    const server = http.createServer((req, res) => {
-        // skip
-    });
+    const server = http.createServer();
 
     server.on('request', async (req, res) => {
         const params = url.parse(req.url, true).query;
