@@ -10,7 +10,7 @@ version = '0.0.3'
 
 [dependencies]
 serde = { version = "1.0", optional = true }
-abci-storage = {path = 'abci_storage', version = '0.0.3', optional = true}
+abci-storage = { path = 'abci_storage', version = '0.0.3', optional = true}
 pallet-abci = { path = 'abci', version = '0.0.3', optional = true }
 pallet-session = { version = '2.0.0', features = ["historical" ], default-features = false }
 pallet-sudo = { version = '2.0.0', default-features = false }
@@ -25,8 +25,11 @@ sp-api = { version = '2.0.0', default-features = false }
 sp-runtime-interface = { version = '2.0.0', default-features = false }
 alt_serde = { version = '1', default-features = false, features = ['derive'] }
 parking_lot = { version = "0.10.0", optional = true }
+base64 = { version = '0.12.3', default-features = false, features = ["alloc"] }
+hex = { version = '0.4.2', default-features = false }
+ripemd160 = { version = "0.9.1", default-features = false }
+sha2 = { version = "0.9.2", default-features = false }
 lazy_static = '1.2.0'
-hex = '0.4.2'
 
 [dev-dependencies]
 testcontainers = '0.10'

@@ -171,6 +171,7 @@ pub trait AbciInterface {
         hash: Vec<u8>,
         last_block_id: Vec<u8>,
         proposer_address: Vec<u8>,
+        active_validators: Option<Vec<protos::VoteInfo>>,
     ) -> AbciResult<dyn ResponseBeginBlock>;
 
     fn end_block(&mut self, height: i64) -> AbciResult<dyn ResponseEndBlock>;
