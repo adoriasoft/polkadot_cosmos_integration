@@ -183,7 +183,6 @@ decl_module! {
             origin,
             cosmos_account_pub_key: Vec<u8>,
             r#type: u64,
-            power: i64
         ) -> DispatchResult {
             let origin_signed = ensure_signed(origin)?;
             <AccountLedger<T>>::insert(&origin_signed, Some((&origin_signed, 0)));
@@ -195,7 +194,7 @@ decl_module! {
                     <SubstrateAccounts<T>>::insert(&convertable, utils::CosmosAccount {
                         pub_key: cosmos_account_pub_key,
                         pub_key_type: crypto_transform::PubKeyTypes::Ed25519,
-                        power,
+                        power: 0,
                     });
                     Ok(())
                 },
@@ -204,7 +203,7 @@ decl_module! {
                     <SubstrateAccounts<T>>::insert(convertable, utils::CosmosAccount {
                         pub_key: cosmos_account_pub_key,
                         pub_key_type: crypto_transform::PubKeyTypes::Secp256k1,
-                        power,
+                        power: 0,
                     });
                     Ok(())
                 },
@@ -220,20 +219,6 @@ decl_module! {
             let convertable = <T as pallet_session::Trait>::ValidatorIdOf::convert(origin_signed)
                 .unwrap();
             <SubstrateAccounts<T>>::remove(&convertable);
-            Ok(())
-        }
-
-        // Update Cosmos node account.
-        #[weight = 0]
-        fn update_comsos_account_power(origin, new_power: i64) -> DispatchResult {
-            let origin_signed = ensure_signed(origin)?;
-            let convertable = <T as pallet_session::Trait>::ValidatorIdOf::convert(origin_signed)
-                .unwrap();
-            let existed_account = <SubstrateAccounts<T>>::get(&convertable);
-            if let Some(mut account) = existed_account {
-                account.power = new_power;
-                <SubstrateAccounts<T>>::insert(&convertable, &account);
-            }
             Ok(())
         }
 
