@@ -16,7 +16,7 @@ source ./testing_setup/basic_setup.sh
 source ./testing_setup/test_utils.sh
 
 start_all
-sleep 10s
+sleep 20s
 
 cd ../../node_testing_ui
 

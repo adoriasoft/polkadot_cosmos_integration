@@ -343,8 +343,8 @@ impl<T: Trait> Module<T> {
         // Sessions starts after end_block() with number 2.
         // For some reason two first sessions is missed.
         let mut corresponding_height = 0;
-        if new_index > 5 {
-            corresponding_height = new_index - 6;
+        if new_index > 2 {
+            corresponding_height = new_index - 3;
         };
 
         let next_cosmos_validators =
