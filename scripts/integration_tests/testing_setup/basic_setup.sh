@@ -9,10 +9,6 @@ function clean_tmp() {
     touch tmp/cosmos_log.log
 }
 
-function clean_rocks_db() {
-    rm -rf abci_storage_rocksdb
-}
-
 function clean_substrate() {
     echo "Clean Substrate"
     export ABCI_GENESIS_STATE_PATH=$HOME/.nsd/config/genesis.json
@@ -60,3 +56,4 @@ function stop_all() {
     stop_substrate
     stop_cosmos
 }
+

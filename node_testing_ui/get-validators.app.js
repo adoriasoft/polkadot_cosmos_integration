@@ -7,7 +7,7 @@ async function init() {
     const api = await ApiPromise.create({ provider });
     const validators = await api.query.session.validators();
 
-    console.log(validators.length);
+    console.log(validators.map(v => v.toString()).join('@'));
 }
 
 init()

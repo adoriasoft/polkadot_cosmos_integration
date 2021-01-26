@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
 function assert_eq() {
-    if [[ "$1" == "$2" || "$1" == "$3" || "$1" == "$4" ]]; then
+    if [ "$1" == "$2" ]
+    then 
         echo -e "\033[0;32m OK \033[0m"
     else 
         echo -e "\033[0;31m FAIL"
