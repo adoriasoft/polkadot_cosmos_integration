@@ -350,6 +350,12 @@ impl<T: Trait> Module<T> {
         let next_cosmos_validators =
             abci_interface::get_cosmos_validators(corresponding_height.into()).unwrap();
 
+        debug::info!(
+            "on_new_session() corresponding_height: {:?} next_cosmos_validators: {:?}",
+            corresponding_height,
+            next_cosmos_validators,
+        );
+
         if !next_cosmos_validators.is_empty() {
             let mut new_substrate_validators: Vec<T::AccountId> = vec![];
             for cosmos_validator_id in &next_cosmos_validators {
@@ -362,6 +368,14 @@ impl<T: Trait> Module<T> {
                     );
                     sp_runtime::print(&*hex::encode(cosmos_validator_id.to_vec()));
                 }
+            }
+
+            debug::info!(
+                "on_new_session() new_substrate_validators: {:?}",
+                new_substrate_validators
+            );
+            if !new_substrate_validators.is_empty() {
+                return Some(new_substrate_validators);
             }
         }
 

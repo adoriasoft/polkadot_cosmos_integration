@@ -23,7 +23,7 @@ cd ../../node_testing_ui
 validators_set_1=$(node ./get-validators.app.js)
 assert_eq "$validators_set_1" $initial_validators_set
 
-insert_bob_account=$(node ./tx.app.js //Bob 0 0xdacf6e056bbefeb9333f35aec1a0a4c507afc4ce17552e0409fc72cf7e728bf0)
+insert_bob_account=$(node ./tx.app.js //Bob 0 0xa911e89ab8aec83f3c15701e1305486f47403a541659d20c3c43929cc31d34b9)
 sleep 20s
 
 validators_set_2=$(node ./get-validators.app.js)
