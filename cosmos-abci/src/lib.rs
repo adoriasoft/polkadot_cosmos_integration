@@ -350,8 +350,6 @@ impl<T: Trait> Module<T> {
         let next_cosmos_validators =
             abci_interface::get_cosmos_validators(corresponding_height.into()).unwrap();
 
-        debug::info!("Validators for corresponding height {:?} of set {:?}", corresponding_height, next_cosmos_validators);
-
         if !next_cosmos_validators.is_empty() {
             let mut new_substrate_validators: Vec<T::AccountId> = vec![];
             for cosmos_validator_id in &next_cosmos_validators {
@@ -364,17 +362,6 @@ impl<T: Trait> Module<T> {
                     );
                     sp_runtime::print(&*hex::encode(cosmos_validator_id.to_vec()));
                 }
-            }
-            if !new_substrate_validators.is_empty() {
-                debug::info!(
-                    "Substrate validators for new_session() {:?}",
-                    new_substrate_validators
-                );
-                // NOTE Add sudo root account
-                // the reason if new validators set not include `root` node stops to responding.
-                let sudo = <pallet_sudo::Module<T>>::key();
-                new_substrate_validators.push(sudo);
-                return Some(new_substrate_validators);
             }
         }
 
