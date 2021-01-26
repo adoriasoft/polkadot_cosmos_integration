@@ -15,27 +15,19 @@ async function startServer() {
     const api = await ApiPromise.create({ provider });
     const server = http.createServer();
 
+    // Query node data.
     server.on('request', async (req, res) => {
-        const params = url.parse(req.url, true).query;
-        const substrateAccountAddress = params.substrate_address;
-        const cosmosAccountAddress = params.cosmos_address;
-        if (substrateAccountAddress, cosmosAccountAddress) {
-            const signAccount = getBlockchainAccount(substrateAccountAddress);
-            if (signAccount.address && signAccount.address.length > 0) {
-                try {
-                    const txHash = await api.tx.cosmosAbci
-                        .insertCosmosAccount(cosmosAccountAddress)
-                        .signAndSend(signAccount);
-                    res.setHeader('Content-Type', 'application/json')
-                    res.end(JSON.stringify({
-                        txHash,
-                    }));
-                } catch (err) {
-                    res.end('Error send tx', JSON.stringify(err));
-                }
-            }
+        const { type } = req.query || {};
+        if (type) {
+            res.write(type);
+            res.end();
+        } else {
+            const validators = await api.query.session.validators();
+            res.write(JSON.stringify(validators));
+            res.end();
         }
     });
+
     server.listen(8000);
 }
 

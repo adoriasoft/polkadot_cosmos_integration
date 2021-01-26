@@ -224,7 +224,7 @@ decl_module! {
 
         // Transaction dispatch.
         #[weight = 0]
-        pub fn abci_transaction(origin, data: Vec<u8>) -> DispatchResult {
+        fn abci_transaction(origin, data: Vec<u8>) -> DispatchResult {
             let _ = ensure_none(origin)?;
 
             Self::call_abci_transaction(data)?;
