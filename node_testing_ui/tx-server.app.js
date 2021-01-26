@@ -28,7 +28,9 @@ async function startServer() {
         }
     });
 
-    server.listen(8000);
+    server.listen(8000).on('listening', () => {
+        console.log('Server listen port', 8000);
+    });
 }
 
 startServer();
