@@ -537,19 +537,16 @@ pub trait AbciInterface {
 
         // current cosmos_validators vec is empty assign the previous value
         if cosmos_validators.is_empty() {
-            match abci_storage::get_abci_storage_instance()
+            if let Some(bytes) = abci_storage::get_abci_storage_instance()
                 .map_err(|_| "failed to get abci storage instance")?
                 .get((height - 1).to_ne_bytes().to_vec())
                 .map_err(|_| "failed to get value from the abci storage")?
             {
-                Some(bytes) => {
-                    cosmos_validators = pallet_abci::utils::deserialize_vec::<
-                        pallet_abci::protos::ValidatorUpdate,
-                    >(&bytes)
-                    .map_err(|_| "cannot deserialize ValidatorUpdate vector")?;
-                }
-                None => {}
-            };
+                cosmos_validators = pallet_abci::utils::deserialize_vec::<
+                    pallet_abci::protos::ValidatorUpdate,
+                >(&bytes)
+                .map_err(|_| "cannot deserialize ValidatorUpdate vector")?;
+            }
         }
 
         let bytes = pallet_abci::utils::serialize_vec(cosmos_validators)
