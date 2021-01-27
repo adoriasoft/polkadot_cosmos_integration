@@ -1,0 +1,20 @@
+{
+  "name": "node_testing_cli_app",
+  "version": "0.0.1",
+  "scripts": {
+    "start:tx-app": "node tx.app.js",
+    "start:block-info-app": "node block-info.app.js",
+    "postinstall": "echo 'After install' && rm -rf ./node_modules/@polkadot/api/node_modules/@polkadot/keyring"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "bn.js": "^5.0.0",
+    "@polkadot/api": "^2.2.1",
+    "@polkadot/keyring": "^3.5.1",
+    "@polkadot/types": "^2.2.1",
+    "@polkadot/ui-keyring": "^0.60.1",
+    "@polkadot/ui-settings": "^0.60.1",
+    "@polkadot/util": "^3.5.1",
+    "@polkadot/util-crypto": "^3.5.1"
+  }
+}
