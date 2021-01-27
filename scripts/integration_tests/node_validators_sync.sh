@@ -28,10 +28,10 @@ cd ../../node_testing_ui
 
 validators_set_1=$(node ./get-validators.app.js)
 assert_eq "$validators_set_1" $initial_validators_set
-insert_bob_account=$(node ./tx.app.js //Bob 0 0xa911e89ab8aec83f3c15701e1305486f47403a541659d20c3c43929cc31d34b9)
-sleep 20s
+insert_bob_account=$(node ./insert-cosmos-validator.app.js //Bob 0 0xa911e89ab8aec83f3c15701e1305486f47403a541659d20c3c43929cc31d34b9)
+sleep 300s
 
-# validators_set_2=$(node ./get-validators.app.js)
-# assert_eq "$validators_set_2" $after_first_update_validators_set
+validators_set_2=$(node ./get-validators.app.js)
+assert_eq "$validators_set_2" $after_first_update_validators_set
 
 test_passed "Cosmos/Substrate node sync test passed"
