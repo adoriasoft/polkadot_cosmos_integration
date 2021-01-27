@@ -184,7 +184,7 @@ decl_module! {
         ) -> DispatchResult {
             let origin_signed = ensure_signed(origin)?;
             <AccountLedger<T>>::insert(&origin_signed, Some((&origin_signed, 0)));
-            let convertable = <T as pallet_session::Trait>::ValidatorIdOf::convert(origin_signed.clone())
+            let convertable = <T as pallet_session::Trait>::ValidatorIdOf::convert(origin_signed)
             .unwrap();
             match r#type {
                 0 => {
