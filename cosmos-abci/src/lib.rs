@@ -365,9 +365,9 @@ impl<T: Trait> Module<T> {
                     new_substrate_validators.push(substrate_account_id);
                 } else {
                     sp_runtime::print(
-                        "WARNING: Not able to found Substrate account to Cosmos for ID \n",
+                        "WARNING: Not able to found Substrate account to Cosmos for ID : ",
                     );
-                    sp_runtime::print(str::from_utf8(cosmos_validator_id).unwrap());
+                    sp_runtime::print(&*hex::encode(cosmos_validator_id));
                 }
             }
             debug::info!(
