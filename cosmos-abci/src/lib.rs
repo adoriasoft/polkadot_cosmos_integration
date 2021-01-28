@@ -14,18 +14,20 @@ use frame_system::{
     offchain::{AppCrypto, CreateSignedTransaction},
     RawOrigin,
 };
-use sp_core::{crypto::{KeyTypeId, Public}, Hasher};
+use pallet_session as session;
+use sp_core::{
+    crypto::{KeyTypeId, Public},
+    Hasher,
+};
 use sp_runtime::{
     traits::{Convert, SaturatedConversion, Zero},
     transaction_validity::{
         InvalidTransaction, TransactionSource, TransactionValidity, ValidTransaction,
     },
-    DispatchError,
-    RuntimeDebug,
+    DispatchError, RuntimeDebug,
 };
 use sp_runtime_interface::runtime_interface;
 use sp_std::{convert::TryInto, prelude::*, str};
-use pallet_session as session;
 
 /// Declare `crypto_transform` module.
 pub mod crypto_transform;
@@ -86,7 +88,10 @@ pub trait CosmosAbci {
 
 /// The pallet configuration trait.
 pub trait Trait:
-    CreateSignedTransaction<Call<Self>> + pallet_session::Trait + pallet_sudo::Trait + pallet_grandpa::Trait
+    CreateSignedTransaction<Call<Self>>
+    + pallet_session::Trait
+    + pallet_sudo::Trait
+    + pallet_grandpa::Trait
 {
     type AuthorityId: AppCrypto<Self::Public, Self::Signature> + Default + Decode;
     type Call: From<Call<Self>>;
@@ -344,7 +349,7 @@ impl<T: Trait> Module<T> {
         // For some reason two first sessions is skipped.
         let mut corresponding_height = 0;
         if new_index > SESSION_BLOCKS_PERIOD {
-            corresponding_height = new_index - (SESSION_BLOCKS_PERIOD+1);
+            corresponding_height = new_index - (SESSION_BLOCKS_PERIOD + 1);
         }
 
         let next_cosmos_validators =
@@ -375,23 +380,25 @@ impl<T: Trait> Module<T> {
                     new_substrate_validators
                 );
 
-                let pending_scheduled_grandpa_change = <pallet_grandpa::Module<T>>::pending_change();
+                let pending_scheduled_grandpa_change =
+                    <pallet_grandpa::Module<T>>::pending_change();
 
                 if let Some(mut origin_change) = pending_scheduled_grandpa_change {
                     if !origin_change.next_authorities.is_empty() {
                         let mut some_authority_power_updated = false;
-                        let updated_authorities = origin_change.next_authorities
+                        let updated_authorities = origin_change
+                            .next_authorities
                             .iter()
                             .map(|authority| {
                                 let mut updated_authority = None;
                                 let finded_authorities = &next_cosmos_validators
                                     .iter()
-                                    .filter(|v| { &v.0 == &authority.0.to_raw_vec() })
+                                    .filter(|v| &v.0 == &authority.0.to_raw_vec())
                                     .collect::<Vec<_>>();
                                 if !finded_authorities.is_empty() {
                                     updated_authority = Some((
                                         authority.clone().0,
-                                        finded_authorities[0].1.try_into().unwrap()
+                                        finded_authorities[0].1.try_into().unwrap(),
                                     ));
                                     some_authority_power_updated = true;
                                 }
@@ -404,12 +411,18 @@ impl<T: Trait> Module<T> {
                             .collect::<Vec<_>>();
                         if some_authority_power_updated {
                             origin_change.next_authorities = updated_authorities;
+
                             debug::info!(
                                 "Grandpa pending changed autorities {:?}",
                                 origin_change.next_authorities
                             );
+
                             // TODO Maybe update the PendingChange property in store imediatelly.
-                            let _response = <pallet_grandpa::Module<T>>::schedule_change(origin_change.next_authorities, Zero::zero(), None);
+                            let _response = <pallet_grandpa::Module<T>>::schedule_change(
+                                origin_change.next_authorities,
+                                Zero::zero(),
+                                None,
+                            );
                         }
                     }
                 }
@@ -591,7 +604,7 @@ pub trait AbciInterface {
                     .map_err(|_| "cannot deserialize cosmos validators")?;
             }
         }
-    
+
         let bytes = pallet_abci::utils::serialize_vec(cosmos_validators)
             .map_err(|_| "cannot deserialize cosmos validators")?;
 
