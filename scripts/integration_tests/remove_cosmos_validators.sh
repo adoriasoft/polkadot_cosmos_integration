@@ -6,6 +6,12 @@ trap "kill 0" EXIT
 initial_validators_set="5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY@5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty"
 after_first_update_validators_set="5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty"
 
+# Launch Substrate node with single initial validator = (Alice)
+# Check new validators length must be equal to 1
+# Update validators list with two other validators = (Alice, Dave)
+# Check new validators length must be equal to 2
+# Update validators list with single validator = (Alice)
+# Check new validators length must be equal to 1
 source ./testing_setup/basic_setup.sh
 source ./testing_setup/test_utils.sh
 
@@ -28,4 +34,11 @@ sleep 30s
 validators_set_2=$(node ./get-validators.app.js)
 assert_eq "$validators_set_2" $after_first_update_validators_set
 
-test_passed "node_validators_sync test passed"
+node ./remove-cosmos-validator.app.js //Bob
+sleep 30s
+
+validators_set_2=$(node ./get-validators.app.js)
+assert_eq "$validators_set_2" $after_first_update_validators_set
+
+test_passed "remove_cosmos_validators test passed"
+
