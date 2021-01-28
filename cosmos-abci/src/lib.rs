@@ -16,7 +16,7 @@ use frame_system::{
 };
 use sp_core::{crypto::{KeyTypeId, Public}, Hasher};
 use sp_runtime::{
-    traits::{Convert, SaturatedConversion},
+    traits::{Convert, SaturatedConversion, Zero},
     transaction_validity::{
         InvalidTransaction, TransactionSource, TransactionValidity, ValidTransaction,
     },
@@ -360,7 +360,7 @@ impl<T: Trait> Module<T> {
                     sp_runtime::print(
                         "WARNING: Not able to found Substrate account to Cosmos for ID \n",
                     );
-                    sp_runtime::print(&*hex::encode(cosmos_validator_id.to_vec()));
+                    sp_runtime::print(&*hex::encode(cosmos_validator_id.0.to_vec()));
                 }
             }
 
@@ -374,12 +374,10 @@ impl<T: Trait> Module<T> {
                     "Substrate validators for new_session() {:?}",
                     new_substrate_validators
                 );
+
                 let pending_scheduled_grandpa_change = <pallet_grandpa::Module<T>>::pending_change();
+
                 if let Some(mut origin_change) = pending_scheduled_grandpa_change {
-                    debug::info!(
-                        "Grandpa pending autorities {:?}",
-                        origin_change.next_authorities
-                    );
                     if !origin_change.next_authorities.is_empty() {
                         let mut some_authority_power_updated = false;
                         let updated_authorities = origin_change.next_authorities
@@ -410,8 +408,8 @@ impl<T: Trait> Module<T> {
                                 "Grandpa pending changed autorities {:?}",
                                 origin_change.next_authorities
                             );
-                            // TODO Update pending change or call pub method with schedule update with new authorities.
-                            // <pallet_grandpa::Module<T>>::PendingChange::put(origin_change);
+                            // TODO Maybe update the PendingChange property in store imediatelly.
+                            let _response = <pallet_grandpa::Module<T>>::schedule_change(origin_change.next_authorities, Zero::zero(), None);
                         }
                     }
                 }
