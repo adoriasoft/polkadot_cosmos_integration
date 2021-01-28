@@ -166,13 +166,11 @@ decl_module! {
     pub struct Module<T: Trait> for enum Call where origin: T::Origin {
         // Block initialization.
         fn on_initialize(block_number: T::BlockNumber) -> Weight {
-            // debug::info!("on_initialize() block_number: {:?}", block_number);
             0
         }
 
         // Block finalization.
         fn on_finalize(block_number: T::BlockNumber) {
-            // debug::info!("on_finalize() block_number: {:?}", block_number);
         }
 
         // Insert Cosmos node account.
