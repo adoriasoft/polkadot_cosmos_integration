@@ -30,6 +30,7 @@ impl From<UintAuthorityId> for MockSessionKeys {
 
 pub const KEY_ID_A: KeyTypeId = KeyTypeId([4; 4]);
 pub const KEY_ID_B: KeyTypeId = KeyTypeId([9; 4]);
+pub type Historical = pallet_session::historical::Module<Test>;
 
 #[derive(Debug, Clone, codec::Encode, codec::Decode, PartialEq, Eq)]
 pub struct PreUpgradeMockSessionKeys {
@@ -181,6 +182,18 @@ impl frame_system::Trait for Test {
 impl pallet_sudo::Trait for Test {
     type Event = ();
     type Call = Call<Test>;
+}
+
+// TODO
+// Complete pallet trait impl.
+impl pallet_grandpa::Trait for Test {
+    type Event = ();
+   // type Call = From<Call<Test>>;
+   // type KeyOwnerProofSystem = Historical;
+   // type KeyOwnerProof = <Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(KeyTypeId, crypto::ABCIAuthId)>>::Proof;
+   // type KeyOwnerIdentification = <Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(KeyTypeId, GrandpaId)>>::Proof;
+   // type HandleEquivocation = ();
+    type WeightInfo = ();
 }
 
 impl Trait for Test {

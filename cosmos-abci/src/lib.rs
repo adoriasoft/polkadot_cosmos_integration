@@ -393,7 +393,12 @@ impl<T: Trait> Module<T> {
                                 let mut updated_authority = None;
                                 let finded_authorities = &next_cosmos_validators
                                     .iter()
-                                    .filter(|v| &v.0 == &authority.0.to_raw_vec())
+                                    .filter(|v| {
+                                        // let substrate_authority_key = <CosmosAccounts<T>>::get(v.0).unwrap();
+                                        // &substrate_authority_key == &authority.0.to_raw_vec()
+                                        // TODO Get right type of substrate account.
+                                        true
+                                    })
                                     .collect::<Vec<_>>();
                                 if !finded_authorities.is_empty() {
                                     updated_authority = Some((
@@ -403,7 +408,7 @@ impl<T: Trait> Module<T> {
                                     some_authority_power_updated = true;
                                 }
                                 if let Some(new_authority) = updated_authority {
-                                    new_authority.clone()
+                                    new_authority
                                 } else {
                                     authority.clone()
                                 }
