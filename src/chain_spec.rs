@@ -33,19 +33,7 @@ where
     AccountPublic::from(get_from_seed::<TPublic>(seed)).into_account()
 }
 
-// Generate an Aura/Grandpa authority keys.
-/* pub fn authority_keys_from_seed(
-    seed: &str,
-    account_key: AccountId,
-) -> (AuraId, GrandpaId, AccountId) {
-    (
-        get_from_seed::<AuraId>(seed),
-        get_from_seed::<GrandpaId>(seed),
-        account_key,
-    )
-} */
-
-/// Return an Aura/Grandpa session keys.
+/// Return an session keys.
 pub fn to_session_keys(
     ed25519_keyring: &Ed25519Keyring,
     sr25519_keyring: &Sr25519Keyring,
@@ -57,7 +45,6 @@ pub fn to_session_keys(
 }
 
 /// Return initial node session keys.
-// Vec<(AuraId, GrandpaId, AccountId)>
 fn initial_poa_keys() -> Vec<(AccountId, AccountId, SessionKeys)> {
     vec![(
         get_account_id_from_seed::<sr25519::Public>("Alice"),

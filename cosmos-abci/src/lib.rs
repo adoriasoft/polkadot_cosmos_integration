@@ -14,17 +14,21 @@ use frame_system::{
     offchain::{AppCrypto, CreateSignedTransaction},
     RawOrigin,
 };
-use pallet_session as session;
-use sp_core::{crypto::KeyTypeId, Hasher};
+use sp_core::{crypto::{KeyTypeId, Public}, Hasher};
 use sp_runtime::{
     traits::{Convert, SaturatedConversion},
     transaction_validity::{
         InvalidTransaction, TransactionSource, TransactionValidity, ValidTransaction,
     },
-    DispatchError, RuntimeDebug,
+    DispatchError,
+    RuntimeDebug,
+    // RuntimeAppPublic,
+    // sp_application_crypto::RuntimePublic
 };
 use sp_runtime_interface::runtime_interface;
 use sp_std::{convert::TryInto, prelude::*, str};
+use pallet_session as session;
+// use pallet_grandpa::*;
 
 /// Import `crypto_transform` module.
 pub mod crypto_transform;
@@ -41,6 +45,7 @@ type OptionalLedger<AccountId> = Option<(AccountId, Balance)>;
 pub const COSMOS_ACCOUNT_DEFAULT_PUB_KEY_TYPE: &str = "ed25519";
 /// Priority for unsigned transaction.
 pub const UNSIGNED_TXS_PRIORITY: u64 = 100;
+pub const SESSION_BLOCKS_PERIOD: u32 = 2;
 
 /// The KeyType ID.
 pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"abci");
@@ -84,7 +89,7 @@ pub trait CosmosAbci {
 
 /// The pallet configuration trait.
 pub trait Trait:
-    CreateSignedTransaction<Call<Self>> + pallet_session::Trait + pallet_sudo::Trait
+    CreateSignedTransaction<Call<Self>> + pallet_session::Trait + pallet_sudo::Trait + pallet_grandpa::Trait
 {
     type AuthorityId: AppCrypto<Self::Public, Self::Signature> + Default + Decode;
     type Call: From<Call<Self>>;
@@ -354,10 +359,10 @@ impl<T: Trait> Module<T> {
 
     pub fn on_new_session(new_index: SessionIndex) -> Option<Vec<T::AccountId>> {
         // Sessions starts after end_block() with number 2.
-        // For some reason two first sessions is missed.
+        // For some reason two first sessions is skipped.
         let mut corresponding_height = 0;
-        if new_index > 2 {
-            corresponding_height = new_index - 3;
+        if new_index > SESSION_BLOCKS_PERIOD {
+            corresponding_height = new_index - (SESSION_BLOCKS_PERIOD+1);
         }
 
         // debug::info!(
@@ -371,7 +376,7 @@ impl<T: Trait> Module<T> {
         if !next_cosmos_validators.is_empty() {
             let mut new_substrate_validators: Vec<T::AccountId> = vec![];
             for cosmos_validator_id in &next_cosmos_validators {
-                let substrate_account_id = <CosmosAccounts<T>>::get(cosmos_validator_id);
+                let substrate_account_id = <CosmosAccounts<T>>::get(cosmos_validator_id.0.clone());
                 if substrate_account_id.is_some() {
                     if let Some(full_substrate_account_id) = substrate_account_id {
                         new_substrate_validators.push(full_substrate_account_id);
@@ -379,7 +384,7 @@ impl<T: Trait> Module<T> {
                         sp_runtime::print(
                             "WARNING: Not able to found Substrate account to Cosmos for ID \n",
                         );
-                        sp_runtime::print(str::from_utf8(cosmos_validator_id).unwrap());
+                        sp_runtime::print(str::from_utf8(&cosmos_validator_id.0).unwrap());
                     }
                 }
             }
@@ -388,6 +393,47 @@ impl<T: Trait> Module<T> {
                     "Substrate validators for new_session() {:?}",
                     new_substrate_validators
                 );
+                let pending_scheduled_grandpa_change = <pallet_grandpa::Module<T>>::pending_change();
+                if let Some(mut origin_change) = pending_scheduled_grandpa_change {
+                    debug::info!(
+                        "Grandpa pending autorities {:?}",
+                        origin_change.next_authorities
+                    );
+                    if !origin_change.next_authorities.is_empty() {
+                        let mut some_authority_power_updated = false;
+                        let updated_authorities = origin_change.next_authorities
+                            .iter()
+                            .map(|authority| {
+                                let mut updated_authority = None;
+                                let finded_authorities = &next_cosmos_validators
+                                    .iter()
+                                    .filter(|v| { &v.0 == &authority.0.to_raw_vec() })
+                                    .collect::<Vec<_>>();
+                                if !finded_authorities.is_empty() {
+                                    updated_authority = Some((
+                                        authority.clone().0,
+                                        finded_authorities[0].1.try_into().unwrap()
+                                    ));
+                                    some_authority_power_updated = true;
+                                }
+                                if let Some(new_authority) = updated_authority {
+                                    new_authority.clone()
+                                } else {
+                                    authority.clone()
+                                }
+                            })
+                            .collect::<Vec<_>>();
+                        if some_authority_power_updated {
+                            origin_change.next_authorities = updated_authorities;
+                            debug::info!(
+                                "Grandpa pending changed autorities {:?}",
+                                origin_change.next_authorities
+                            );
+                            // TODO Update pending change or call pub method with schedule update with new authorities.
+                            // <pallet_grandpa::Module<T>>::PendingChange::put(origin_change);
+                        }
+                    }
+                }
                 return Some(new_substrate_validators);
             }
         }
@@ -456,7 +502,7 @@ pub trait AbciInterface {
         Ok(value)
     }
 
-    fn get_cosmos_validators(height: i64) -> Result<Vec<Vec<u8>>, DispatchError> {
+    fn get_cosmos_validators(height: i64) -> Result<Vec<(Vec<u8>, i64)>, DispatchError> {
         match abci_storage::get_abci_storage_instance()
             .map_err(|_| "failed to get abci storage instance")?
             .get(height.to_ne_bytes().to_vec())
@@ -468,13 +514,13 @@ pub trait AbciInterface {
                 >(&bytes)
                 .map_err(|_| "cannot deserialize ValidatorUpdate vector")?;
 
-                let mut res = Vec::new();
+                let mut response = Vec::new();
                 for val in validators {
                     if let Some(key) = val.pub_key {
-                        res.push(key.data);
+                        response.push((key.data, val.power));
                     }
                 }
-                Ok(res)
+                Ok(response)
             }
             None => Ok(Vec::new()),
         }
@@ -552,8 +598,20 @@ pub trait AbciInterface {
             .map_err(|_| "failed to setup connection")?
             .end_block(height)
             .map_err(|_| "end_block failed")?;
-        let cosmos_validators = result.get_validator_updates();
+        let mut cosmos_validators = result.get_validator_updates();
 
+        // take validators from the previous block is current is empty
+        if cosmos_validators.is_empty() {
+            if let Some(previous_validators_bytes) = abci_storage::get_abci_storage_instance()
+                .map_err(|_| "failed to get abci storage instance")?
+                .get((height - 1).to_ne_bytes().to_vec())
+                .map_err(|_| "failed to write some data into the abci storage")?
+            {
+                cosmos_validators = pallet_abci::utils::deserialize_vec(&previous_validators_bytes)
+                    .map_err(|_| "cannot deserialize cosmos validators")?;
+            }
+        }
+    
         let bytes = pallet_abci::utils::serialize_vec(cosmos_validators)
             .map_err(|_| "cannot deserialize cosmos validators")?;
 
