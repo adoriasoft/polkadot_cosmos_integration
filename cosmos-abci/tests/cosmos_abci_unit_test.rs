@@ -188,11 +188,11 @@ impl pallet_sudo::Trait for Test {
 // Complete pallet trait impl.
 impl pallet_grandpa::Trait for Test {
     type Event = ();
-   // type Call = From<Call<Test>>;
-   // type KeyOwnerProofSystem = Historical;
-   // type KeyOwnerProof = <Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(KeyTypeId, crypto::ABCIAuthId)>>::Proof;
-   // type KeyOwnerIdentification = <Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(KeyTypeId, GrandpaId)>>::Proof;
-   // type HandleEquivocation = ();
+    // type Call = From<Call<Test>>;
+    // type KeyOwnerProofSystem = Historical;
+    // type KeyOwnerProof = <Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(KeyTypeId, crypto::ABCIAuthId)>>::Proof;
+    // type KeyOwnerIdentification = <Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(KeyTypeId, GrandpaId)>>::Proof;
+    // type HandleEquivocation = ();
     type WeightInfo = ();
 }
 
