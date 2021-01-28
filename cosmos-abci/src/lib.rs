@@ -22,17 +22,14 @@ use sp_runtime::{
     },
     DispatchError,
     RuntimeDebug,
-    // RuntimeAppPublic,
-    // sp_application_crypto::RuntimePublic
 };
 use sp_runtime_interface::runtime_interface;
 use sp_std::{convert::TryInto, prelude::*, str};
 use pallet_session as session;
-// use pallet_grandpa::*;
 
-/// Import `crypto_transform` module.
+/// Declare `crypto_transform` module.
 pub mod crypto_transform;
-/// Import `utils` module.
+/// Declare `utils` module.
 pub mod utils;
 
 /// Balance type for pallet.

@@ -3990,7 +3990,6 @@ dependencies = [
  "serde",
  "sha2 0.9.2",
  "sp-api",
- "sp-application-crypto",
  "sp-core",
  "sp-io",
  "sp-runtime",
