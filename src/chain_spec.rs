@@ -3,7 +3,7 @@ use node_template_runtime::{
     SessionConfig, Signature, SudoConfig, SystemConfig, WASM_BINARY,
 };
 use sc_service::ChainType;
-use sp_core::{sr25519, Pair, Public};
+use sp_core::{ed25519, sr25519, Pair, Public};
 // use sp_finality_grandpa::AuthorityId as GrandpaId;
 // use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_keyring::{Ed25519Keyring, Sr25519Keyring};
@@ -46,11 +46,18 @@ pub fn to_session_keys(
 
 /// Return initial node session keys.
 fn initial_poa_keys() -> Vec<(AccountId, AccountId, SessionKeys)> {
-    vec![(
-        get_account_id_from_seed::<sr25519::Public>("Alice"),
-        get_account_id_from_seed::<sr25519::Public>("Alice"),
-        to_session_keys(&Ed25519Keyring::Alice, &Sr25519Keyring::Alice),
-    )]
+    vec![
+        (
+            get_account_id_from_seed::<ed25519::Public>("Alice"),
+            get_account_id_from_seed::<sr25519::Public>("Alice"),
+            to_session_keys(&Ed25519Keyring::Alice, &Sr25519Keyring::Alice),
+        ),
+        (
+            get_account_id_from_seed::<ed25519::Public>("Bob"),
+            get_account_id_from_seed::<sr25519::Public>("Bob"),
+            to_session_keys(&Ed25519Keyring::Bob, &Sr25519Keyring::Bob),
+        ),
+    ]
 }
 
 pub fn development_config() -> Result<ChainSpec, String> {
@@ -74,6 +81,10 @@ pub fn development_config() -> Result<ChainSpec, String> {
                 vec![
                     get_account_id_from_seed::<sr25519::Public>("Alice"),
                     get_account_id_from_seed::<sr25519::Public>("Bob"),
+                    get_account_id_from_seed::<sr25519::Public>("Charlie"),
+                    get_account_id_from_seed::<sr25519::Public>("Dave"),
+                    get_account_id_from_seed::<sr25519::Public>("Eve"),
+                    get_account_id_from_seed::<sr25519::Public>("Ferdie"),
                     get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
                     get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
                 ],
