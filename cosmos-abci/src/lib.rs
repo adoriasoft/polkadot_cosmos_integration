@@ -347,14 +347,6 @@ impl<T: Trait> Module<T> {
             corresponding_height = new_index - 3;
         }
 
-        let current_susbtrate_validators = <pallet_session::Module<T>>::validators();
-
-        debug::info!(
-            "on_new_session() corresponding_height: {:?}, current_susbtrate_validators: {:?}",
-            corresponding_height,
-            current_susbtrate_validators
-        );
-
         let next_cosmos_validators =
             abci_interface::get_cosmos_validators(corresponding_height.into()).unwrap();
 
@@ -370,10 +362,6 @@ impl<T: Trait> Module<T> {
                     sp_runtime::print(&*hex::encode(cosmos_validator_id));
                 }
             }
-            debug::info!(
-                "new_session() new_substrate_validators: {:?}",
-                new_substrate_validators
-            );
 
             if !new_substrate_validators.is_empty() {
                 return Some(new_substrate_validators);
@@ -540,10 +528,22 @@ pub trait AbciInterface {
             .map_err(|_| "failed to setup connection")?
             .end_block(height)
             .map_err(|_| "end_block failed")?;
-        let cosmos_validators = result.get_validator_updates();
+        let mut cosmos_validators = result.get_validator_updates();
+
+        // take validators from the previous block is current is empty
+        if cosmos_validators.is_empty() {
+            if let Some(previous_validators_bytes) = abci_storage::get_abci_storage_instance()
+                .map_err(|_| "failed to get abci storage instance")?
+                .get((height - 1).to_ne_bytes().to_vec())
+                .map_err(|_| "failed to write some data into the abci storage")?
+            {
+                cosmos_validators = pallet_abci::utils::deserialize_vec(&previous_validators_bytes)
+                    .map_err(|_| "cannot deserialize cosmos validators")?;
+            }
+        }
 
         let bytes = pallet_abci::utils::serialize_vec(cosmos_validators)
-            .map_err(|_| "cannot deserialize cosmos validators")?;
+            .map_err(|_| "cannot serialize cosmos validators")?;
 
         // save it in the storage
         abci_storage::get_abci_storage_instance()
