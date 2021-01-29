@@ -27,7 +27,7 @@ use sp_runtime::{
     DispatchError, RuntimeDebug,
 };
 use sp_runtime_interface::runtime_interface;
-use sp_std::{convert::TryInto, prelude::*, str};
+use sp_std::{convert::TryInto, prelude::*, str, cmp::{PartialEq}};
 
 /// Declare `crypto_transform` module.
 pub mod crypto_transform;
@@ -163,7 +163,7 @@ pub struct ABCITxs {
 decl_storage! {
     trait Store for Module<T: Trait> as ABCITxStorage {
         ABCITxStorage get(fn abci_tx): map hasher(blake2_128_concat) T::BlockNumber => ABCITxs;
-        CosmosAccounts get(fn cosmos_accounts): map hasher(blake2_128_concat) utils::CosmosAccountPubKey => Option<T::ValidatorId> = None;
+        CosmosAccounts get(fn cosmos_accounts): map hasher(blake2_128_concat) utils::CosmosAccountPubKey => Option<T::AccountId> = None;
         AccountLedger get(fn account_ledgers): map hasher(blake2_128_concat) T::AccountId => OptionalLedger<T::AccountId>;
         SubstrateAccounts get(fn substrate_accounts): map hasher(blake2_128_concat) <T as pallet_session::Trait>::ValidatorId => Option<utils::CosmosAccount> = None;
     }
@@ -191,11 +191,11 @@ decl_module! {
         ) -> DispatchResult {
             let origin_signed = ensure_signed(origin)?;
             <AccountLedger<T>>::insert(&origin_signed, Some((&origin_signed, 0)));
-            let convertable = <T as pallet_session::Trait>::ValidatorIdOf::convert(origin_signed)
+            let convertable = <T as pallet_session::Trait>::ValidatorIdOf::convert(origin_signed.clone())
             .unwrap();
             match r#type {
                 0 => {
-                    <CosmosAccounts<T>>::insert(&cosmos_account_pub_key, &convertable);
+                    <CosmosAccounts<T>>::insert(&cosmos_account_pub_key, &origin_signed);
                     <SubstrateAccounts<T>>::insert(&convertable, utils::CosmosAccount {
                         pub_key: cosmos_account_pub_key,
                         pub_key_type: crypto_transform::PubKeyTypes::Ed25519,
@@ -204,8 +204,8 @@ decl_module! {
                     Ok(())
                 },
                 1 => {
-                    <CosmosAccounts<T>>::insert(&cosmos_account_pub_key, &convertable);
-                    <SubstrateAccounts<T>>::insert(convertable, utils::CosmosAccount {
+                    <CosmosAccounts<T>>::insert(&cosmos_account_pub_key, &origin_signed);
+                    <SubstrateAccounts<T>>::insert(&convertable, utils::CosmosAccount {
                         pub_key: cosmos_account_pub_key,
                         pub_key_type: crypto_transform::PubKeyTypes::Secp256k1,
                         power: 0,
@@ -344,23 +344,92 @@ impl<T: Trait> Module<T> {
         Ok(())
     }
 
-    pub fn on_new_session(new_index: SessionIndex) -> Option<Vec<T::ValidatorId>> {
+    fn get_corresponding_height(session_index: SessionIndex) -> i64 {
+        let mut corresponding_height = 0;
+        if session_index > SESSION_BLOCKS_PERIOD {
+            corresponding_height = session_index - (SESSION_BLOCKS_PERIOD + 1);
+        }
+        corresponding_height.into()
+    }
+
+    pub fn on_start_session(start_index: SessionIndex) {
+        let corresponding_height = Self::get_corresponding_height(start_index);
+        let next_cosmos_validators =
+            abci_interface::get_cosmos_validators(corresponding_height.into()).unwrap();
+
+        debug::info!(
+            "Cosmos validators on start_session() {:?}",
+            next_cosmos_validators
+        );
+    
+        let pending_scheduled_grandpa_change =
+            <pallet_grandpa::Module<T>>::pending_change();
+
+        if let Some(mut origin_change) = pending_scheduled_grandpa_change {
+            if !origin_change.next_authorities.is_empty() {
+                let mut some_authority_power_updated = false;
+                let updated_authorities = origin_change
+                    .next_authorities
+                        .iter()
+                        .map(|authority| {
+                            let mut updated_authority = None;
+                            let finded_authorities = &next_cosmos_validators
+                                .iter()
+                                .filter(|_v| {
+                                    // let substrate_authority_key = <CosmosAccounts<T>>::get(v.0.clone()).unwrap();
+                                    // &substrate_authority_key == &authority.0.to_raw_vec()
+                                    // TODO Get right type of substrate account.
+                                    true
+                                })
+                                .collect::<Vec<_>>();
+                            if !finded_authorities.is_empty() {
+                                updated_authority = Some((
+                                    authority.clone().0,
+                                    finded_authorities[0].1.try_into().unwrap(),
+                                ));
+                                some_authority_power_updated = true;
+                            }
+                            if let Some(new_authority) = updated_authority {
+                                new_authority
+                            } else {
+                                authority.clone()
+                            }
+                        })
+                        .collect::<Vec<_>>();
+                if some_authority_power_updated {
+                    origin_change.next_authorities = updated_authorities;
+
+                    debug::info!(
+                        "Grandpa pending changed autorities {:?}",
+                        origin_change.next_authorities
+                    );
+
+                    // TODO Maybe update the PendingChange property in store imediatelly.
+                    let _response = <pallet_grandpa::Module<T>>::schedule_change(
+                        origin_change.next_authorities,
+                        Zero::zero(),
+                        None,
+                    );
+                }
+            }
+        }
+    }
+
+    pub fn on_new_session(new_session_index: SessionIndex) -> Option<Vec<T::ValidatorId>> {
         // Sessions starts after end_block() with number 2.
         // For some reason two first sessions is skipped.
-        let mut corresponding_height = 0;
-        if new_index > SESSION_BLOCKS_PERIOD {
-            corresponding_height = new_index - (SESSION_BLOCKS_PERIOD + 1);
-        }
 
+        let corresponding_height = Self::get_corresponding_height(new_session_index);
         let next_cosmos_validators =
             abci_interface::get_cosmos_validators(corresponding_height.into()).unwrap();
 
         if !next_cosmos_validators.is_empty() {
-            let mut new_substrate_validators = vec![];
+            let mut new_substrate_validators = Vec::<T::ValidatorId>::new();
             for cosmos_validator_id in &next_cosmos_validators {
                 let substrate_account_id = <CosmosAccounts<T>>::get(cosmos_validator_id.0.clone());
                 if let Some(full_substrate_account_id) = substrate_account_id {
-                    new_substrate_validators.push(full_substrate_account_id);
+                    let substrate_validator_id = <T as pallet_session::Trait>::ValidatorIdOf::convert(full_substrate_account_id).unwrap();
+                    new_substrate_validators.push(substrate_validator_id);
                 } else {
                     sp_runtime::print(
                         "WARNING: Not able to found Substrate account to Cosmos for ID \n",
@@ -369,68 +438,11 @@ impl<T: Trait> Module<T> {
                 }
             }
 
-            debug::info!(
-                "on_new_session() new_substrate_validators: {:?}",
-                new_substrate_validators
-            );
-
             if !new_substrate_validators.is_empty() {
                 debug::info!(
                     "Substrate validators for new_session() {:?}",
                     new_substrate_validators
                 );
-
-                let pending_scheduled_grandpa_change =
-                    <pallet_grandpa::Module<T>>::pending_change();
-
-                if let Some(mut origin_change) = pending_scheduled_grandpa_change {
-                    if !origin_change.next_authorities.is_empty() {
-                        let mut some_authority_power_updated = false;
-                        let updated_authorities = origin_change
-                            .next_authorities
-                            .iter()
-                            .map(|authority| {
-                                let mut updated_authority = None;
-                                let finded_authorities = &next_cosmos_validators
-                                    .iter()
-                                    .filter(|v| {
-                                        // let substrate_authority_key = <CosmosAccounts<T>>::get(v.0).unwrap();
-                                        // &substrate_authority_key == &authority.0.to_raw_vec()
-                                        // TODO Get right type of substrate account.
-                                        true
-                                    })
-                                    .collect::<Vec<_>>();
-                                if !finded_authorities.is_empty() {
-                                    updated_authority = Some((
-                                        authority.clone().0,
-                                        finded_authorities[0].1.try_into().unwrap(),
-                                    ));
-                                    some_authority_power_updated = true;
-                                }
-                                if let Some(new_authority) = updated_authority {
-                                    new_authority
-                                } else {
-                                    authority.clone()
-                                }
-                            })
-                            .collect::<Vec<_>>();
-                        if some_authority_power_updated {
-                            origin_change.next_authorities = updated_authorities;
-
-                            debug::info!(
-                                "Grandpa pending changed autorities {:?}",
-                                origin_change.next_authorities
-                            );
-
-                            // TODO Maybe update the PendingChange property in store imediatelly.
-                            let _response = <pallet_grandpa::Module<T>>::schedule_change(
-                                origin_change.next_authorities,
-                                Zero::zero(),
-                                None,
-                            );
-                        }
-                    }
-                }
                 return Some(new_substrate_validators);
             }
         }
@@ -665,9 +677,20 @@ impl<T: Trait> pallet_session::SessionManager<T::ValidatorId> for Module<T> {
         Self::on_new_session(new_index)
     }
 
-    fn end_session(_end_index: SessionIndex) {}
+    fn end_session(end_index: SessionIndex) {
+        debug::info!(
+            "Session with index {:?} ends now.",
+            end_index
+        );
+    }
 
-    fn start_session(_start_index: SessionIndex) {}
+    fn start_session(start_index: SessionIndex) {
+        debug::info!(
+            "Session with index {:?} starts now.",
+            start_index
+        );
+
+    }
 }
 
 impl<T: Trait> pallet_session::ShouldEndSession<T::BlockNumber> for Module<T> {
