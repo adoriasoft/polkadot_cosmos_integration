@@ -192,7 +192,7 @@ decl_module! {
             let origin_signed = ensure_signed(origin)?;
             <AccountLedger<T>>::insert(&origin_signed, Some((&origin_signed, 0)));
             let convertable = <T as pallet_session::Trait>::ValidatorIdOf::convert(origin_signed.clone())
-            .unwrap();
+                .unwrap();
             match r#type {
                 0 => {
                     <CosmosAccounts<T>>::insert(&cosmos_account_pub_key, &origin_signed);
@@ -262,6 +262,14 @@ decl_module! {
 
 /// Implementation of additional methods for pallet configuration trait.
 impl<T: Trait> Module<T> {
+    fn get_corresponding_height(session_index: SessionIndex) -> u32 {
+        let mut corresponding_height = 0;
+        if session_index > SESSION_BLOCKS_PERIOD {
+            corresponding_height = session_index - (SESSION_BLOCKS_PERIOD + 1);
+        }
+        corresponding_height.into()
+    }
+
     // The abci transaction call.
     pub fn call_abci_transaction(data: Vec<u8>) -> DispatchResult {
         let block_number = <system::Module<T>>::block_number();
@@ -306,6 +314,8 @@ impl<T: Trait> Module<T> {
             };
         }
 
+        Self::on_start_session(block_number.saturated_into() as u32, true);
+
         if let Err(err) = abci_interface::begin_block(
             block_number.saturated_into() as i64,
             block_hash.as_ref().to_vec(),
@@ -344,24 +354,15 @@ impl<T: Trait> Module<T> {
         Ok(())
     }
 
-    fn get_corresponding_height(session_index: SessionIndex) -> i64 {
-        let mut corresponding_height = 0;
-        if session_index > SESSION_BLOCKS_PERIOD {
-            corresponding_height = session_index - (SESSION_BLOCKS_PERIOD + 1);
+    pub fn on_start_session(start_index: SessionIndex, is_block_height: bool) {
+        let mut corresponding_height = start_index;
+    
+        if !is_block_height {
+            corresponding_height = Self::get_corresponding_height(start_index);
         }
-        corresponding_height.into()
-    }
 
-    pub fn on_start_session(start_index: SessionIndex) {
-        let corresponding_height = Self::get_corresponding_height(start_index);
         let next_cosmos_validators =
             abci_interface::get_cosmos_validators(corresponding_height.into()).unwrap();
-
-        debug::info!(
-            "Cosmos validators on start_session() {:?}",
-            next_cosmos_validators
-        );
-    
         let pending_scheduled_grandpa_change =
             <pallet_grandpa::Module<T>>::pending_change();
 
@@ -372,6 +373,11 @@ impl<T: Trait> Module<T> {
                     .next_authorities
                         .iter()
                         .map(|authority| {
+                            debug::info!(
+                                "Grandpa pending change updated authority {:?}",
+                                &authority.0.to_raw_vec()
+                            );
+
                             let mut updated_authority = None;
                             let finded_authorities = &next_cosmos_validators
                                 .iter()
@@ -414,7 +420,13 @@ impl<T: Trait> Module<T> {
                         None,
                     );
                 }
+            } else {
+                debug::info!("Grandpa pending changed autorities is empty");
             }
+        } else {
+            debug::info!(
+                "Grandpa `PendingChange` is empty"
+            );
         }
     }
 
@@ -692,7 +704,6 @@ impl<T: Trait> pallet_session::SessionManager<T::ValidatorId> for Module<T> {
             "Session with index {:?} starts now.",
             start_index
         );
-        Self::on_start_session(start_index);
     }
 }
 
