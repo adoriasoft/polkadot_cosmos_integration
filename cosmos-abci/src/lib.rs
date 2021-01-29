@@ -375,11 +375,14 @@ impl<T: Trait> Module<T> {
                             let mut updated_authority = None;
                             let finded_authorities = &next_cosmos_validators
                                 .iter()
-                                .filter(|_v| {
-                                    // let substrate_authority_key = <CosmosAccounts<T>>::get(v.0.clone()).unwrap();
-                                    // &substrate_authority_key == &authority.0.to_raw_vec()
-                                    // TODO Get right type of substrate account.
-                                    true
+                                .filter(|v| {
+                                    let substrate_from_cosmos_account_id: Option<T::AccountId> =
+                                        <CosmosAccounts<T>>::get(v.0.clone());
+                                    let mut key: &[u8] = &authority.0.to_raw_vec();
+                                    let account_id_from_authority_key = T::AccountId::decode(&mut key).unwrap_or_default();
+                                    if let Some(substrate_account_id) = substrate_from_cosmos_account_id {
+                                        substrate_account_id == account_id_from_authority_key
+                                    } else { false }
                                 })
                                 .collect::<Vec<_>>();
                             if !finded_authorities.is_empty() {
@@ -689,7 +692,7 @@ impl<T: Trait> pallet_session::SessionManager<T::ValidatorId> for Module<T> {
             "Session with index {:?} starts now.",
             start_index
         );
-
+        Self::on_start_session(start_index);
     }
 }
 
