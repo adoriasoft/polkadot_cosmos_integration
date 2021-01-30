@@ -218,18 +218,20 @@ decl_module! {
 
         // Remove Cosmos node account.
         #[weight = 0]
-        fn remove_cosmos_account(origin, cosmos_account_id: Vec<u8>) -> DispatchResult {
+        fn remove_cosmos_account(origin) -> DispatchResult {
             let origin_signed = ensure_signed(origin)?;
-            <CosmosAccounts<T>>::remove(&cosmos_account_id);
             let convertable = <T as pallet_session::Trait>::ValidatorIdOf::convert(origin_signed)
                 .unwrap();
+            if let Some(cosmos_account) = <SubstrateAccounts<T>>::get(&convertable) {
+                <CosmosAccounts<T>>::remove(&cosmos_account.pub_key);
+            }
             <SubstrateAccounts<T>>::remove(&convertable);
             Ok(())
         }
 
         // Transaction dispatch.
         #[weight = 0]
-        fn abci_transaction(origin, data: Vec<u8>) -> DispatchResult {
+        pub fn abci_transaction(origin, data: Vec<u8>) -> DispatchResult {
             let _ = ensure_none(origin)?;
 
             Self::call_abci_transaction(data)?;
@@ -307,7 +309,6 @@ impl<T: Trait> Module<T> {
         extrinsics_root: T::Hash,
     ) -> bool {
         let mut active_cosmos_validators = Vec::<utils::CosmosAccount>::new();
-
         for validator in <pallet_session::Module<T>>::validators() {
             if let Some(value) = <SubstrateAccounts<T>>::get(validator) {
                 active_cosmos_validators.push(value);
@@ -325,7 +326,6 @@ impl<T: Trait> Module<T> {
         ) {
             panic!("Begin block failed: {:?}", err);
         }
-
         true
     }
 
@@ -447,9 +447,9 @@ impl<T: Trait> Module<T> {
                     new_substrate_validators.push(substrate_validator_id);
                 } else {
                     sp_runtime::print(
-                        "WARNING: Not able to found Substrate account to Cosmos for ID \n",
+                        "WARNING: Not able to found Substrate account to Cosmos for ID : ",
                     );
-                    sp_runtime::print(&*hex::encode(cosmos_validator_id.0.to_vec()));
+                    sp_runtime::print(&*hex::encode(cosmos_validator_id));
                 }
             }
 
@@ -461,7 +461,6 @@ impl<T: Trait> Module<T> {
                 return Some(new_substrate_validators);
             }
         }
-
         None
     }
 }
@@ -638,7 +637,7 @@ pub trait AbciInterface {
         }
 
         let bytes = pallet_abci::utils::serialize_vec(cosmos_validators)
-            .map_err(|_| "cannot deserialize cosmos validators")?;
+            .map_err(|_| "cannot serialize cosmos validators")?;
 
         // save it in the storage
         abci_storage::get_abci_storage_instance()
@@ -675,6 +674,7 @@ impl<T: Trait> Convert<T::AccountId, Option<T::AccountId>> for utils::StashOf<T>
         }
     }
 }
+
 impl<T: Trait> Convert<T::AccountId, Option<utils::Exposure<T::AccountId, Balance>>>
     for utils::ExposureOf<T>
 {
@@ -687,8 +687,9 @@ impl<T: Trait> Convert<T::AccountId, Option<utils::Exposure<T::AccountId, Balanc
     }
 }
 
-impl<T: Trait> pallet_session::SessionManager<T::ValidatorId> for Module<T> {
-    fn new_session(new_index: SessionIndex) -> Option<Vec<T::ValidatorId>> {
+impl<T: Trait> pallet_session::SessionManager<T::AccountId> for Module<T> {
+    fn new_session(new_index: SessionIndex) -> Option<Vec<T::AccountId>> {
+        // debug::info!("new_session() end_index: {:?}", new_index);
         Self::on_new_session(new_index)
     }
 

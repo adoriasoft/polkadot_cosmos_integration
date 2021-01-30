@@ -125,6 +125,10 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
                 vec![
                     get_account_id_from_seed::<sr25519::Public>("Alice"),
                     get_account_id_from_seed::<sr25519::Public>("Bob"),
+<<<<<<< HEAD
+=======
+                    get_account_id_from_seed::<sr25519::Public>("Bob"),
+>>>>>>> master
                     get_account_id_from_seed::<sr25519::Public>("Charlie"),
                     get_account_id_from_seed::<sr25519::Public>("Dave"),
                     get_account_id_from_seed::<sr25519::Public>("Eve"),
