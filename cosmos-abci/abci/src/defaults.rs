@@ -1,4 +1,4 @@
-/// Method for getting RPC url form active env.
+/// Method for getting gRPC url form active env.
 pub fn get_server_url() -> String {
     match std::env::var("ABCI_SERVER_URL") {
         Ok(val) => val,
@@ -13,7 +13,7 @@ pub fn get_storage_name() -> String {
     }
 }
 
-/// Default ABCI RPC url.
+/// Default ABCI gRPC url.
 pub const DEFAULT_ABCI_URL: &str = "tcp://localhost:26658";
 
 /// Default ABCI storage name.
