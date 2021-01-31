@@ -353,12 +353,8 @@ impl<T: Trait> Module<T> {
         Ok(())
     }
 
-    pub fn on_start_session(start_index: SessionIndex, is_block_height: bool) {
-        let mut corresponding_height = start_index;
-
-        if !is_block_height {
-            corresponding_height = Self::get_corresponding_height(start_index);
-        }
+    pub fn on_start_session(start_index: SessionIndex) {
+        let corresponding_height = Self::get_corresponding_height(start_index);
 
         let next_cosmos_validators =
             abci_interface::get_cosmos_validators(corresponding_height.into()).unwrap();
@@ -368,16 +364,17 @@ impl<T: Trait> Module<T> {
                 let mut authorities_with_updated_weight: fg_primitives::AuthorityList = Vec::new();
 
                 for next_cosmos_validator in &next_cosmos_validators {
-                    let mut substrate_account_id: &[u8] =
+                    let mut next_substrate_account_id: &[u8] =
                         &<CosmosAccounts<T>>::get(next_cosmos_validator.0.clone()).encode();
                     let next_authority = (
-                        sp_finality_grandpa::AuthorityId::decode(&mut substrate_account_id)
+                        sp_finality_grandpa::AuthorityId::decode(&mut next_substrate_account_id)
                             .unwrap_or_default(),
                         next_cosmos_validator.1 as u64,
                     );
                     authorities_with_updated_weight.push(next_authority);
                 }
 
+                // Update `weight` for each active validator.
                 let _response = <pallet_grandpa::Module<T>>::schedule_change(
                     authorities_with_updated_weight,
                     Zero::zero(),
@@ -396,7 +393,7 @@ impl<T: Trait> Module<T> {
         let corresponding_height = Self::get_corresponding_height(new_session_index);
         let next_cosmos_validators =
             abci_interface::get_cosmos_validators(corresponding_height.into()).unwrap();
-
+        
         if !next_cosmos_validators.is_empty() {
             let mut new_substrate_validators = Vec::<T::AccountId>::new();
             for cosmos_validator_id in &next_cosmos_validators {
@@ -412,11 +409,6 @@ impl<T: Trait> Module<T> {
             }
 
             if !new_substrate_validators.is_empty() {
-                debug::info!(
-                    "Substrate validators for new_session() {:?} for index {:?}",
-                    new_substrate_validators,
-                    corresponding_height,
-                );
                 <ValidatorsRecentlyUpdated>::set(true);
                 return Some(new_substrate_validators);
             }
@@ -655,7 +647,7 @@ impl<T: Trait> pallet_session::SessionManager<T::AccountId> for Module<T> {
     fn end_session(_end_index: SessionIndex) {}
 
     fn start_session(start_index: SessionIndex) {
-        Self::on_start_session(start_index, false);
+        Self::on_start_session(start_index);
     }
 }
 
