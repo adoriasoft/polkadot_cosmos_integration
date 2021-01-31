@@ -268,7 +268,7 @@ impl<T: Trait> Module<T> {
         if session_index > SESSION_BLOCKS_PERIOD {
             corresponding_height = session_index - (SESSION_BLOCKS_PERIOD + 1);
         }
-        corresponding_height.into()
+        corresponding_height
     }
 
     // The abci transaction call.
