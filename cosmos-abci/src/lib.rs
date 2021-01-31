@@ -392,7 +392,7 @@ impl<T: Trait> Module<T> {
         let corresponding_height = Self::get_corresponding_height(new_session_index);
         let next_cosmos_validators =
             abci_interface::get_cosmos_validators(corresponding_height.into()).unwrap();
-        
+
         if !next_cosmos_validators.is_empty() {
             let mut new_substrate_validators = Vec::<T::AccountId>::new();
             for cosmos_validator_id in &next_cosmos_validators {
