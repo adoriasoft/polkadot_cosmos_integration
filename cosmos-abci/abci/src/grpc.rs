@@ -117,19 +117,15 @@ impl crate::AbciInterface for AbciinterfaceGrpc {
         last_block_id: Vec<u8>,
         data_hash: Vec<u8>,
         // Active system validators.
-        active_validators: Option<Vec<protos::VoteInfo>>,
+        active_validators: Vec<protos::VoteInfo>,
     ) -> crate::AbciResult<dyn crate::ResponseBeginBlock> {
         let chain_id: String = self.chain_id.clone();
         self.last_commit_hash = hash.clone();
 
-        let mut last_commit_info = protos::LastCommitInfo {
+        let last_commit_info = protos::LastCommitInfo {
             round: 0,
-            votes: vec![],
+            votes: active_validators,
         };
-
-        if let Some(last_active_validators) = active_validators {
-            last_commit_info.votes = last_active_validators;
-        }
 
         let request = tonic::Request::new(protos::RequestBeginBlock {
             hash,

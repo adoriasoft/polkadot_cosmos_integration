@@ -487,7 +487,7 @@ pub trait AbciInterface {
         proposer_address: Vec<u8>,
         current_cosmos_validators: Vec<utils::CosmosAccount>,
     ) -> DispatchResult {
-        let cosmos_validators: Option<Vec<pallet_abci::protos::VoteInfo>> = Some(
+        let cosmos_validators: Vec<pallet_abci::protos::VoteInfo> = 
             current_cosmos_validators
                 .iter()
                 .map(|validator| {
@@ -504,8 +504,7 @@ pub trait AbciInterface {
                         signed_last_block: false,
                     }
                 })
-                .collect(),
-        );
+                .collect();
 
         let _result = pallet_abci::get_abci_instance()
             .map_err(|_| "failed to setup connection")?
