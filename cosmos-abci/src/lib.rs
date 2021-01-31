@@ -17,7 +17,6 @@ use frame_system::{
 use pallet_grandpa::fg_primitives;
 use pallet_session as session;
 use sp_core::{crypto::KeyTypeId, Hasher};
-use sp_finality_grandpa;
 use sp_runtime::{
     traits::{Convert, SaturatedConversion, Zero},
     transaction_validity::{
