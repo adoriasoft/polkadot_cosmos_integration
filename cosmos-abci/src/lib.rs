@@ -14,11 +14,9 @@ use frame_system::{
     offchain::{AppCrypto, CreateSignedTransaction},
     RawOrigin,
 };
+use pallet_grandpa::fg_primitives;
 use pallet_session as session;
-use sp_core::{
-    crypto::{KeyTypeId},
-    Hasher,
-};
+use sp_core::{crypto::KeyTypeId, Hasher};
 use sp_finality_grandpa;
 use sp_runtime::{
     traits::{Convert, SaturatedConversion, Zero},
@@ -28,8 +26,7 @@ use sp_runtime::{
     DispatchError, RuntimeDebug,
 };
 use sp_runtime_interface::runtime_interface;
-use sp_std::{convert::TryInto, prelude::*, str, cmp::{PartialEq}};
-use pallet_grandpa::{fg_primitives};
+use sp_std::{cmp::PartialEq, convert::TryInto, prelude::*, str};
 
 /// Declare `crypto_transform` module.
 pub mod crypto_transform;
@@ -358,7 +355,7 @@ impl<T: Trait> Module<T> {
 
     pub fn on_start_session(start_index: SessionIndex, is_block_height: bool) {
         let mut corresponding_height = start_index;
-    
+
         if !is_block_height {
             corresponding_height = Self::get_corresponding_height(start_index);
         }
@@ -371,10 +368,12 @@ impl<T: Trait> Module<T> {
                 let mut authorities_with_updated_weight: fg_primitives::AuthorityList = Vec::new();
 
                 for next_cosmos_validator in &next_cosmos_validators {
-                    let mut substrate_account_id: &[u8] = &<CosmosAccounts<T>>::get(next_cosmos_validator.0.clone()).encode();
+                    let mut substrate_account_id: &[u8] =
+                        &<CosmosAccounts<T>>::get(next_cosmos_validator.0.clone()).encode();
                     let next_authority = (
-                        sp_finality_grandpa::AuthorityId::decode(&mut substrate_account_id).unwrap_or_default(),
-                        next_cosmos_validator.1 as u64
+                        sp_finality_grandpa::AuthorityId::decode(&mut substrate_account_id)
+                            .unwrap_or_default(),
+                        next_cosmos_validator.1 as u64,
                     );
                     authorities_with_updated_weight.push(next_authority);
                 }
@@ -386,7 +385,7 @@ impl<T: Trait> Module<T> {
                 );
             }
 
-            <ValidatorsRecentlyUpdated<>>::set(false);
+            <ValidatorsRecentlyUpdated>::set(false);
         }
     }
 
@@ -418,7 +417,7 @@ impl<T: Trait> Module<T> {
                     new_substrate_validators,
                     corresponding_height,
                 );
-                <ValidatorsRecentlyUpdated<>>::set(true);
+                <ValidatorsRecentlyUpdated>::set(true);
                 return Some(new_substrate_validators);
             }
         }
@@ -653,7 +652,7 @@ impl<T: Trait> pallet_session::SessionManager<T::AccountId> for Module<T> {
         Self::on_new_session(new_index)
     }
 
-    fn end_session(_end_index: SessionIndex) { }
+    fn end_session(_end_index: SessionIndex) {}
 
     fn start_session(start_index: SessionIndex) {
         Self::on_start_session(start_index, false);

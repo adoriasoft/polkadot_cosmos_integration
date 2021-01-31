@@ -1,11 +1,8 @@
-use frame_support::{impl_outer_origin, parameter_types,
-    weights::Weight,
-    traits:: {
-        KeyOwnerProofSystem,
-    },
+use frame_support::{
+    impl_outer_origin, parameter_types, traits::KeyOwnerProofSystem, weights::Weight,
 };
 use pallet_cosmos_abci::{crypto, Call, Module, Trait, KEY_TYPE};
-use pallet_grandpa::{AuthorityId as GrandpaId};
+use pallet_grandpa::AuthorityId as GrandpaId;
 use pallet_session::*;
 use sp_core::{
     crypto::{key_types::DUMMY, KeyTypeId},
@@ -194,8 +191,10 @@ impl pallet_grandpa::Trait for Test {
     type Event = ();
     type Call = pallet_grandpa::Call<Self>;
     type KeyOwnerProofSystem = ();
-    type KeyOwnerProof = <Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(KeyTypeId, crypto::ABCIAuthId)>>::Proof;
-    type KeyOwnerIdentification = <Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(KeyTypeId, GrandpaId)>>::Proof;
+    type KeyOwnerProof =
+        <Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(KeyTypeId, crypto::ABCIAuthId)>>::Proof;
+    type KeyOwnerIdentification =
+        <Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(KeyTypeId, GrandpaId)>>::Proof;
     type HandleEquivocation = ();
     type WeightInfo = ();
 }
