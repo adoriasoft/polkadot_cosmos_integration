@@ -268,7 +268,6 @@ impl<T: Trait> Module<T> {
         } else {
             0
         }
-        .into()
     }
 
     // The abci transaction call.
