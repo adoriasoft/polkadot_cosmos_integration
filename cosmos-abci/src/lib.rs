@@ -164,7 +164,6 @@ decl_storage! {
         CosmosAccounts get(fn cosmos_accounts): map hasher(blake2_128_concat) utils::CosmosAccountPubKey => Option<T::AccountId> = None;
         AccountLedger get(fn account_ledgers): map hasher(blake2_128_concat) T::AccountId => OptionalLedger<T::AccountId>;
         SubstrateAccounts get(fn substrate_accounts): map hasher(blake2_128_concat) <T as session::Trait>::ValidatorId => Option<utils::CosmosAccount> = None;
-        ValidatorsRecentlyUpdated get(fn validators_recently_updated): bool = false;
     }
 }
 
@@ -264,11 +263,11 @@ decl_module! {
 /// Implementation of additional methods for pallet configuration trait.
 impl<T: Trait> Module<T> {
     fn get_corresponding_height(session_index: SessionIndex) -> u32 {
-        let mut corresponding_height = 0;
         if session_index > SESSION_BLOCKS_PERIOD {
-            corresponding_height = session_index - (SESSION_BLOCKS_PERIOD + 1);
-        }
-        corresponding_height
+            session_index - (SESSION_BLOCKS_PERIOD + 1)
+        } else {
+            0
+        }.into()
     }
 
     // The abci transaction call.
@@ -358,30 +357,26 @@ impl<T: Trait> Module<T> {
         let next_cosmos_validators =
             abci_interface::get_cosmos_validators(corresponding_height.into()).unwrap();
 
-        if Self::validators_recently_updated() {
-            if !next_cosmos_validators.is_empty() {
-                let mut authorities_with_updated_weight: fg_primitives::AuthorityList = Vec::new();
+        if !next_cosmos_validators.is_empty() {
+            let mut authorities_with_updated_weight: fg_primitives::AuthorityList = Vec::new();
 
-                for next_cosmos_validator in &next_cosmos_validators {
-                    let mut next_substrate_account_id: &[u8] =
-                        &<CosmosAccounts<T>>::get(next_cosmos_validator.0.clone()).encode();
-                    let next_authority = (
-                        sp_finality_grandpa::AuthorityId::decode(&mut next_substrate_account_id)
-                            .unwrap_or_default(),
-                        next_cosmos_validator.1 as u64,
-                    );
-                    authorities_with_updated_weight.push(next_authority);
-                }
-
-                // Update `weight` for each active validator.
-                let _response = <pallet_grandpa::Module<T>>::schedule_change(
-                    authorities_with_updated_weight,
-                    Zero::zero(),
-                    None,
+            for next_cosmos_validator in &next_cosmos_validators {
+                let mut next_substrate_account_id: &[u8] =
+                    &<CosmosAccounts<T>>::get(next_cosmos_validator.0.clone()).encode();
+                let next_authority = (
+                    sp_finality_grandpa::AuthorityId::decode(&mut next_substrate_account_id)
+                        .unwrap_or_default(),
+                    next_cosmos_validator.1 as u64,
                 );
+                authorities_with_updated_weight.push(next_authority);
             }
 
-            <ValidatorsRecentlyUpdated>::set(false);
+            // Update `weight` for each active validator.
+            let _response = <pallet_grandpa::Module<T>>::schedule_change(
+                authorities_with_updated_weight,
+                Zero::zero(),
+                None,
+            );
         }
     }
 
@@ -394,7 +389,7 @@ impl<T: Trait> Module<T> {
             abci_interface::get_cosmos_validators(corresponding_height.into()).unwrap();
 
         if !next_cosmos_validators.is_empty() {
-            let mut new_substrate_validators = Vec::<T::AccountId>::new();
+            let mut new_substrate_validators: Vec<T::AccountId> = vec![];
             for cosmos_validator_id in &next_cosmos_validators {
                 let substrate_account_id = <CosmosAccounts<T>>::get(cosmos_validator_id.0.clone());
                 if let Some(full_substrate_account_id) = substrate_account_id {
@@ -403,12 +398,11 @@ impl<T: Trait> Module<T> {
                     sp_runtime::print(
                         "WARNING: Not able to found Substrate account to Cosmos for ID : ",
                     );
-                    sp_runtime::print(&*hex::encode(&cosmos_validator_id.0.clone()));
+                    sp_runtime::print(&*hex::encode(&cosmos_validator_id.0));
                 }
             }
 
             if !new_substrate_validators.is_empty() {
-                <ValidatorsRecentlyUpdated>::set(true);
                 return Some(new_substrate_validators);
             }
         }
