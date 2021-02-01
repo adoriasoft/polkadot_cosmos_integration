@@ -487,12 +487,6 @@ pub trait AbciInterface {
                     crypto_transform::PubKeyTypes::Ed25519,
                 );
 
-                debug::info!(
-                    "begin_block() address: {:?}, power: {:?}",
-                    hex::encode(&address),
-                    validator.power
-                );
-
                 pallet_abci::protos::VoteInfo {
                     validator: Some(pallet_abci::protos::Validator {
                         address,
