@@ -218,70 +218,70 @@ impl pallet_aura::Trait for Runtime {
 pub mod time {
     use super::BlockNumber;
 
-	/// Since BABE is probabilistic this is the average expected block time that
-	/// we are targetting. Blocks will be produced at a minimum duration defined
-	/// by `SLOT_DURATION`, but some slots will not be allocated to any
-	/// authority and hence no block will be produced. We expect to have this
-	/// block time on average following the defined slot duration and the value
-	/// of `c` configured for BABE (where `1 - c` represents the probability of
-	/// a slot being empty).
-	/// This value is only used indirectly to define the unit constants below
-	/// that are expressed in blocks. The rest of the code should use
-	/// `SLOT_DURATION` instead (like the Timestamp pallet for calculating the
-	/// minimum period).
-	///
-	/// If using BABE with secondary slots (default) then all of the slots will
-	/// always be assigned, in which case `MILLISECS_PER_BLOCK` and
-	/// `SLOT_DURATION` should have the same value.
-	///
-	/// <https://research.web3.foundation/en/latest/polkadot/block-production/Babe.html#-6.-practical-results>
-	pub const MILLISECS_PER_BLOCK: u64 = 3000;
-	pub const SECS_PER_BLOCK: u64 = MILLISECS_PER_BLOCK / 1000;
+    /// Since BABE is probabilistic this is the average expected block time that
+    /// we are targetting. Blocks will be produced at a minimum duration defined
+    /// by `SLOT_DURATION`, but some slots will not be allocated to any
+    /// authority and hence no block will be produced. We expect to have this
+    /// block time on average following the defined slot duration and the value
+    /// of `c` configured for BABE (where `1 - c` represents the probability of
+    /// a slot being empty).
+    /// This value is only used indirectly to define the unit constants below
+    /// that are expressed in blocks. The rest of the code should use
+    /// `SLOT_DURATION` instead (like the Timestamp pallet for calculating the
+    /// minimum period).
+    ///
+    /// If using BABE with secondary slots (default) then all of the slots will
+    /// always be assigned, in which case `MILLISECS_PER_BLOCK` and
+    /// `SLOT_DURATION` should have the same value.
+    ///
+    /// <https://research.web3.foundation/en/latest/polkadot/block-production/Babe.html#-6.-practical-results>
+    pub const MILLISECS_PER_BLOCK: u64 = 3000;
+    pub const SECS_PER_BLOCK: u64 = MILLISECS_PER_BLOCK / 1000;
 
-	pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
+    pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
 
-	// 1 in 4 blocks (on average, not counting collisions) will be primary BABE blocks.
-	pub const PRIMARY_PROBABILITY: (u64, u64) = (1, 4);
+    // 1 in 4 blocks (on average, not counting collisions) will be primary BABE blocks.
+    pub const PRIMARY_PROBABILITY: (u64, u64) = (1, 4);
 
-	pub const EPOCH_DURATION_IN_BLOCKS: BlockNumber = 10 * MINUTES;
-	pub const EPOCH_DURATION_IN_SLOTS: u64 = {
-		const SLOT_FILL_RATE: f64 = MILLISECS_PER_BLOCK as f64 / SLOT_DURATION as f64;
+    pub const EPOCH_DURATION_IN_BLOCKS: BlockNumber = 10 * MINUTES;
+    pub const EPOCH_DURATION_IN_SLOTS: u64 = {
+        const SLOT_FILL_RATE: f64 = MILLISECS_PER_BLOCK as f64 / SLOT_DURATION as f64;
 
-		(EPOCH_DURATION_IN_BLOCKS as f64 * SLOT_FILL_RATE) as u64
-	};
+        (EPOCH_DURATION_IN_BLOCKS as f64 * SLOT_FILL_RATE) as u64
+    };
 
-	// These time units are defined in number of blocks.
-	pub const MINUTES: BlockNumber = 60 / (SECS_PER_BLOCK as BlockNumber);
-	pub const HOURS: BlockNumber = MINUTES * 60;
-	pub const DAYS: BlockNumber = HOURS * 24;
+    // These time units are defined in number of blocks.
+    pub const MINUTES: BlockNumber = 60 / (SECS_PER_BLOCK as BlockNumber);
+    pub const HOURS: BlockNumber = MINUTES * 60;
+    pub const DAYS: BlockNumber = HOURS * 24;
 }
 
 #[cfg(feature = "babe")]
 parameter_types! {
-	pub const EpochDuration: u64 = time::EPOCH_DURATION_IN_SLOTS;
-	pub const ExpectedBlockTime: u64 = time::MILLISECS_PER_BLOCK;
+    pub const EpochDuration: u64 = time::EPOCH_DURATION_IN_SLOTS;
+    pub const ExpectedBlockTime: u64 = time::MILLISECS_PER_BLOCK;
 }
 
 #[cfg(feature = "babe")]
 impl pallet_babe::Trait for Runtime {
-	type EpochDuration = EpochDuration;
-	type ExpectedBlockTime = ExpectedBlockTime;
-	type EpochChangeTrigger = pallet_babe::ExternalTrigger;
+    type EpochDuration = EpochDuration;
+    type ExpectedBlockTime = ExpectedBlockTime;
+    type EpochChangeTrigger = pallet_babe::ExternalTrigger;
 
-	type KeyOwnerProofSystem = ();
+    type KeyOwnerProofSystem = ();
 
-	type KeyOwnerProof = <Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(
-		KeyTypeId,
-		pallet_babe::AuthorityId,
-	)>>::Proof;
+    type KeyOwnerProof = <Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(
+        KeyTypeId,
+        pallet_babe::AuthorityId,
+    )>>::Proof;
 
-	type KeyOwnerIdentification = <Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(
-		KeyTypeId,
-		pallet_babe::AuthorityId,
-	)>>::IdentificationTuple;
+    type KeyOwnerIdentification = <Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(
+        KeyTypeId,
+        pallet_babe::AuthorityId,
+    )>>::IdentificationTuple;
 
-	type HandleEquivocation = ();
-	type WeightInfo = ();
+    type HandleEquivocation = ();
+    type WeightInfo = ();
 }
 
 impl pallet_grandpa::Trait for Runtime {
@@ -601,51 +601,51 @@ impl_runtime_apis! {
     }
 
     #[cfg(feature = "babe")]
-	impl sp_consensus_babe::BabeApi<Block> for Runtime {
-		fn configuration() -> sp_consensus_babe::BabeGenesisConfiguration {
-			// The choice of `c` parameter (where `1 - c` represents the
-			// probability of a slot being empty), is done in accordance to the
-			// slot duration and expected target block time, for safely
-			// resisting network delays of maximum two seconds.
-			// <https://research.web3.foundation/en/latest/polkadot/BABE/Babe/#6-practical-results>
-			sp_consensus_babe::BabeGenesisConfiguration {
-				slot_duration: Babe::slot_duration(),
-				epoch_length: EpochDuration::get(),
-				c: time::PRIMARY_PROBABILITY,
-				genesis_authorities: Babe::authorities(),
-				randomness: Babe::randomness(),
-				allowed_slots: sp_consensus_babe::AllowedSlots::PrimaryAndSecondaryPlainSlots,
-			}
-		}
+    impl sp_consensus_babe::BabeApi<Block> for Runtime {
+        fn configuration() -> sp_consensus_babe::BabeGenesisConfiguration {
+            // The choice of `c` parameter (where `1 - c` represents the
+            // probability of a slot being empty), is done in accordance to the
+            // slot duration and expected target block time, for safely
+            // resisting network delays of maximum two seconds.
+            // <https://research.web3.foundation/en/latest/polkadot/BABE/Babe/#6-practical-results>
+            sp_consensus_babe::BabeGenesisConfiguration {
+                slot_duration: Babe::slot_duration(),
+                epoch_length: EpochDuration::get(),
+                c: time::PRIMARY_PROBABILITY,
+                genesis_authorities: Babe::authorities(),
+                randomness: Babe::randomness(),
+                allowed_slots: sp_consensus_babe::AllowedSlots::PrimaryAndSecondaryPlainSlots,
+            }
+        }
 
-		fn current_epoch_start() -> sp_consensus_babe::SlotNumber {
-			Babe::current_epoch_start()
-		}
+        fn current_epoch_start() -> sp_consensus_babe::SlotNumber {
+            Babe::current_epoch_start()
+        }
 
-		fn generate_key_ownership_proof(
-			_slot_number: sp_consensus_babe::SlotNumber,
-			_authority_id: sp_consensus_babe::AuthorityId,
-		) -> Option<sp_consensus_babe::OpaqueKeyOwnershipProof> {
+        fn generate_key_ownership_proof(
+            _slot_number: sp_consensus_babe::SlotNumber,
+            _authority_id: sp_consensus_babe::AuthorityId,
+        ) -> Option<sp_consensus_babe::OpaqueKeyOwnershipProof> {
             // TODO: Replace with some logic
-			// use codec::Encode;
-			// Historical::prove((sp_consensus_babe::KEY_TYPE, authority_id))
-			// 	.map(|p| p.encode())
+            // use codec::Encode;
+            // Historical::prove((sp_consensus_babe::KEY_TYPE, authority_id))
+            // 	.map(|p| p.encode())
             // 	.map(sp_consensus_babe::OpaqueKeyOwnershipProof::new)
             None
-		}
+        }
 
-		fn submit_report_equivocation_unsigned_extrinsic(
-			equivocation_proof: sp_consensus_babe::EquivocationProof<<Block as BlockT>::Header>,
-			key_owner_proof: sp_consensus_babe::OpaqueKeyOwnershipProof,
-		) -> Option<()> {
-			let key_owner_proof = key_owner_proof.decode()?;
+        fn submit_report_equivocation_unsigned_extrinsic(
+            equivocation_proof: sp_consensus_babe::EquivocationProof<<Block as BlockT>::Header>,
+            key_owner_proof: sp_consensus_babe::OpaqueKeyOwnershipProof,
+        ) -> Option<()> {
+            let key_owner_proof = key_owner_proof.decode()?;
 
-			Babe::submit_unsigned_equivocation_report(
-				equivocation_proof,
-				key_owner_proof,
-			)
-		}
-	}
+            Babe::submit_unsigned_equivocation_report(
+                equivocation_proof,
+                key_owner_proof,
+            )
+        }
+    }
 
     impl sp_session::SessionKeys<Block> for Runtime {
         fn generate_session_keys(seed: Option<Vec<u8>>) -> Vec<u8> {

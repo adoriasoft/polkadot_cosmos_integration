@@ -1,6 +1,6 @@
 use node_template_runtime::{
-    opaque::SessionKeys, AccountId, BalancesConfig, GenesisConfig, GrandpaConfig,
-    SessionConfig, Signature, SudoConfig, SystemConfig, WASM_BINARY,
+    opaque::SessionKeys, AccountId, BalancesConfig, GenesisConfig, GrandpaConfig, SessionConfig,
+    Signature, SudoConfig, SystemConfig, WASM_BINARY,
 };
 use sc_service::ChainType;
 use sp_core::{ed25519, sr25519, Pair, Public};
