@@ -11,6 +11,7 @@ use pallet_grandpa::{
     fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
 };
 use sp_api::impl_runtime_apis;
+#[cfg(feature = "aura")]
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::traits::{
@@ -91,9 +92,17 @@ pub mod opaque {
     /// Opaque block identifier type.
     pub type BlockId = generic::BlockId<Block>;
 
+    #[cfg(feature = "aura")]
     impl_opaque_keys! {
         pub struct SessionKeys {
             pub aura: Aura,
+            pub grandpa: Grandpa,
+        }
+    }
+    #[cfg(feature = "babe")]
+    impl_opaque_keys! {
+        pub struct SessionKeys {
+            pub babe: Babe,
             pub grandpa: Grandpa,
         }
     }
@@ -200,8 +209,79 @@ impl frame_system::Trait for Runtime {
     type SystemWeightInfo = ();
 }
 
+#[cfg(feature = "aura")]
 impl pallet_aura::Trait for Runtime {
     type AuthorityId = AuraId;
+}
+
+#[cfg(feature = "babe")]
+pub mod time {
+    use super::BlockNumber;
+
+	/// Since BABE is probabilistic this is the average expected block time that
+	/// we are targetting. Blocks will be produced at a minimum duration defined
+	/// by `SLOT_DURATION`, but some slots will not be allocated to any
+	/// authority and hence no block will be produced. We expect to have this
+	/// block time on average following the defined slot duration and the value
+	/// of `c` configured for BABE (where `1 - c` represents the probability of
+	/// a slot being empty).
+	/// This value is only used indirectly to define the unit constants below
+	/// that are expressed in blocks. The rest of the code should use
+	/// `SLOT_DURATION` instead (like the Timestamp pallet for calculating the
+	/// minimum period).
+	///
+	/// If using BABE with secondary slots (default) then all of the slots will
+	/// always be assigned, in which case `MILLISECS_PER_BLOCK` and
+	/// `SLOT_DURATION` should have the same value.
+	///
+	/// <https://research.web3.foundation/en/latest/polkadot/block-production/Babe.html#-6.-practical-results>
+	pub const MILLISECS_PER_BLOCK: u64 = 3000;
+	pub const SECS_PER_BLOCK: u64 = MILLISECS_PER_BLOCK / 1000;
+
+	pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
+
+	// 1 in 4 blocks (on average, not counting collisions) will be primary BABE blocks.
+	pub const PRIMARY_PROBABILITY: (u64, u64) = (1, 4);
+
+	pub const EPOCH_DURATION_IN_BLOCKS: BlockNumber = 10 * MINUTES;
+	pub const EPOCH_DURATION_IN_SLOTS: u64 = {
+		const SLOT_FILL_RATE: f64 = MILLISECS_PER_BLOCK as f64 / SLOT_DURATION as f64;
+
+		(EPOCH_DURATION_IN_BLOCKS as f64 * SLOT_FILL_RATE) as u64
+	};
+
+	// These time units are defined in number of blocks.
+	pub const MINUTES: BlockNumber = 60 / (SECS_PER_BLOCK as BlockNumber);
+	pub const HOURS: BlockNumber = MINUTES * 60;
+	pub const DAYS: BlockNumber = HOURS * 24;
+}
+
+#[cfg(feature = "babe")]
+parameter_types! {
+	pub const EpochDuration: u64 = time::EPOCH_DURATION_IN_SLOTS;
+	pub const ExpectedBlockTime: u64 = time::MILLISECS_PER_BLOCK;
+}
+
+#[cfg(feature = "babe")]
+impl pallet_babe::Trait for Runtime {
+	type EpochDuration = EpochDuration;
+	type ExpectedBlockTime = ExpectedBlockTime;
+	type EpochChangeTrigger = pallet_babe::ExternalTrigger;
+
+	type KeyOwnerProofSystem = ();
+
+	type KeyOwnerProof = <Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(
+		KeyTypeId,
+		pallet_babe::AuthorityId,
+	)>>::Proof;
+
+	type KeyOwnerIdentification = <Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(
+		KeyTypeId,
+		pallet_babe::AuthorityId,
+	)>>::IdentificationTuple;
+
+	type HandleEquivocation = ();
+	type WeightInfo = ();
 }
 
 impl pallet_grandpa::Trait for Runtime {
@@ -230,7 +310,10 @@ parameter_types! {
 impl pallet_timestamp::Trait for Runtime {
     /// A timestamp: milliseconds since the unix epoch.
     type Moment = u64;
+    #[cfg(feature = "aura")]
     type OnTimestampSet = Aura;
+    #[cfg(feature = "babe")]
+    type OnTimestampSet = Babe;
     type MinimumPeriod = MinimumPeriod;
     type WeightInfo = ();
 }
@@ -363,6 +446,7 @@ where
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
+#[cfg(feature = "aura")]
 construct_runtime!(
     pub enum Runtime where
         Block = Block,
@@ -373,6 +457,25 @@ construct_runtime!(
         RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Module, Call, Storage},
         Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent},
         Aura: pallet_aura::{Module, Config<T>, Inherent},
+        Session: pallet_session::{Module, Call, Storage, Event, Config<T>},
+        Grandpa: pallet_grandpa::{Module, Call, Storage, Config, Event},
+        Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
+        TransactionPayment: pallet_transaction_payment::{Module, Storage},
+        Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
+        CosmosAbci: pallet_cosmos_abci::{Module, Call, ValidateUnsigned},
+    }
+);
+#[cfg(feature = "babe")]
+construct_runtime!(
+    pub enum Runtime where
+        Block = Block,
+        NodeBlock = opaque::Block,
+        UncheckedExtrinsic = UncheckedExtrinsic
+    {
+        System: frame_system::{Module, Call, Config, Storage, Event<T>},
+        RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Module, Call, Storage},
+        Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent},
+        Babe: pallet_babe::{Module, Call, Storage, Config},
         Session: pallet_session::{Module, Call, Storage, Event, Config<T>},
         Grandpa: pallet_grandpa::{Module, Call, Storage, Config, Event},
         Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
@@ -486,6 +589,7 @@ impl_runtime_apis! {
         }
     }
 
+    #[cfg(feature = "aura")]
     impl sp_consensus_aura::AuraApi<Block, AuraId> for Runtime {
         fn slot_duration() -> u64 {
             Aura::slot_duration()
@@ -495,6 +599,53 @@ impl_runtime_apis! {
             Aura::authorities()
         }
     }
+
+    #[cfg(feature = "babe")]
+	impl sp_consensus_babe::BabeApi<Block> for Runtime {
+		fn configuration() -> sp_consensus_babe::BabeGenesisConfiguration {
+			// The choice of `c` parameter (where `1 - c` represents the
+			// probability of a slot being empty), is done in accordance to the
+			// slot duration and expected target block time, for safely
+			// resisting network delays of maximum two seconds.
+			// <https://research.web3.foundation/en/latest/polkadot/BABE/Babe/#6-practical-results>
+			sp_consensus_babe::BabeGenesisConfiguration {
+				slot_duration: Babe::slot_duration(),
+				epoch_length: EpochDuration::get(),
+				c: time::PRIMARY_PROBABILITY,
+				genesis_authorities: Babe::authorities(),
+				randomness: Babe::randomness(),
+				allowed_slots: sp_consensus_babe::AllowedSlots::PrimaryAndSecondaryPlainSlots,
+			}
+		}
+
+		fn current_epoch_start() -> sp_consensus_babe::SlotNumber {
+			Babe::current_epoch_start()
+		}
+
+		fn generate_key_ownership_proof(
+			_slot_number: sp_consensus_babe::SlotNumber,
+			_authority_id: sp_consensus_babe::AuthorityId,
+		) -> Option<sp_consensus_babe::OpaqueKeyOwnershipProof> {
+            // TODO: Replace with some logic
+			// use codec::Encode;
+			// Historical::prove((sp_consensus_babe::KEY_TYPE, authority_id))
+			// 	.map(|p| p.encode())
+            // 	.map(sp_consensus_babe::OpaqueKeyOwnershipProof::new)
+            None
+		}
+
+		fn submit_report_equivocation_unsigned_extrinsic(
+			equivocation_proof: sp_consensus_babe::EquivocationProof<<Block as BlockT>::Header>,
+			key_owner_proof: sp_consensus_babe::OpaqueKeyOwnershipProof,
+		) -> Option<()> {
+			let key_owner_proof = key_owner_proof.decode()?;
+
+			Babe::submit_unsigned_equivocation_report(
+				equivocation_proof,
+				key_owner_proof,
+			)
+		}
+	}
 
     impl sp_session::SessionKeys<Block> for Runtime {
         fn generate_session_keys(seed: Option<Vec<u8>>) -> Vec<u8> {
