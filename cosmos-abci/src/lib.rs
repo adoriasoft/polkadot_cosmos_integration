@@ -267,7 +267,8 @@ impl<T: Trait> Module<T> {
             session_index - (SESSION_BLOCKS_PERIOD + 1)
         } else {
             0
-        }.into()
+        }
+        .into()
     }
 
     // The abci transaction call.
