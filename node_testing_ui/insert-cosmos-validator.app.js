@@ -9,7 +9,7 @@ function getBlockchainAccount(keypair) {
 }
 
 async function init() {
-    const [_, __, substrate_address, substrate_address_key_type, cosmos_address] = process.argv;
+    const [_, __, substrate_address, cosmos_address] = process.argv;
     const WS_URL = process.env.NODE_ENV === 'production' ? appConstants.ENDPOINT_PROD : appConstants.ENDPOINT_LOCAL;
     const provider = new WsProvider(WS_URL);
     const api = await ApiPromise.create({ provider });
@@ -20,7 +20,7 @@ async function init() {
                 const signer = getBlockchainAccount(substrate_address);
                 try {
                     const txHash = await api.tx.cosmosAbci
-                        .insertCosmosAccount(cosmos_address, substrate_address_key_type)
+                        .insertCosmosAccount(cosmos_address)
                         .signAndSend(signer);
                     resovle(txHash.toString());
                 } catch (err) {
