@@ -8,7 +8,7 @@ function assert_eq() {
         echo -e "\033[0;31m FAIL"
         echo "assert_eq"
         echo "expects" $2
-        echo "got " $1 " \033[0m"
+        echo "got " $1 " "
         exit -1
     fi
 }
@@ -21,7 +21,7 @@ function assert_ne() {
         echo -e "\033[0;31m FAIL"
         echo "assert_ne"
         echo "expects" $2
-        echo "got " $1 " \033[0m"
+        echo "got " $1 " "
         exit -1
     fi
 }
