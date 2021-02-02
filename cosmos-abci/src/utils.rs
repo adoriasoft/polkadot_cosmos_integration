@@ -23,6 +23,5 @@ pub type CosmosAccountPubKey = Vec<u8>;
 #[derive(Encode, Decode)]
 pub struct CosmosAccount {
     pub pub_key: CosmosAccountPubKey,
-    pub pub_key_type: crate::crypto_transform::PubKeyTypes,
     pub power: i64,
 }
