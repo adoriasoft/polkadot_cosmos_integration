@@ -378,7 +378,7 @@ construct_runtime!(
         Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
         TransactionPayment: pallet_transaction_payment::{Module, Storage},
         Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
-        CosmosAbci: pallet_cosmos_abci::{Module, Call, ValidateUnsigned},
+        CosmosAbci: pallet_cosmos_abci::{Module, Call, ValidateUnsigned, Storage},
     }
 );
 

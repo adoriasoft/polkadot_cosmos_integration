@@ -1,10 +1,13 @@
 const { ApiPromise, WsProvider } = require('@polkadot/api');
-const appConstants = require('./app.constants');
+const { ENDPOINTS, METADATA_TYPES } = require('./app.constants');
 
 async function init() {
-    const WS_URL = process.env.NODE_ENV === 'production' ? appConstants.ENDPOINT_PROD : appConstants.ENDPOINT_LOCAL;
+    const WS_URL = process.env.NODE_ENV === 'production' ? ENDPOINTS.ENDPOINT_PROD : ENDPOINTS.ENDPOINT_LOCAL;
     const provider = new WsProvider(WS_URL);
-    const api = await ApiPromise.create({ provider });
+    const api = await ApiPromise.create({
+        provider,
+        ...METADATA_TYPES,
+    });
     const validators = await api.query.session.validators();
 
     console.log(validators.map(v => v.toString()).join('@'));

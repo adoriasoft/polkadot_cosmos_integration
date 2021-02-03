@@ -1,7 +1,6 @@
 const { ApiPromise, WsProvider } = require('@polkadot/api');
 const { Keyring } = require('@polkadot/keyring');
-
-const appConstants = require('./app.constants');
+const { ENDPOINTS, METADATA_TYPES } = require('./app.constants');
 
 function getBlockchainAccount(keypair) {
     const keyring = new Keyring({ type: "sr25519" });
@@ -10,9 +9,12 @@ function getBlockchainAccount(keypair) {
 
 async function init() {
     const [_, __, substrate_address, cosmos_address] = process.argv;
-    const WS_URL = process.env.NODE_ENV === 'production' ? appConstants.ENDPOINT_PROD : appConstants.ENDPOINT_LOCAL;
+    const WS_URL = process.env.NODE_ENV === 'production' ? ENDPOINTS.ENDPOINT_PROD : ENDPOINTS.ENDPOINT_LOCAL;
     const provider = new WsProvider(WS_URL);
-    const api = await ApiPromise.create({ provider });
+    const api = await ApiPromise.create({
+        provider,
+        ...METADATA_TYPES,
+    });
 
     const response = await new Promise(resovle => {
         setTimeout(async () => {
