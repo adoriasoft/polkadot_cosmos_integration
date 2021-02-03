@@ -338,26 +338,22 @@ impl<T: Trait> Module<T> {
 
     pub fn on_start_session(start_index: SessionIndex) {
         let corresponding_height = Self::get_corresponding_height(start_index);
-        let next_cosmos_validators = abci_interface::get_cosmos_validators(
-            corresponding_height.into()
-        ).unwrap();
+        let next_cosmos_validators =
+            abci_interface::get_cosmos_validators(corresponding_height.into()).unwrap();
 
         if !next_cosmos_validators.is_empty() {
             let mut authorities_with_updated_weight: fg_primitives::AuthorityList = Vec::new();
 
             for next_cosmos_validator in &next_cosmos_validators {
-                let mut next_substrate_account_id: &[u8] = &<CosmosAccounts<T>>::get(
-                    next_cosmos_validator.pub_key.clone()
-                ).encode();
+                let mut next_substrate_account_id: &[u8] =
+                    &<CosmosAccounts<T>>::get(next_cosmos_validator.pub_key.clone()).encode();
 
                 match sp_finality_grandpa::AuthorityId::decode(&mut next_substrate_account_id) {
                     Ok(value) => {
-                        authorities_with_updated_weight.push((
-                            value,
-                            next_cosmos_validator.power as u64
-                        ));
-                    },
-                    Err(_err) => { },
+                        authorities_with_updated_weight
+                            .push((value, next_cosmos_validator.power as u64));
+                    }
+                    Err(_err) => {}
                 }
             }
 
@@ -366,9 +362,9 @@ impl<T: Trait> Module<T> {
                 match <pallet_grandpa::Module<T>>::schedule_change(
                     authorities_with_updated_weight,
                     Zero::zero(),
-                    None
+                    None,
                 ) {
-                    Err(_err) => { },
+                    Err(_err) => {}
                     Ok(_ok) => {
                         debug::info!("Push new `PendingChange` success");
                     }
@@ -388,14 +384,20 @@ impl<T: Trait> Module<T> {
         if !next_cosmos_validators.is_empty() {
             let mut new_substrate_validators: Vec<T::AccountId> = vec![];
             for cosmos_validator in &next_cosmos_validators {
-                if let Some(substrate_account_id) = <CosmosAccounts<T>>::get(&cosmos_validator.pub_key) {
+                if let Some(substrate_account_id) =
+                    <CosmosAccounts<T>>::get(&cosmos_validator.pub_key)
+                {
                     new_substrate_validators.push(substrate_account_id.clone());
                     // update cosmos validator in the substrate storage
-                    let convertable =
-                        <T as pallet_session::Trait>::ValidatorIdOf::convert(substrate_account_id.clone())
-                            .unwrap();
+                    let convertable = <T as pallet_session::Trait>::ValidatorIdOf::convert(
+                        substrate_account_id.clone(),
+                    )
+                    .unwrap();
                     <SubstrateAccounts<T>>::insert(convertable, cosmos_validator);
-                    <SubstrateAccountWeights<T>>::insert(substrate_account_id, cosmos_validator.power);
+                    <SubstrateAccountWeights<T>>::insert(
+                        substrate_account_id,
+                        cosmos_validator.power,
+                    );
                 } else {
                     sp_runtime::print(
                         "WARNING: Not able to found Substrate account to Cosmos for ID : ",
