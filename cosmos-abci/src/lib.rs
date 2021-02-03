@@ -357,7 +357,7 @@ impl<T: Trait> Module<T> {
                 }
             }
 
-            if authorities_with_updated_weight.len() > 0 {
+            if !authorities_with_updated_weight.is_empty() {
                 // Update `weight` for each active validator.
                 match <pallet_grandpa::Module<T>>::schedule_change(
                     authorities_with_updated_weight,
