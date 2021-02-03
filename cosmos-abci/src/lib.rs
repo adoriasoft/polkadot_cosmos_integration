@@ -161,9 +161,10 @@ pub struct ABCITxs {
 decl_storage! {
     trait Store for Module<T: Trait> as ABCITxStorage {
         ABCITxStorage get(fn abci_tx): map hasher(blake2_128_concat) T::BlockNumber => ABCITxs;
-        CosmosAccounts get(fn cosmos_accounts): map hasher(blake2_128_concat) utils::CosmosAccountPubKey => Option<T::AccountId> = None;
+        CosmosAccounts get(fn cosmos_accounts): map hasher(blake2_128_concat) Vec<u8> => Option<T::AccountId> = None;
         AccountLedger get(fn account_ledgers): map hasher(blake2_128_concat) T::AccountId => OptionalLedger<T::AccountId>;
         SubstrateAccounts get(fn substrate_accounts): map hasher(blake2_128_concat) <T as session::Trait>::ValidatorId => Option<utils::CosmosAccount> = None;
+        SubstrateAccountWeights get(fn substrate_account_weights): map hasher(blake2_128_concat) T::AccountId => Option<i64> = None;
     }
 }
 
@@ -189,6 +190,7 @@ decl_module! {
             let convertable = <T as pallet_session::Trait>::ValidatorIdOf::convert(origin_signed.clone())
                 .unwrap();
             <CosmosAccounts<T>>::insert(&cosmos_account_pub_key, &origin_signed);
+            <SubstrateAccountWeights<T>>::insert(&origin_signed, 1);
             <SubstrateAccounts<T>>::insert(&convertable, utils::CosmosAccount {
                 pub_key: cosmos_account_pub_key,
                 power: 0,
@@ -200,12 +202,13 @@ decl_module! {
         #[weight = 0]
         fn remove_cosmos_account(origin) -> DispatchResult {
             let origin_signed = ensure_signed(origin)?;
-            let convertable = <T as session::Trait>::ValidatorIdOf::convert(origin_signed)
+            let convertable = <T as session::Trait>::ValidatorIdOf::convert(origin_signed.clone())
                 .unwrap();
             if let Some(cosmos_account) = <SubstrateAccounts<T>>::get(&convertable) {
                 <CosmosAccounts<T>>::remove(&cosmos_account.pub_key);
             }
             <SubstrateAccounts<T>>::remove(&convertable);
+            <SubstrateAccountWeights<T>>::remove(&origin_signed);
             Ok(())
         }
 
@@ -335,30 +338,42 @@ impl<T: Trait> Module<T> {
 
     pub fn on_start_session(start_index: SessionIndex) {
         let corresponding_height = Self::get_corresponding_height(start_index);
-
-        let next_cosmos_validators =
-            abci_interface::get_cosmos_validators(corresponding_height.into()).unwrap();
+        let next_cosmos_validators = abci_interface::get_cosmos_validators(
+            corresponding_height.into()
+        ).unwrap();
 
         if !next_cosmos_validators.is_empty() {
             let mut authorities_with_updated_weight: fg_primitives::AuthorityList = Vec::new();
 
             for next_cosmos_validator in &next_cosmos_validators {
-                let mut next_substrate_account_id: &[u8] =
-                    &<CosmosAccounts<T>>::get(next_cosmos_validator.0.clone()).encode();
-                let next_authority = (
-                    sp_finality_grandpa::AuthorityId::decode(&mut next_substrate_account_id)
-                        .unwrap_or_default(),
-                    next_cosmos_validator.1 as u64,
-                );
-                authorities_with_updated_weight.push(next_authority);
+                let mut next_substrate_account_id: &[u8] = &<CosmosAccounts<T>>::get(
+                    next_cosmos_validator.pub_key.clone()
+                ).encode();
+
+                match sp_finality_grandpa::AuthorityId::decode(&mut next_substrate_account_id) {
+                    Ok(value) => {
+                        authorities_with_updated_weight.push((
+                            value,
+                            next_cosmos_validator.power as u64
+                        ));
+                    },
+                    Err(_err) => { },
+                }
             }
 
-            // Update `weight` for each active validator.
-            let _response = <pallet_grandpa::Module<T>>::schedule_change(
-                authorities_with_updated_weight,
-                Zero::zero(),
-                None,
-            );
+            if authorities_with_updated_weight.len() > 0 {
+                // Update `weight` for each active validator.
+                match <pallet_grandpa::Module<T>>::schedule_change(
+                    authorities_with_updated_weight,
+                    Zero::zero(),
+                    None
+                ) {
+                    Err(_err) => { },
+                    Ok(_ok) => {
+                        debug::info!("Push new `PendingChange` success");
+                    }
+                }
+            }
         }
     }
 
@@ -377,9 +392,10 @@ impl<T: Trait> Module<T> {
                     new_substrate_validators.push(substrate_account_id.clone());
                     // update cosmos validator in the substrate storage
                     let convertable =
-                        <T as pallet_session::Trait>::ValidatorIdOf::convert(substrate_account_id)
+                        <T as pallet_session::Trait>::ValidatorIdOf::convert(substrate_account_id.clone())
                             .unwrap();
                     <SubstrateAccounts<T>>::insert(convertable, cosmos_validator);
+                    <SubstrateAccountWeights<T>>::insert(substrate_account_id, cosmos_validator.power);
                 } else {
                     sp_runtime::print(
                         "WARNING: Not able to found Substrate account to Cosmos for ID : ",
@@ -472,7 +488,7 @@ pub trait AbciInterface {
                 let mut response = Vec::new();
                 for val in validators {
                     if let Some(key) = val.pub_key {
-                        res.push(utils::CosmosAccount {
+                        response.push(utils::CosmosAccount {
                             pub_key: key.data,
                             power: val.power,
                         });
