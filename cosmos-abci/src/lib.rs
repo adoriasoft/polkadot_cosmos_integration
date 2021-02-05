@@ -18,7 +18,7 @@ use pallet_grandpa::fg_primitives;
 use pallet_session as session;
 use sp_core::{crypto::KeyTypeId, Hasher};
 use sp_runtime::{
-    traits::{Convert, SaturatedConversion, Zero},
+    traits::{Convert, OpaqueKeys, SaturatedConversion, Zero},
     transaction_validity::{
         InvalidTransaction, TransactionSource, TransactionValidity, ValidTransaction,
     },
@@ -92,7 +92,7 @@ pub trait Trait:
     + pallet_sudo::Trait
     + pallet_grandpa::Trait
 {
-    type AuthorityId: AppCrypto<Self::Public, Self::Signature> + Default + Decode;
+    type AuthorityId: Decode + sp_runtime::RuntimeAppPublic + Default;
     type Call: From<Call<Self>>;
     type Subscription: SubscriptionManager;
 }
@@ -143,7 +143,7 @@ tuple_impls! { A B C D E F G H I J K }
 tuple_impls! { A B C D E F G H I J K L }
 tuple_impls! { A B C D E F G H I J K L M }
 tuple_impls! { A B C D E F G H I J K L M N }
-tuple_impls! { A B C D E F G H I J K L M N O}
+tuple_impls! { A B C D E F G H I J K L M N O }
 tuple_impls! { A B C D E F G H I J K L M N O P }
 
 impl<T: Trait> sp_runtime::BoundToRuntimeAppPublic for Module<T>
@@ -338,38 +338,31 @@ impl<T: Trait> Module<T> {
     }
 
     pub fn assign_weights() {
-        let current_session_index = <session::Module<T>>::current_index();
-        let corresponding_height = Self::get_corresponding_height(current_session_index);
-        let next_cosmos_validators =
-            abci_interface::get_cosmos_validators(corresponding_height.into()).unwrap();
+        let mut authorities_with_updated_weight: fg_primitives::AuthorityList = Vec::new();
+        for validator in <session::Module<T>>::validators() {
+            if let Some(value) = <SubstrateAccounts<T>>::get(validator) {
+                let mut substrate_account_id: &[u8] =
+                    &<CosmosAccounts<T>>::get(value.pub_key).encode();
 
-        if !next_cosmos_validators.is_empty() {
-            let mut authorities_with_updated_weight: fg_primitives::AuthorityList = Vec::new();
+                let authority_id =
+                    sp_finality_grandpa::AuthorityId::decode(&mut substrate_account_id)
+                        .map_err(|_| "cannot decode substrate account if into the authority id")
+                        .unwrap();
 
-            for next_cosmos_validator in &next_cosmos_validators {
-                let mut next_substrate_account_id: &[u8] =
-                    &<CosmosAccounts<T>>::get(next_cosmos_validator.pub_key.clone()).encode();
+                authorities_with_updated_weight.push((authority_id, value.power as u64));
+            };
+        }
 
-                match sp_finality_grandpa::AuthorityId::decode(&mut next_substrate_account_id) {
-                    Ok(value) => {
-                        authorities_with_updated_weight
-                            .push((value, next_cosmos_validator.power as u64));
-                    }
-                    Err(_err) => {}
-                }
-            }
-
-            if !authorities_with_updated_weight.is_empty() {
-                // Update `weight` for each active validator.
-                match <pallet_grandpa::Module<T>>::schedule_change(
-                    authorities_with_updated_weight,
-                    Zero::zero(),
-                    None,
-                ) {
-                    Err(_err) => {}
-                    Ok(_ok) => {
-                        debug::info!("Push new `PendingChange` success");
-                    }
+        if !authorities_with_updated_weight.is_empty() {
+            // Update `weight` for each active validator.
+            match <pallet_grandpa::Module<T>>::schedule_change(
+                authorities_with_updated_weight,
+                Zero::zero(),
+                None,
+            ) {
+                Err(_err) => {}
+                Ok(_ok) => {
+                    debug::info!("Push new `PendingChange` success");
                 }
             }
         }
@@ -656,17 +649,26 @@ impl<T: Trait> pallet_session::ShouldEndSession<T::BlockNumber> for Module<T> {
     }
 }
 
-impl<T: Trait> pallet_session::OneSessionHandler<T::AccountId> for Module<T> where <T as Trait>::AuthorityId: sp_runtime::RuntimeAppPublic {
+impl<T: Trait> pallet_session::OneSessionHandler<T::AccountId> for Module<T>
+where
+    <T as Trait>::AuthorityId: sp_runtime::RuntimeAppPublic,
+{
     type Key = T::AuthorityId;
 
-    fn on_new_session<'a, I: 'a>(changed: bool, _validators: I, _queued_validators: I) where I: Iterator<Item=(&'a T::AccountId, T::AuthorityId)> {
-        debug::info!("on_new_session(): {:?}", changed);
-        Self::assign_weights();
+    fn on_new_session<'a, I: 'a>(changed: bool, _validators: I, _queued_validators: I)
+    where
+        I: Iterator<Item = (&'a T::AccountId, Self::Key)>,
+    {
+        debug::info!("OneSessionHandler on_new_session(): {:?}", changed);
+        // Self::assign_weights();
     }
 
-    fn on_genesis_session<'a, I: 'a>(_validators: I) where I: Iterator<Item=(&'a T::AccountId, T::AuthorityId)> {
-        debug::info!("on_genesis_session().");
+    fn on_genesis_session<'a, I: 'a>(_validators: I)
+    where
+        I: Iterator<Item = (&'a T::AccountId, Self::Key)>,
+    {
+        debug::info!("OneSessionHandler on_genesis_session().");
     }
 
-	fn on_disabled(_i: usize) { }
+    fn on_disabled(_i: usize) {}
 }

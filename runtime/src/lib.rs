@@ -95,6 +95,7 @@ pub mod opaque {
         pub struct SessionKeys {
             pub aura: Aura,
             pub grandpa: Grandpa,
+            pub abci: CosmosAbci,
         }
     }
 }
@@ -286,7 +287,7 @@ impl pallet_session::Trait for Runtime {
     type ShouldEndSession = pallet_session::PeriodicSessions<Period, Offset>;
     type NextSessionRotation = pallet_session::PeriodicSessions<Period, Offset>;
     type SessionManager = CosmosAbci;
-    type SessionHandler = CosmosAbci;
+    type SessionHandler = (Aura, Grandpa, CosmosAbci);
     type Keys = opaque::SessionKeys;
     type DisabledValidatorsThreshold = DisabledValidatorsThreshold;
     type WeightInfo = ();
@@ -298,7 +299,7 @@ impl pallet_sudo::Trait for Runtime {
 }
 
 impl pallet_cosmos_abci::Trait for Runtime {
-    type AuthorityId = pallet_cosmos_abci::crypto::ABCIAuthId;
+    type AuthorityId = pallet_cosmos_abci::crypto::Public;
     type Call = Call;
     type Subscription = ();
 }
