@@ -61,6 +61,7 @@ pub mod crypto {
 
     #[derive(Decode, Default)]
     pub struct ABCIAuthId;
+
     /// Implemented for ocw-runtime.
     impl frame_system::offchain::AppCrypto<MultiSigner, MultiSignature> for ABCIAuthId {
         type RuntimeAppPublic = Public;
@@ -336,8 +337,9 @@ impl<T: Trait> Module<T> {
         Ok(())
     }
 
-    pub fn on_start_session(start_index: SessionIndex) {
-        let corresponding_height = Self::get_corresponding_height(start_index);
+    pub fn assign_weights() {
+        let current_session_index = <session::Module<T>>::current_index();
+        let corresponding_height = Self::get_corresponding_height(current_session_index);
         let next_cosmos_validators =
             abci_interface::get_cosmos_validators(corresponding_height.into()).unwrap();
 
@@ -645,13 +647,26 @@ impl<T: Trait> pallet_session::SessionManager<T::AccountId> for Module<T> {
 
     fn end_session(_end_index: SessionIndex) {}
 
-    fn start_session(start_index: SessionIndex) {
-        Self::on_start_session(start_index);
-    }
+    fn start_session(_start_index: SessionIndex) {}
 }
 
 impl<T: Trait> pallet_session::ShouldEndSession<T::BlockNumber> for Module<T> {
     fn should_end_session(_: T::BlockNumber) -> bool {
         true
     }
+}
+
+impl<T: Trait> pallet_session::OneSessionHandler<T::AccountId> for Module<T> where <T as Trait>::AuthorityId: sp_runtime::RuntimeAppPublic {
+    type Key = T::AuthorityId;
+
+    fn on_new_session<'a, I: 'a>(changed: bool, _validators: I, _queued_validators: I) where I: Iterator<Item=(&'a T::AccountId, T::AuthorityId)> {
+        debug::info!("on_new_session(): {:?}", changed);
+        Self::assign_weights();
+    }
+
+    fn on_genesis_session<'a, I: 'a>(_validators: I) where I: Iterator<Item=(&'a T::AccountId, T::AuthorityId)> {
+        debug::info!("on_genesis_session().");
+    }
+
+	fn on_disabled(_i: usize) { }
 }
