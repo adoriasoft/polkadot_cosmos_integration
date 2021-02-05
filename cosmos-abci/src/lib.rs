@@ -49,32 +49,9 @@ pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"abci");
 /// them with the pallet-specific identifier.
 pub mod crypto {
     use crate::KEY_TYPE;
-    use frame_support::codec::Decode;
-    use sp_core::sr25519::Signature as Sr25519Signature;
     use sp_runtime::app_crypto::{app_crypto, sr25519};
-    use sp_runtime::traits::Verify;
-    use sp_runtime::{MultiSignature, MultiSigner};
 
     app_crypto!(sr25519, KEY_TYPE);
-
-    #[derive(Decode, Default)]
-    pub struct ABCIAuthId;
-
-    /// Implemented for ocw-runtime.
-    impl frame_system::offchain::AppCrypto<MultiSigner, MultiSignature> for ABCIAuthId {
-        type RuntimeAppPublic = Public;
-        type GenericSignature = sp_core::sr25519::Signature;
-        type GenericPublic = sp_core::sr25519::Public;
-    }
-
-    /// Implemented for mock runtime in test.
-    impl frame_system::offchain::AppCrypto<<Sr25519Signature as Verify>::Signer, Sr25519Signature>
-        for ABCIAuthId
-    {
-        type RuntimeAppPublic = Public;
-        type GenericSignature = sp_core::sr25519::Signature;
-        type GenericPublic = sp_core::sr25519::Public;
-    }
 }
 
 /// The CosmosAbci trait.
@@ -247,8 +224,8 @@ decl_module! {
 /// Implementation of additional methods for pallet configuration trait.
 impl<T: Trait> Module<T> {
     fn get_corresponding_height(session_index: SessionIndex) -> u32 {
-        if session_index > SESSION_BLOCKS_PERIOD {
-            session_index - (SESSION_BLOCKS_PERIOD + 1)
+        if session_index > 2 {
+            (session_index - 2) * SESSION_BLOCKS_PERIOD
         } else {
             0
         }
@@ -270,8 +247,6 @@ impl<T: Trait> Module<T> {
         parent_hash: T::Hash,
         extrinsics_root: T::Hash,
     ) {
-        debug::info!("call_offchain_worker(), block_number: {:?}", block_number);
-
         Self::call_on_initialize(block_number, block_hash, parent_hash, extrinsics_root);
 
         let abci_txs: ABCITxs = <ABCITxStorage<T>>::get(block_number);
