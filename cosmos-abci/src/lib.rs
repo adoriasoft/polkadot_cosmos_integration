@@ -10,15 +10,13 @@ use frame_support::{
     weights::Weight,
 };
 use frame_system::{
-    self as system, ensure_none, ensure_signed,
-    offchain::{AppCrypto, CreateSignedTransaction},
-    RawOrigin,
+    self as system, ensure_none, ensure_signed, offchain::CreateSignedTransaction, RawOrigin,
 };
 use pallet_grandpa::fg_primitives;
 use pallet_session as session;
 use sp_core::{crypto::KeyTypeId, Hasher};
 use sp_runtime::{
-    traits::{Convert, OpaqueKeys, SaturatedConversion, Zero},
+    traits::{Convert, SaturatedConversion, Zero},
     transaction_validity::{
         InvalidTransaction, TransactionSource, TransactionValidity, ValidTransaction,
     },
@@ -339,17 +337,21 @@ impl<T: Trait> Module<T> {
 
     pub fn assign_weights() {
         let mut authorities_with_updated_weight: fg_primitives::AuthorityList = Vec::new();
-        for validator in <session::Module<T>>::validators() {
+        let validators = <session::Module<T>>::validators();
+
+        for validator in &validators {
             if let Some(value) = <SubstrateAccounts<T>>::get(validator) {
                 let mut substrate_account_id: &[u8] =
                     &<CosmosAccounts<T>>::get(value.pub_key).encode();
-
-                let authority_id =
-                    sp_finality_grandpa::AuthorityId::decode(&mut substrate_account_id)
-                        .map_err(|_| "cannot decode substrate account if into the authority id")
-                        .unwrap();
-
-                authorities_with_updated_weight.push((authority_id, value.power as u64));
+                match sp_finality_grandpa::AuthorityId::decode(&mut substrate_account_id) {
+                    Ok(authority_id_value) => {
+                        authorities_with_updated_weight
+                            .push((authority_id_value, value.power as u64));
+                    }
+                    Err(err) => {
+                        debug::info!("Unable to decode AccountId to AuthorityId then try to assign validator weight {:?}", err);
+                    }
+                }
             };
         }
 
@@ -360,9 +362,11 @@ impl<T: Trait> Module<T> {
                 Zero::zero(),
                 None,
             ) {
-                Err(_err) => {}
+                Err(err) => {
+                    debug::info!("`PendingChange` already scheduled {:?}", err);
+                }
                 Ok(_ok) => {
-                    debug::info!("Push new `PendingChange` success");
+                    debug::info!("Schedule new `PendingChange` success.");
                 }
             }
         }
@@ -655,19 +659,19 @@ where
 {
     type Key = T::AuthorityId;
 
-    fn on_new_session<'a, I: 'a>(changed: bool, _validators: I, _queued_validators: I)
+    fn on_new_session<'a, I: 'a>(changed: bool, validators: I, _queued_validators: I)
     where
         I: Iterator<Item = (&'a T::AccountId, Self::Key)>,
     {
-        debug::info!("OneSessionHandler on_new_session(): {:?}", changed);
-        // Self::assign_weights();
+        if changed {
+            Self::assign_weights();
+        }
     }
 
     fn on_genesis_session<'a, I: 'a>(_validators: I)
     where
         I: Iterator<Item = (&'a T::AccountId, Self::Key)>,
     {
-        debug::info!("OneSessionHandler on_genesis_session().");
     }
 
     fn on_disabled(_i: usize) {}
