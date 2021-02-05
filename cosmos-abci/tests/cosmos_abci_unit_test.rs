@@ -1,5 +1,5 @@
 use frame_support::{
-    impl_outer_origin, parameter_types, traits::KeyOwnerProofSystem, weights::Weight,
+    impl_outer_origin, parameter_types, traits::KeyOwnerProofSystem, weights::Weight
 };
 use pallet_cosmos_abci::{crypto, Call, Module, Trait, KEY_TYPE};
 use pallet_grandpa::AuthorityId as GrandpaId;
@@ -200,7 +200,7 @@ impl pallet_grandpa::Trait for Test {
 }
 
 impl Trait for Test {
-    type AuthorityId = crypto::ABCIAuthId;
+    type AuthorityId = GrandpaId;
     type Call = Call<Test>;
     type Subscription = ();
 }
