@@ -37,8 +37,9 @@ pub fn to_session_keys(
     sr25519_keyring: &Sr25519Keyring,
 ) -> SessionKeys {
     SessionKeys {
-        grandpa: ed25519_keyring.to_owned().public().into(),
         aura: sr25519_keyring.to_owned().public().into(),
+        abci: sr25519_keyring.to_owned().public().into(),
+        grandpa: ed25519_keyring.to_owned().public().into(),
     }
 }
 

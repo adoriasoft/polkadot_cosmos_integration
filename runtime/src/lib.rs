@@ -14,8 +14,7 @@ use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::traits::{
-    BlakeTwo256, Block as BlockT, IdentifyAccount, IdentityLookup, NumberFor, OpaqueKeys,
-    Saturating, Verify,
+    BlakeTwo256, Block as BlockT, IdentifyAccount, IdentityLookup, NumberFor, Saturating, Verify,
 };
 use sp_runtime::{
     create_runtime_str, generic,
@@ -94,6 +93,7 @@ pub mod opaque {
     impl_opaque_keys! {
         pub struct SessionKeys {
             pub aura: Aura,
+            pub abci: CosmosAbci,
             pub grandpa: Grandpa,
         }
     }
@@ -286,7 +286,7 @@ impl pallet_session::Trait for Runtime {
     type ShouldEndSession = pallet_session::PeriodicSessions<Period, Offset>;
     type NextSessionRotation = pallet_session::PeriodicSessions<Period, Offset>;
     type SessionManager = CosmosAbci;
-    type SessionHandler = <opaque::SessionKeys as OpaqueKeys>::KeyTypeIdProviders;
+    type SessionHandler = (Aura, CosmosAbci, Grandpa);
     type Keys = opaque::SessionKeys;
     type DisabledValidatorsThreshold = DisabledValidatorsThreshold;
     type WeightInfo = ();
@@ -298,7 +298,7 @@ impl pallet_sudo::Trait for Runtime {
 }
 
 impl pallet_cosmos_abci::Trait for Runtime {
-    type AuthorityId = pallet_cosmos_abci::crypto::ABCIAuthId;
+    type AuthorityId = pallet_cosmos_abci::crypto::Public;
     type Call = Call;
     type Subscription = ();
 }
