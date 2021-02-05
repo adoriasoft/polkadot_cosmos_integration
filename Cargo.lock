@@ -3963,14 +3963,12 @@ version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "17e2d59cd974996dd81af46e14eefdf8183b39b11bcfd8efa2c2a3ca7b6d923b"
 dependencies = [
- "frame-benchmarking",
  "frame-support",
  "frame-system",
  "pallet-authorship",
  "pallet-session",
  "pallet-timestamp",
  "parity-scale-codec",
- "serde",
  "sp-application-crypto",
  "sp-consensus-babe",
  "sp-consensus-vrf",
