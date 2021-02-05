@@ -200,7 +200,7 @@ impl pallet_grandpa::Trait for Test {
 }
 
 impl Trait for Test {
-    type AuthorityId = crypto::ABCIAuthId;
+    type AuthorityId = GrandpaId;
     type Call = Call<Test>;
     type Subscription = ();
 }
