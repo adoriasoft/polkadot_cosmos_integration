@@ -4,8 +4,6 @@ use node_template_runtime::{
 };
 use sc_service::ChainType;
 use sp_core::{ed25519, sr25519, Pair, Public};
-// use sp_finality_grandpa::AuthorityId as GrandpaId;
-// use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_keyring::{Ed25519Keyring, Sr25519Keyring};
 use sp_runtime::traits::{IdentifyAccount, Verify};
 
@@ -33,19 +31,19 @@ where
     AccountPublic::from(get_from_seed::<TPublic>(seed)).into_account()
 }
 
-/// Return an Aura/Grandpa session keys.
+/// Return an session keys.
 pub fn to_session_keys(
     ed25519_keyring: &Ed25519Keyring,
     sr25519_keyring: &Sr25519Keyring,
 ) -> SessionKeys {
     SessionKeys {
-        grandpa: ed25519_keyring.to_owned().public().into(),
         aura: sr25519_keyring.to_owned().public().into(),
+        abci: sr25519_keyring.to_owned().public().into(),
+        grandpa: ed25519_keyring.to_owned().public().into(),
     }
 }
 
 /// Return initial node session keys.
-// Vec<(GrandpaId, AuraId , AccountId)>
 fn initial_poa_keys() -> Vec<(AccountId, AccountId, SessionKeys)> {
     vec![
         (
@@ -125,7 +123,6 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
                 // Pre-funded accounts
                 vec![
                     get_account_id_from_seed::<sr25519::Public>("Alice"),
-                    get_account_id_from_seed::<sr25519::Public>("Bob"),
                     get_account_id_from_seed::<sr25519::Public>("Bob"),
                     get_account_id_from_seed::<sr25519::Public>("Charlie"),
                     get_account_id_from_seed::<sr25519::Public>("Dave"),

@@ -1,5 +1,8 @@
-use frame_support::{impl_outer_origin, parameter_types, weights::Weight};
+use frame_support::{
+    impl_outer_origin, parameter_types, traits::KeyOwnerProofSystem, weights::Weight,
+};
 use pallet_cosmos_abci::{crypto, Call, Module, Trait, KEY_TYPE};
+use pallet_grandpa::AuthorityId as GrandpaId;
 use pallet_session::*;
 use sp_core::{
     crypto::{key_types::DUMMY, KeyTypeId},
@@ -30,6 +33,7 @@ impl From<UintAuthorityId> for MockSessionKeys {
 
 pub const KEY_ID_A: KeyTypeId = KeyTypeId([4; 4]);
 pub const KEY_ID_B: KeyTypeId = KeyTypeId([9; 4]);
+pub type Historical = pallet_session::historical::Module<Test>;
 
 #[derive(Debug, Clone, codec::Encode, codec::Decode, PartialEq, Eq)]
 pub struct PreUpgradeMockSessionKeys {
@@ -183,8 +187,20 @@ impl pallet_sudo::Trait for Test {
     type Call = Call<Test>;
 }
 
+impl pallet_grandpa::Trait for Test {
+    type Event = ();
+    type Call = pallet_grandpa::Call<Self>;
+    type KeyOwnerProofSystem = ();
+    type KeyOwnerProof =
+        <Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(KeyTypeId, crypto::ABCIAuthId)>>::Proof;
+    type KeyOwnerIdentification =
+        <Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(KeyTypeId, GrandpaId)>>::Proof;
+    type HandleEquivocation = ();
+    type WeightInfo = ();
+}
+
 impl Trait for Test {
-    type AuthorityId = crypto::ABCIAuthId;
+    type AuthorityId = GrandpaId;
     type Call = Call<Test>;
     type Subscription = ();
 }

@@ -10,25 +10,24 @@ use frame_support::{
     weights::Weight,
 };
 use frame_system::{
-    self as system, ensure_none, ensure_signed,
-    offchain::{AppCrypto, CreateSignedTransaction},
-    RawOrigin,
+    self as system, ensure_none, ensure_signed, offchain::CreateSignedTransaction, RawOrigin,
 };
+use pallet_grandpa::fg_primitives;
 use pallet_session as session;
 use sp_core::{crypto::KeyTypeId, Hasher};
 use sp_runtime::{
-    traits::{Convert, SaturatedConversion},
+    traits::{Convert, SaturatedConversion, Zero},
     transaction_validity::{
         InvalidTransaction, TransactionSource, TransactionValidity, ValidTransaction,
     },
     DispatchError, RuntimeDebug,
 };
 use sp_runtime_interface::runtime_interface;
-use sp_std::{convert::TryInto, prelude::*, str};
+use sp_std::{cmp::PartialEq, convert::TryInto, prelude::*, str};
 
-/// Import `crypto_transform` module.
+/// Declare `crypto_transform` module.
 pub mod crypto_transform;
-/// Import `utils` module.
+/// Declare `utils` module.
 pub mod utils;
 
 /// Balance type for pallet.
@@ -41,6 +40,7 @@ type OptionalLedger<AccountId> = Option<(AccountId, Balance)>;
 pub const COSMOS_ACCOUNT_DEFAULT_PUB_KEY_TYPE: &str = "ed25519";
 /// Priority for unsigned transaction.
 pub const UNSIGNED_TXS_PRIORITY: u64 = 100;
+pub const SESSION_BLOCKS_PERIOD: u32 = 2;
 
 /// The KeyType ID.
 pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"abci");
@@ -49,31 +49,9 @@ pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"abci");
 /// them with the pallet-specific identifier.
 pub mod crypto {
     use crate::KEY_TYPE;
-    use frame_support::codec::Decode;
-    use sp_core::sr25519::Signature as Sr25519Signature;
     use sp_runtime::app_crypto::{app_crypto, sr25519};
-    use sp_runtime::traits::Verify;
-    use sp_runtime::{MultiSignature, MultiSigner};
 
     app_crypto!(sr25519, KEY_TYPE);
-
-    #[derive(Decode, Default)]
-    pub struct ABCIAuthId;
-    /// Implemented for ocw-runtime.
-    impl frame_system::offchain::AppCrypto<MultiSigner, MultiSignature> for ABCIAuthId {
-        type RuntimeAppPublic = Public;
-        type GenericSignature = sp_core::sr25519::Signature;
-        type GenericPublic = sp_core::sr25519::Public;
-    }
-
-    /// Implemented for mock runtime in test.
-    impl frame_system::offchain::AppCrypto<<Sr25519Signature as Verify>::Signer, Sr25519Signature>
-        for ABCIAuthId
-    {
-        type RuntimeAppPublic = Public;
-        type GenericSignature = sp_core::sr25519::Signature;
-        type GenericPublic = sp_core::sr25519::Public;
-    }
 }
 
 /// The CosmosAbci trait.
@@ -84,9 +62,12 @@ pub trait CosmosAbci {
 
 /// The pallet configuration trait.
 pub trait Trait:
-    CreateSignedTransaction<Call<Self>> + pallet_session::Trait + pallet_sudo::Trait
+    CreateSignedTransaction<Call<Self>>
+    + pallet_session::Trait
+    + pallet_sudo::Trait
+    + pallet_grandpa::Trait
 {
-    type AuthorityId: AppCrypto<Self::Public, Self::Signature> + Default + Decode;
+    type AuthorityId: Decode + sp_runtime::RuntimeAppPublic + Default;
     type Call: From<Call<Self>>;
     type Subscription: SubscriptionManager;
 }
@@ -137,7 +118,7 @@ tuple_impls! { A B C D E F G H I J K }
 tuple_impls! { A B C D E F G H I J K L }
 tuple_impls! { A B C D E F G H I J K L M }
 tuple_impls! { A B C D E F G H I J K L M N }
-tuple_impls! { A B C D E F G H I J K L M N O}
+tuple_impls! { A B C D E F G H I J K L M N O }
 tuple_impls! { A B C D E F G H I J K L M N O P }
 
 impl<T: Trait> sp_runtime::BoundToRuntimeAppPublic for Module<T>
@@ -156,9 +137,10 @@ pub struct ABCITxs {
 decl_storage! {
     trait Store for Module<T: Trait> as ABCITxStorage {
         ABCITxStorage get(fn abci_tx): map hasher(blake2_128_concat) T::BlockNumber => ABCITxs;
-        CosmosAccounts get(fn cosmos_accounts): map hasher(blake2_128_concat) utils::CosmosAccountPubKey => Option<T::AccountId> = None;
+        CosmosAccounts get(fn cosmos_accounts): map hasher(blake2_128_concat) Vec<u8> => Option<T::AccountId> = None;
         AccountLedger get(fn account_ledgers): map hasher(blake2_128_concat) T::AccountId => OptionalLedger<T::AccountId>;
-        SubstrateAccounts get(fn substrate_accounts): map hasher(blake2_128_concat) <T as pallet_session::Trait>::ValidatorId => Option<utils::CosmosAccount> = None;
+        SubstrateAccounts get(fn substrate_accounts): map hasher(blake2_128_concat) <T as session::Trait>::ValidatorId => Option<utils::CosmosAccount> = None;
+        SubstrateAccountWeights get(fn substrate_account_weights): map hasher(blake2_128_concat) T::AccountId => Option<i64> = None;
     }
 }
 
@@ -182,12 +164,13 @@ decl_module! {
             let origin_signed = ensure_signed(origin)?;
             <AccountLedger<T>>::insert(&origin_signed, Some((&origin_signed, 0)));
             let convertable = <T as pallet_session::Trait>::ValidatorIdOf::convert(origin_signed.clone())
-            .unwrap();
+                .unwrap();
             <CosmosAccounts<T>>::insert(&cosmos_account_pub_key, &origin_signed);
-                    <SubstrateAccounts<T>>::insert(&convertable, utils::CosmosAccount {
-                        pub_key: cosmos_account_pub_key,
-                        power: 0,
-                    });
+            <SubstrateAccountWeights<T>>::insert(&origin_signed, 1);
+            <SubstrateAccounts<T>>::insert(&convertable, utils::CosmosAccount {
+                pub_key: cosmos_account_pub_key,
+                power: 0,
+            });
             Ok(())
         }
 
@@ -195,12 +178,13 @@ decl_module! {
         #[weight = 0]
         fn remove_cosmos_account(origin) -> DispatchResult {
             let origin_signed = ensure_signed(origin)?;
-            let convertable = <T as pallet_session::Trait>::ValidatorIdOf::convert(origin_signed)
+            let convertable = <T as session::Trait>::ValidatorIdOf::convert(origin_signed.clone())
                 .unwrap();
             if let Some(cosmos_account) = <SubstrateAccounts<T>>::get(&convertable) {
                 <CosmosAccounts<T>>::remove(&cosmos_account.pub_key);
             }
             <SubstrateAccounts<T>>::remove(&convertable);
+            <SubstrateAccountWeights<T>>::remove(&origin_signed);
             Ok(())
         }
 
@@ -239,6 +223,14 @@ decl_module! {
 
 /// Implementation of additional methods for pallet configuration trait.
 impl<T: Trait> Module<T> {
+    fn get_corresponding_height(session_index: SessionIndex) -> u32 {
+        if session_index > 2 {
+            (session_index - 2) * SESSION_BLOCKS_PERIOD
+        } else {
+            0
+        }
+    }
+
     // The abci transaction call.
     pub fn call_abci_transaction(data: Vec<u8>) -> DispatchResult {
         let block_number = <system::Module<T>>::block_number();
@@ -255,8 +247,6 @@ impl<T: Trait> Module<T> {
         parent_hash: T::Hash,
         extrinsics_root: T::Hash,
     ) {
-        debug::info!("call_offchain_worker(), block_number: {:?}", block_number);
-
         Self::call_on_initialize(block_number, block_hash, parent_hash, extrinsics_root);
 
         let abci_txs: ABCITxs = <ABCITxStorage<T>>::get(block_number);
@@ -276,7 +266,8 @@ impl<T: Trait> Module<T> {
         extrinsics_root: T::Hash,
     ) -> bool {
         let mut active_cosmos_validators = Vec::<utils::CosmosAccount>::new();
-        for validator in <pallet_session::Module<T>>::validators() {
+
+        for validator in <session::Module<T>>::validators() {
             if let Some(value) = <SubstrateAccounts<T>>::get(validator) {
                 active_cosmos_validators.push(value);
             };
@@ -319,14 +310,48 @@ impl<T: Trait> Module<T> {
         Ok(())
     }
 
-    pub fn on_new_session(new_index: SessionIndex) -> Option<Vec<T::AccountId>> {
-        // Sessions starts after end_block() with number 2.
-        // For some reason two first sessions is missed.
-        let mut corresponding_height = 0;
-        if new_index > 2 {
-            corresponding_height = (new_index - 2) * 2;
+    pub fn assign_weights() {
+        let mut authorities_with_updated_weight: fg_primitives::AuthorityList = Vec::new();
+        let validators = <session::Module<T>>::validators();
+
+        for validator in &validators {
+            if let Some(value) = <SubstrateAccounts<T>>::get(validator) {
+                let mut substrate_account_id: &[u8] =
+                    &<CosmosAccounts<T>>::get(value.pub_key).encode();
+                match sp_finality_grandpa::AuthorityId::decode(&mut substrate_account_id) {
+                    Ok(authority_id_value) => {
+                        authorities_with_updated_weight
+                            .push((authority_id_value, value.power as u64));
+                    }
+                    Err(err) => {
+                        debug::info!("Unable to decode AccountId to AuthorityId then try to assign validator weight {:?}", err);
+                    }
+                }
+            };
         }
 
+        if !authorities_with_updated_weight.is_empty() {
+            // Update `weight` for each active validator.
+            match <pallet_grandpa::Module<T>>::schedule_change(
+                authorities_with_updated_weight,
+                Zero::zero(),
+                None,
+            ) {
+                Err(err) => {
+                    debug::info!("`PendingChange` already scheduled {:?}", err);
+                }
+                Ok(_ok) => {
+                    debug::info!("Schedule new `PendingChange` success.");
+                }
+            }
+        }
+    }
+
+    pub fn on_new_session(new_session_index: SessionIndex) -> Option<Vec<T::AccountId>> {
+        // Sessions starts after end_block() with number 2.
+        // For some reason two first sessions is skipped.
+
+        let corresponding_height = Self::get_corresponding_height(new_session_index);
         let next_cosmos_validators =
             abci_interface::get_cosmos_validators(corresponding_height.into()).unwrap();
 
@@ -338,10 +363,15 @@ impl<T: Trait> Module<T> {
                 {
                     new_substrate_validators.push(substrate_account_id.clone());
                     // update cosmos validator in the substrate storage
-                    let convertable =
-                        <T as pallet_session::Trait>::ValidatorIdOf::convert(substrate_account_id)
-                            .unwrap();
+                    let convertable = <T as pallet_session::Trait>::ValidatorIdOf::convert(
+                        substrate_account_id.clone(),
+                    )
+                    .unwrap();
                     <SubstrateAccounts<T>>::insert(convertable, cosmos_validator);
+                    <SubstrateAccountWeights<T>>::insert(
+                        substrate_account_id,
+                        cosmos_validator.power,
+                    );
                 } else {
                     sp_runtime::print(
                         "WARNING: Not able to found Substrate account to Cosmos for ID : ",
@@ -431,16 +461,16 @@ pub trait AbciInterface {
                 >(&bytes)
                 .map_err(|_| "cannot deserialize ValidatorUpdate vector")?;
 
-                let mut res = Vec::new();
+                let mut response = Vec::new();
                 for val in validators {
                     if let Some(key) = val.pub_key {
-                        res.push(utils::CosmosAccount {
+                        response.push(utils::CosmosAccount {
                             pub_key: key.data,
                             power: val.power,
                         });
                     }
                 }
-                Ok(res)
+                Ok(response)
             }
             None => Ok(Vec::new()),
         }
@@ -584,21 +614,40 @@ impl<T: Trait> Convert<T::AccountId, Option<utils::Exposure<T::AccountId, Balanc
 
 impl<T: Trait> pallet_session::SessionManager<T::AccountId> for Module<T> {
     fn new_session(new_index: SessionIndex) -> Option<Vec<T::AccountId>> {
-        // debug::info!("new_session() end_index: {:?}", new_index);
         Self::on_new_session(new_index)
     }
 
-    fn end_session(_end_index: SessionIndex) {
-        // debug::info!("end_session() end_index: {:?}", _end_index);
-    }
+    fn end_session(_end_index: SessionIndex) {}
 
-    fn start_session(_start_index: SessionIndex) {
-        // debug::info!("start_session() start_index: {:?}", _start_index);
-    }
+    fn start_session(_start_index: SessionIndex) {}
 }
 
 impl<T: Trait> pallet_session::ShouldEndSession<T::BlockNumber> for Module<T> {
     fn should_end_session(_: T::BlockNumber) -> bool {
         true
     }
+}
+
+impl<T: Trait> pallet_session::OneSessionHandler<T::AccountId> for Module<T>
+where
+    <T as Trait>::AuthorityId: sp_runtime::RuntimeAppPublic,
+{
+    type Key = T::AuthorityId;
+
+    fn on_new_session<'a, I: 'a>(changed: bool, _validators: I, _queued_validators: I)
+    where
+        I: Iterator<Item = (&'a T::AccountId, Self::Key)>,
+    {
+        if changed {
+            Self::assign_weights();
+        }
+    }
+
+    fn on_genesis_session<'a, I: 'a>(_validators: I)
+    where
+        I: Iterator<Item = (&'a T::AccountId, Self::Key)>,
+    {
+    }
+
+    fn on_disabled(_i: usize) {}
 }
