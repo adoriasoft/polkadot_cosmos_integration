@@ -659,7 +659,7 @@ where
 {
     type Key = T::AuthorityId;
 
-    fn on_new_session<'a, I: 'a>(changed: bool, validators: I, _queued_validators: I)
+    fn on_new_session<'a, I: 'a>(changed: bool, _validators: I, _queued_validators: I)
     where
         I: Iterator<Item = (&'a T::AccountId, Self::Key)>,
     {
