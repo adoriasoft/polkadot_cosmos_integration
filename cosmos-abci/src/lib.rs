@@ -324,7 +324,7 @@ impl<T: Trait> Module<T> {
                             .push((authority_id_value, value.power as u64));
                     }
                     Err(_err) => {
-                        debug::info!("Unable to decode AccountId to AuthorityId then try to assign validator weight {:?}.");
+                        debug::info!("Unable to decode AccountId to AuthorityId then try to assign validator weight.");
                     }
                 }
             };
@@ -338,7 +338,7 @@ impl<T: Trait> Module<T> {
                 None,
             ) {
                 Err(_err) => {
-                    debug::info!("`PendingChange` already scheduled {:?}.");
+                    debug::info!("`PendingChange` has been already scheduled.");
                 }
                 Ok(_ok) => {
                     debug::info!("Schedule new `PendingChange` success.");
