@@ -8,7 +8,7 @@ expect_validators_set_2="5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty"
 expect_validators_set_3="5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY"
 expected_validator_power="100"
 
-cosmos_validator_pub_key="0xdacf6e056bbefeb9333f35aec1a0a4c507afc4ce17552e0409fc72cf7e728bf0"
+cosmos_validator_pub_key="0x576df7ddfdbd7d231d141c2d958bb69f9d84856a235afa618f09351395d25612"
 
 source ./testing_setup/basic_setup.sh
 source ./testing_setup/test_utils.sh
