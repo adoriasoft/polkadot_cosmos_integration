@@ -175,8 +175,7 @@ decl_module! {
         // Remove Cosmos node account.
         #[weight = 0]
         fn remove_cosmos_account(origin) -> DispatchResult {
-            let origin_signed = ensure_signed(origin)?;
-            let convertable = <T as session::Trait>::ValidatorIdOf::convert(origin_signed.clone())
+            let convertable = <T as session::Trait>::ValidatorIdOf::convert(ensure_signed(origin)?)
                 .unwrap();
             if let Some(cosmos_account) = <SubstrateAccounts<T>>::get(&convertable) {
                 <CosmosAccounts<T>>::remove(&cosmos_account.pub_key);
