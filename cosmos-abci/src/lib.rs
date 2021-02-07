@@ -140,7 +140,6 @@ decl_storage! {
         CosmosAccounts get(fn cosmos_accounts): map hasher(blake2_128_concat) Vec<u8> => Option<T::AccountId> = None;
         AccountLedger get(fn account_ledgers): map hasher(blake2_128_concat) T::AccountId => OptionalLedger<T::AccountId>;
         SubstrateAccounts get(fn substrate_accounts): map hasher(blake2_128_concat) <T as session::Trait>::ValidatorId => Option<utils::CosmosAccount> = None;
-        SubstrateAccountWeights get(fn substrate_account_weights): map hasher(blake2_128_concat) T::AccountId => Option<i64> = None;
     }
 }
 
@@ -166,7 +165,6 @@ decl_module! {
             let convertable = <T as pallet_session::Trait>::ValidatorIdOf::convert(origin_signed.clone())
                 .unwrap();
             <CosmosAccounts<T>>::insert(&cosmos_account_pub_key, &origin_signed);
-            <SubstrateAccountWeights<T>>::insert(&origin_signed, 1);
             <SubstrateAccounts<T>>::insert(&convertable, utils::CosmosAccount {
                 pub_key: cosmos_account_pub_key,
                 power: 0,
@@ -184,7 +182,6 @@ decl_module! {
                 <CosmosAccounts<T>>::remove(&cosmos_account.pub_key);
             }
             <SubstrateAccounts<T>>::remove(&convertable);
-            <SubstrateAccountWeights<T>>::remove(&origin_signed);
             Ok(())
         }
 
@@ -347,31 +344,28 @@ impl<T: Trait> Module<T> {
         }
     }
 
-    pub fn on_new_session(new_session_index: SessionIndex) -> Option<Vec<T::AccountId>> {
+    pub fn on_new_session(new_session_index: SessionIndex) -> Option<Vec<T::ValidatorId>> {
         // Sessions starts after end_block() with number 2.
         // For some reason two first sessions is skipped.
+
+        let current_substarte_validators = <session::Module<T>>::validators();
 
         let corresponding_height = Self::get_corresponding_height(new_session_index);
         let next_cosmos_validators =
             abci_interface::get_cosmos_validators(corresponding_height.into()).unwrap();
 
         if !next_cosmos_validators.is_empty() {
-            let mut new_substrate_validators: Vec<T::AccountId> = vec![];
+            let mut new_substrate_validators: Vec<T::ValidatorId> = vec![];
             for cosmos_validator in &next_cosmos_validators {
                 if let Some(substrate_account_id) =
                     <CosmosAccounts<T>>::get(&cosmos_validator.pub_key)
                 {
-                    new_substrate_validators.push(substrate_account_id.clone());
                     // update cosmos validator in the substrate storage
-                    let convertable = <T as pallet_session::Trait>::ValidatorIdOf::convert(
-                        substrate_account_id.clone(),
-                    )
-                    .unwrap();
+                    let convertable =
+                        <T as pallet_session::Trait>::ValidatorIdOf::convert(substrate_account_id)
+                            .unwrap();
+                    new_substrate_validators.push(convertable.clone());
                     <SubstrateAccounts<T>>::insert(convertable, cosmos_validator);
-                    <SubstrateAccountWeights<T>>::insert(
-                        substrate_account_id,
-                        cosmos_validator.power,
-                    );
                 } else {
                     sp_runtime::print(
                         "WARNING: Not able to found Substrate account to Cosmos for ID : ",
@@ -380,7 +374,9 @@ impl<T: Trait> Module<T> {
                 }
             }
 
-            if !new_substrate_validators.is_empty() {
+            if !new_substrate_validators.is_empty()
+                && current_substarte_validators != new_substrate_validators
+            {
                 return Some(new_substrate_validators);
             }
         }
@@ -612,8 +608,8 @@ impl<T: Trait> Convert<T::AccountId, Option<utils::Exposure<T::AccountId, Balanc
     }
 }
 
-impl<T: Trait> pallet_session::SessionManager<T::AccountId> for Module<T> {
-    fn new_session(new_index: SessionIndex) -> Option<Vec<T::AccountId>> {
+impl<T: Trait> pallet_session::SessionManager<T::ValidatorId> for Module<T> {
+    fn new_session(new_index: SessionIndex) -> Option<Vec<T::ValidatorId>> {
         Self::on_new_session(new_index)
     }
 

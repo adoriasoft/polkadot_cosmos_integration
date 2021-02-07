@@ -60,6 +60,11 @@ function clean_substrate_1() {
     ./../../target/debug/node-template purge-chain --base-path=$SUBSTRATE_NODE_1_HOME --chain=local
 }
 
+function stop_substrate_1() {
+    echo "Stop Substrate node 1"
+    kill $SUBSTRATE_NODE_1_PID
+}
+
 ##
 
 function start_substrate_2() {
@@ -67,7 +72,7 @@ function start_substrate_2() {
     export ABCI_GENESIS_STATE_PATH=$HOME/.nsd/config/genesis.json
     export ABCI_SERVER_URL=tcp://localhost:26662
     export ABCI_RPC_SERVER_URL=127.0.0.1:26661
-    ./../../target/debug/node-template --base-path=$SUBSTRATE_NODE_2_HOME --chain=local --alice &> tmp/substrate_node_2_log.log &
+    ./../../target/debug/node-template --base-path=$SUBSTRATE_NODE_2_HOME --chain=local --bob &> tmp/substrate_node_2_log.log &
     export SUBSTRATE_NODE_2_PID=$!
 
     unset ABCI_SERVER_URL
@@ -78,6 +83,11 @@ function start_substrate_2() {
 function clean_substrate_2() {
     echo "Clean Substrate node 2"
     ./../../target/debug/node-template purge-chain --base-path=$SUBSTRATE_NODE_2_HOME --chain=local
+}
+
+function stop_substrate_2() {
+    echo "Stop Substrate node 2"
+    kill $SUBSTRATE_NODE_2_PID
 }
 
 ########
@@ -94,6 +104,11 @@ function clean_cosmos_1() {
     nsd unsafe-reset-all --home=$COSMOS_NODE_1_HOME
 }
 
+function stop_cosmos_1() {
+    echo "Stop Cosmos node 1"
+    kill $COSMOS_NODE_1_PID
+}
+
 ##
 
 function start_cosmos_2() {
@@ -108,6 +123,10 @@ function clean_cosmos_2() {
     nsd unsafe-reset-all --home=$COSMOS_NODE_2_HOME
 }
 
+function stop_cosmos_2() {
+    echo "Stop Cosmos node 2"
+    kill $COSMOS_NODE_2_PID
+}
 
 #######
 
