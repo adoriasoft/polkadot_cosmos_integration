@@ -29,6 +29,8 @@ use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
+#[cfg(feature = "babe")]
+use pallet_session::{historical as pallet_session_historical};
 
 use frame_system::offchain::SubmitTransaction;
 // A few exports that help ease life for downstream crates.
@@ -49,7 +51,6 @@ pub use pallet_timestamp::Call as TimestampCall;
 pub use sp_runtime::BuildStorage;
 
 pub use pallet_cosmos_abci;
-use pallet_session::{historical as pallet_session_historical};
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -268,19 +269,15 @@ impl pallet_babe::Trait for Runtime {
     type EpochDuration = EpochDuration;
     type ExpectedBlockTime = ExpectedBlockTime;
     type EpochChangeTrigger = pallet_babe::ExternalTrigger;
-
     type KeyOwnerProofSystem = Historical;
-
     type KeyOwnerProof = <Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(
         KeyTypeId,
         pallet_babe::AuthorityId,
     )>>::Proof;
-
     type KeyOwnerIdentification = <Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(
         KeyTypeId,
         pallet_babe::AuthorityId,
     )>>::IdentificationTuple;
-
     type HandleEquivocation = ();
     type WeightInfo = ();
 }
@@ -288,19 +285,14 @@ impl pallet_babe::Trait for Runtime {
 impl pallet_grandpa::Trait for Runtime {
     type Event = Event;
     type Call = Call;
-
     type KeyOwnerProofSystem = Historical;
-
     type KeyOwnerProof =
         <Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(KeyTypeId, GrandpaId)>>::Proof;
-
     type KeyOwnerIdentification = <Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(
         KeyTypeId,
         GrandpaId,
     )>>::IdentificationTuple;
-
     type HandleEquivocation = ();
-
     type WeightInfo = ();
 }
 
@@ -463,7 +455,7 @@ construct_runtime!(
         System: frame_system::{Module, Call, Config, Storage, Event<T>},
         RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Module, Call, Storage},
         Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent},
-        Aura: pallet_aura::{Module, Config<T>, Inherent},
+        PalletAura: pallet_aura::{Module, Call, Storage, Config<T>, Inherent},
         Session: pallet_session::{Module, Call, Storage, Event, Config<T>},
         Grandpa: pallet_grandpa::{Module, Call, Storage, Config, Event},
         Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
@@ -484,12 +476,12 @@ construct_runtime!(
         Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent},
         Babe: pallet_babe::{Module, Call, Storage, Config, Inherent, ValidateUnsigned},
         Session: pallet_session::{Module, Call, Storage, Event, Config<T>},
+		Historical: pallet_session_historical::{Module},
         Grandpa: pallet_grandpa::{Module, Call, Storage, Config, Event},
         Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
         TransactionPayment: pallet_transaction_payment::{Module, Storage},
         Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
-        CosmosAbci: pallet_cosmos_abci::{Module, Call, ValidateUnsigned},
-        Historical: pallet_session_historical::{Module}
+        CosmosAbci: pallet_cosmos_abci::{Module, Call, ValidateUnsigned}
     }
 );
 
