@@ -49,6 +49,7 @@ pub use pallet_timestamp::Call as TimestampCall;
 pub use sp_runtime::BuildStorage;
 
 pub use pallet_cosmos_abci;
+use pallet_session::{historical as pallet_session_historical};
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -268,7 +269,7 @@ impl pallet_babe::Trait for Runtime {
     type ExpectedBlockTime = ExpectedBlockTime;
     type EpochChangeTrigger = pallet_babe::ExternalTrigger;
 
-    type KeyOwnerProofSystem = ();
+    type KeyOwnerProofSystem = Historical;
 
     type KeyOwnerProof = <Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(
         KeyTypeId,
@@ -288,7 +289,7 @@ impl pallet_grandpa::Trait for Runtime {
     type Event = Event;
     type Call = Call;
 
-    type KeyOwnerProofSystem = ();
+    type KeyOwnerProofSystem = Historical;
 
     type KeyOwnerProof =
         <Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(KeyTypeId, GrandpaId)>>::Proof;
@@ -482,6 +483,7 @@ construct_runtime!(
         TransactionPayment: pallet_transaction_payment::{Module, Storage},
         Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
         CosmosAbci: pallet_cosmos_abci::{Module, Call, ValidateUnsigned},
+        Historical: pallet_session_historical::{Module}
     }
 );
 
@@ -624,14 +626,12 @@ impl_runtime_apis! {
 
         fn generate_key_ownership_proof(
             _slot_number: sp_consensus_babe::SlotNumber,
-            _authority_id: sp_consensus_babe::AuthorityId,
+            authority_id: sp_consensus_babe::AuthorityId,
         ) -> Option<sp_consensus_babe::OpaqueKeyOwnershipProof> {
-            // TODO: Replace with some logic
-            // use codec::Encode;
-            // Historical::prove((sp_consensus_babe::KEY_TYPE, authority_id))
-            // 	.map(|p| p.encode())
-            // 	.map(sp_consensus_babe::OpaqueKeyOwnershipProof::new)
-            None
+            use codec::Encode;
+            Historical::prove((sp_consensus_babe::KEY_TYPE, authority_id))
+                .map(|p| p.encode())
+                .map(sp_consensus_babe::OpaqueKeyOwnershipProof::new)
         }
 
         fn submit_report_equivocation_unsigned_extrinsic(
