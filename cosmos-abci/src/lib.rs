@@ -3,6 +3,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(unused_assignments)]
 #![warn(unused_must_use)]
+
 use frame_support::{
     codec::{Decode, Encode},
     debug, decl_module, decl_storage,
@@ -12,9 +13,13 @@ use frame_support::{
 use frame_system::{
     self as system, ensure_none, ensure_signed, offchain::CreateSignedTransaction, RawOrigin,
 };
+#[allow(unused_imports)]
 use pallet_grandpa::fg_primitives;
 use pallet_session as session;
+use pallet_babe as babe;
+use sp_consensus_babe;
 use sp_core::{crypto::KeyTypeId, Hasher};
+#[allow(unused_imports)]
 use sp_runtime::{
     traits::{Convert, SaturatedConversion, Zero},
     transaction_validity::{
@@ -23,7 +28,7 @@ use sp_runtime::{
     DispatchError, RuntimeDebug,
 };
 use sp_runtime_interface::runtime_interface;
-use sp_std::{cmp::PartialEq, convert::TryInto, prelude::*, str};
+use sp_std::{convert::TryInto, prelude::*, str};
 
 /// Declare `crypto_transform` module.
 pub mod crypto_transform;
@@ -66,6 +71,7 @@ pub trait Trait:
     + pallet_session::Trait
     + pallet_sudo::Trait
     + pallet_grandpa::Trait
+    + babe::Trait
 {
     type AuthorityId: Decode + sp_runtime::RuntimeAppPublic + Default;
     type Call: From<Call<Self>>;
@@ -311,7 +317,10 @@ impl<T: Trait> Module<T> {
     }
 
     pub fn assign_weights() {
-        let mut authorities_with_updated_weight: fg_primitives::AuthorityList = Vec::new();
+        #[cfg(feature = "pallet-aura")]
+        let mut aura_authorities_weight: fg_primitives::AuthorityList = Vec::new();
+        #[cfg(feature = "pallet-babe")]
+        let mut babe_authorities_weight = Vec::new();
         let validators = <session::Module<T>>::validators();
 
         for validator in &validators {
@@ -319,9 +328,20 @@ impl<T: Trait> Module<T> {
                 let mut substrate_account_id: &[u8] =
                     &<CosmosAccounts<T>>::get(value.pub_key).encode();
                 match sp_finality_grandpa::AuthorityId::decode(&mut substrate_account_id) {
+                    #[allow(unused_variables)]
                     Ok(authority_id_value) => {
-                        authorities_with_updated_weight
-                            .push((authority_id_value, value.power as u64));
+                        #[cfg(feature = "pallet-aura")]
+                        aura_authorities_weight.push((authority_id_value, value.power as u64));
+                    }
+                    Err(err) => {
+                        debug::info!("Unable to decode AccountId to AuthorityId then try to assign validator weight {:?}", err);
+                    }
+                }
+                match sp_consensus_babe::AuthorityId::decode(&mut substrate_account_id) {
+                    #[allow(unused_variables)]
+                    Ok(authority_id_value) => {
+                        #[cfg(feature = "pallet-babe")]
+                        babe_authorities_weight.push((authority_id_value, value.power as u64));
                     }
                     Err(err) => {
                         debug::info!("Unable to decode AccountId to AuthorityId then try to assign validator weight {:?}", err);
@@ -330,10 +350,18 @@ impl<T: Trait> Module<T> {
             };
         }
 
-        if !authorities_with_updated_weight.is_empty() {
-            // Update `weight` for each active validator.
+        #[cfg(feature = "pallet-babe")]
+        if !babe_authorities_weight.is_empty() {
+            <babe::Module<T>>::enact_epoch_change(
+                babe_authorities_weight.clone(),
+                babe_authorities_weight.clone()
+            );
+        }
+
+        #[cfg(feature = "pallet-aura")]
+        if !aura_authorities_weight.is_empty() {
             match <pallet_grandpa::Module<T>>::schedule_change(
-                authorities_with_updated_weight,
+                aura_authorities_weight,
                 Zero::zero(),
                 None,
             ) {
