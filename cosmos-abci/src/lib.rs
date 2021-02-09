@@ -542,21 +542,34 @@ pub trait AbciInterface {
             .map_err(|_| "failed to setup connection")?
             .end_block(height)
             .map_err(|_| "end_block failed")?;
-        let mut cosmos_validators = result.get_validator_updates();
+        let cosmos_validators_updates = result.get_validator_updates();
 
-        // take validators from the previous block is current is empty
-        if cosmos_validators.is_empty() {
-            if let Some(previous_validators_bytes) = abci_storage::get_abci_storage_instance()
-                .map_err(|_| "failed to get abci storage instance")?
-                .get((height - 1).to_ne_bytes().to_vec())
-                .map_err(|_| "failed to write some data into the abci storage")?
-            {
-                cosmos_validators = pallet_abci::utils::deserialize_vec(&previous_validators_bytes)
+        let mut current_cosmos_validators = vec![];
+
+        // take validators from the previous block
+        if let Some(previous_validators_bytes) = abci_storage::get_abci_storage_instance()
+            .map_err(|_| "failed to get abci storage instance")?
+            .get((height - 1).to_ne_bytes().to_vec())
+            .map_err(|_| "failed to write some data into the abci storage")?
+        {
+            current_cosmos_validators =
+                pallet_abci::utils::deserialize_vec(&previous_validators_bytes)
                     .map_err(|_| "cannot deserialize cosmos validators")?;
-            }
         }
 
-        let bytes = pallet_abci::utils::serialize_vec(cosmos_validators)
+        for validator_update in cosmos_validators_updates {
+            if validator_update.power == 0 {
+                // remove this validator for the current list
+                current_cosmos_validators.retain(
+                    |x: &pallet_abci::protos::ValidatorUpdate| -> bool {
+                        x.pub_key != validator_update.pub_key
+                    },
+                );
+            }
+            current_cosmos_validators.push(validator_update);
+        }
+
+        let bytes = pallet_abci::utils::serialize_vec(current_cosmos_validators)
             .map_err(|_| "cannot serialize cosmos validators")?;
 
         // save it in the storage
