@@ -10,12 +10,15 @@ use codec::Encode;
 use pallet_grandpa::{
     fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
 };
+#[cfg(feature = "babe")]
+use pallet_session::historical as pallet_session_historical;
 use sp_api::impl_runtime_apis;
 #[cfg(feature = "aura")]
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::traits::{
-    BlakeTwo256, Block as BlockT, IdentifyAccount, IdentityLookup, NumberFor, Saturating, Verify, OpaqueKeys
+    BlakeTwo256, Block as BlockT, IdentifyAccount, IdentityLookup, NumberFor, OpaqueKeys,
+    Saturating, Verify,
 };
 use sp_runtime::{
     create_runtime_str, generic,
@@ -28,8 +31,6 @@ use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
-#[cfg(feature = "babe")]
-use pallet_session::{historical as pallet_session_historical};
 
 use frame_system::offchain::SubmitTransaction;
 // A few exports that help ease life for downstream crates.
@@ -479,7 +480,7 @@ construct_runtime!(
         Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent},
         Babe: pallet_babe::{Module, Call, Storage, Config, Inherent, ValidateUnsigned},
         Session: pallet_session::{Module, Call, Storage, Event, Config<T>},
-		Historical: pallet_session_historical::{Module},
+        Historical: pallet_session_historical::{Module},
         Grandpa: pallet_grandpa::{Module, Call, Storage, Config, Event},
         Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
         TransactionPayment: pallet_transaction_payment::{Module, Storage},

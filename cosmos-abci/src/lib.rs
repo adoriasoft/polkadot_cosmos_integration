@@ -13,10 +13,10 @@ use frame_support::{
 use frame_system::{
     self as system, ensure_none, ensure_signed, offchain::CreateSignedTransaction, RawOrigin,
 };
+use pallet_babe as babe;
 #[allow(unused_imports)]
 use pallet_grandpa::fg_primitives;
 use pallet_session as session;
-use pallet_babe as babe;
 use sp_consensus_babe;
 use sp_core::{crypto::KeyTypeId, Hasher};
 #[allow(unused_imports)]
@@ -354,7 +354,7 @@ impl<T: Trait> Module<T> {
         if !babe_authorities_weight.is_empty() {
             <babe::Module<T>>::enact_epoch_change(
                 babe_authorities_weight.clone(),
-                babe_authorities_weight.clone()
+                babe_authorities_weight.clone(),
             );
         }
 
