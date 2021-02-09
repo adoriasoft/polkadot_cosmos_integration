@@ -367,8 +367,14 @@ impl pallet_session::Trait for Runtime {
     type Event = Event;
     type ValidatorId = <Self as frame_system::Trait>::AccountId;
     type ValidatorIdOf = pallet_cosmos_abci::utils::StashOf<Self>;
+    #[cfg(feature = "aura")]
     type ShouldEndSession = pallet_session::PeriodicSessions<Period, Offset>;
+    #[cfg(feature = "aura")]
     type NextSessionRotation = pallet_session::PeriodicSessions<Period, Offset>;
+    #[cfg(feature = "babe")]
+    type ShouldEndSession = Babe;
+    #[cfg(feature = "babe")]
+    type NextSessionRotation = Babe;
     type SessionManager = CosmosAbci;
     type SessionHandler = <opaque::SessionKeys as OpaqueKeys>::KeyTypeIdProviders;
     type Keys = opaque::SessionKeys;
@@ -476,7 +482,7 @@ construct_runtime!(
         System: frame_system::{Module, Call, Config, Storage, Event<T>},
         RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Module, Call, Storage},
         Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent},
-        Babe: pallet_babe::{Module, Call, Storage, Config},
+        Babe: pallet_babe::{Module, Call, Storage, Config, Inherent, ValidateUnsigned},
         Session: pallet_session::{Module, Call, Storage, Event, Config<T>},
         Grandpa: pallet_grandpa::{Module, Call, Storage, Config, Event},
         Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
@@ -629,6 +635,7 @@ impl_runtime_apis! {
             authority_id: sp_consensus_babe::AuthorityId,
         ) -> Option<sp_consensus_babe::OpaqueKeyOwnershipProof> {
             use codec::Encode;
+
             Historical::prove((sp_consensus_babe::KEY_TYPE, authority_id))
                 .map(|p| p.encode())
                 .map(sp_consensus_babe::OpaqueKeyOwnershipProof::new)
