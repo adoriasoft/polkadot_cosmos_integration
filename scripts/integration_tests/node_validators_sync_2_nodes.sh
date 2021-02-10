@@ -68,7 +68,5 @@ sleep 30s
 validators_set=$(node ./get-validators.app.js)
 assert_eq "$validators_set" $expect_validators_set_1
 
-sleep 2000000s
-
 test_passed "node_validators_sync_2_nodes test passed"
 
