@@ -330,13 +330,15 @@ impl<T: Trait> Module<T> {
                 authorities_with_updated_weight,
                 further_wait,
                 Some(median),
-            );
+            )
+            .unwrap();
         } else if changed {
             <pallet_grandpa::Module<T>>::schedule_change(
                 authorities_with_updated_weight,
                 Zero::zero(),
                 None,
-            );
+            )
+            .unwrap();
         }
     }
 
@@ -639,7 +641,7 @@ where
 {
     type Key = T::AuthorityId;
 
-    fn on_new_session<'a, I: 'a>(changed: bool, _validators: I, _queued_validators: I)
+    fn on_new_session<'a, I: 'a>(_changed: bool, _validators: I, _queued_validators: I)
     where
         I: Iterator<Item = (&'a T::AccountId, Self::Key)>,
     {
