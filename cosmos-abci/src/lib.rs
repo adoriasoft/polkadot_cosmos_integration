@@ -306,11 +306,10 @@ impl<T: Trait> Module<T> {
         Ok(())
     }
 
-    pub fn assign_weights() {
+    pub fn assign_weights(changed: bool) {
         let mut authorities_with_updated_weight: fg_primitives::AuthorityList = Vec::new();
         let validators = <session::Module<T>>::validators();
-
-        for validator in &validators {
+        for validator in validators {
             if let Some(value) = <SubstrateAccounts<T>>::get(validator) {
                 let mut substrate_account_id: &[u8] =
                     &<CosmosAccounts<T>>::get(value.pub_key).encode();
@@ -326,20 +325,20 @@ impl<T: Trait> Module<T> {
             };
         }
 
-        if !authorities_with_updated_weight.is_empty() {
-            // Update `weight` for each active validator.
-            match <pallet_grandpa::Module<T>>::schedule_change(
+        if let Some((further_wait, median)) = <pallet_grandpa::Module<T>>::stalled() {
+            <pallet_grandpa::Module<T>>::schedule_change(
+                authorities_with_updated_weight,
+                further_wait,
+                Some(median),
+            )
+            .unwrap();
+        } else if changed {
+            <pallet_grandpa::Module<T>>::schedule_change(
                 authorities_with_updated_weight,
                 Zero::zero(),
                 None,
-            ) {
-                Err(err) => {
-                    debug::info!("`PendingChange` already scheduled {:?}", err);
-                }
-                Ok(_ok) => {
-                    debug::info!("Schedule new `PendingChange` success.");
-                }
-            }
+            )
+            .unwrap();
         }
     }
 
@@ -642,13 +641,11 @@ where
 {
     type Key = T::AuthorityId;
 
-    fn on_new_session<'a, I: 'a>(changed: bool, _validators: I, _queued_validators: I)
+    fn on_new_session<'a, I: 'a>(_changed: bool, _validators: I, _queued_validators: I)
     where
         I: Iterator<Item = (&'a T::AccountId, Self::Key)>,
     {
-        if changed {
-            Self::assign_weights();
-        }
+        // Self::assign_weights(changed);
     }
 
     fn on_genesis_session<'a, I: 'a>(_validators: I)
