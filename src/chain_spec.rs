@@ -4,8 +4,6 @@ use node_template_runtime::{
 };
 use sc_service::ChainType;
 use sp_core::{ed25519, sr25519, Pair, Public};
-// use sp_finality_grandpa::AuthorityId as GrandpaId;
-// use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_keyring::{Ed25519Keyring, Sr25519Keyring};
 use sp_runtime::traits::{IdentifyAccount, Verify};
 
@@ -128,7 +126,6 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
                 // Pre-funded accounts
                 vec![
                     get_account_id_from_seed::<sr25519::Public>("Alice"),
-                    get_account_id_from_seed::<sr25519::Public>("Bob"),
                     get_account_id_from_seed::<sr25519::Public>("Bob"),
                     get_account_id_from_seed::<sr25519::Public>("Charlie"),
                     get_account_id_from_seed::<sr25519::Public>("Dave"),
