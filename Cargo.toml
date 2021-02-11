@@ -79,7 +79,7 @@ sp-consensus-babe = { version = '0.8.0', optional = true }
 substrate-build-script-utils = '2.0.0'
 
 [features]
-default = ['babe']
+default = ['aura']
 aura = ['sc-consensus-aura', 'sp-consensus-aura']
 babe = ['sc-consensus-babe', 'sp-consensus-babe']
 runtime-benchmarks = ['node-template-runtime/runtime-benchmarks']

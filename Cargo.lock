@@ -3933,6 +3933,7 @@ dependencies = [
  "pallet-session",
  "pallet-timestamp",
  "parity-scale-codec",
+ "serde",
  "sp-application-crypto",
  "sp-consensus-aura",
  "sp-inherents",

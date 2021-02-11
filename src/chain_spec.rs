@@ -40,6 +40,8 @@ pub fn to_session_keys(
         grandpa: ed25519_keyring.to_owned().public().into(),
         #[cfg(feature = "aura")]
         aura: sr25519_keyring.to_owned().public().into(),
+        #[cfg(feature = "aura")]
+        abci: sr25519_keyring.to_owned().public().into(),
         #[cfg(feature = "babe")]
         babe: sr25519_keyring.to_owned().public().into(),
     }

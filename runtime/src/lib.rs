@@ -14,8 +14,10 @@ use sp_api::impl_runtime_apis;
 #[cfg(feature = "aura")]
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
+#[allow(unused_imports)]
 use sp_runtime::traits::{
     BlakeTwo256, Block as BlockT, IdentifyAccount, IdentityLookup, NumberFor, Saturating, Verify,
+    OpaqueKeys,
 };
 use sp_runtime::{
     create_runtime_str, generic,
@@ -286,7 +288,10 @@ impl pallet_babe::Trait for Runtime {
 impl pallet_grandpa::Trait for Runtime {
     type Event = Event;
     type Call = Call;
+    #[cfg(feature = "babe")]
     type KeyOwnerProofSystem = Historical;
+    #[cfg(feature = "aura")]
+    type KeyOwnerProofSystem = ();
     type KeyOwnerProof =
         <Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(KeyTypeId, GrandpaId)>>::Proof;
     type KeyOwnerIdentification = <Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(
@@ -369,7 +374,10 @@ impl pallet_session::Trait for Runtime {
     #[cfg(feature = "babe")]
     type NextSessionRotation = Babe;
     type SessionManager = CosmosAbci;
+    #[cfg(feature = "aura")]
     type SessionHandler = (Aura, CosmosAbci, Grandpa);
+    #[cfg(feature = "babe")]
+    type SessionHandler = <opaque::SessionKeys as OpaqueKeys>::KeyTypeIdProviders;
     type Keys = opaque::SessionKeys;
     type DisabledValidatorsThreshold = DisabledValidatorsThreshold;
     type WeightInfo = ();
@@ -456,7 +464,7 @@ construct_runtime!(
         System: frame_system::{Module, Call, Config, Storage, Event<T>},
         RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Module, Call, Storage},
         Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent},
-        PalletAura: pallet_aura::{Module, Call, Storage, Config<T>, Inherent},
+        Aura: pallet_aura::{Module, Config<T>, Inherent},
         Session: pallet_session::{Module, Call, Storage, Event, Config<T>},
         Grandpa: pallet_grandpa::{Module, Call, Storage, Config, Event},
         Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
