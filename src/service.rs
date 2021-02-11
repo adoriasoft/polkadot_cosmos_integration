@@ -29,7 +29,7 @@ type FullBackend = sc_service::TFullBackend<Block>;
 /// Longest selected chain type include FullBackend, Block.
 type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
 
-#[allow(unused_imports)]
+#[allow(dead_code)]
 #[cfg(feature = "aura")]
 type AccountTypeBlockImport = sc_consensus_aura::AuraBlockImport<
     Block,

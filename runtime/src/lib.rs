@@ -153,8 +153,6 @@ parameter_types! {
 }
 
 // Configure FRAME pallets to include in runtime.
-// todo
-
 impl frame_system::Trait for Runtime {
     /// The basic call filter to use in dispatchable.
     type BaseCallFilter = ();
