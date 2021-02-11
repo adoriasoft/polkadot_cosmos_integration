@@ -37,7 +37,8 @@ lazy_static = '1.2.0'
 testcontainers = '0.10'
 
 [features]
-default = ['std']
+default = ['std', 'babe']
+babe = []
 std = [
 	'serde',
 	'parking_lot',
