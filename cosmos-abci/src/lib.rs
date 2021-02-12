@@ -293,7 +293,7 @@ impl<T: Trait> Module<T> {
         match abci_interface::end_block(block_number.saturated_into() as i64) {
             Ok(new_cosmos_validators) => {
                 #[cfg(feature = "babe")]
-                // Assign new weight for authority only if consensus is `babe`.
+                // Assign new weight for authority only if selected consensus is `babe`.
                 for validator in &new_cosmos_validators {
                     match <CosmosAccounts<T>>::get(validator.0.clone()) {
                         Some(substrate_account_id) => {
