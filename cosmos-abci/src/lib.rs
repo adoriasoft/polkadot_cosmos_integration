@@ -321,7 +321,9 @@ impl<T: Trait> Module<T> {
             if let Some(value) = <SubstrateAccounts<T>>::get(validator) {
                 let mut substrate_account_id: &[u8] =
                     &<CosmosAccounts<T>>::get(value.pub_key).encode();
-                if let Ok(authority_id_value) = sp_finality_grandpa::AuthorityId::decode(&mut substrate_account_id) {
+                if let Ok(authority_id_value) =
+                    sp_finality_grandpa::AuthorityId::decode(&mut substrate_account_id)
+                {
                     aura_weighted_authorities.push((authority_id_value, value.power as u64));
                 }
             };
