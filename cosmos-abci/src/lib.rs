@@ -291,35 +291,7 @@ impl<T: Trait> Module<T> {
     /// Called on block finalize.
     pub fn call_on_finalize(block_number: T::BlockNumber) -> bool {
         match abci_interface::end_block(block_number.saturated_into() as i64) {
-            Ok(new_cosmos_validators) => {
-
-                for validator in &new_cosmos_validators {
-
-                    // Get substrate id from cosmos id.
-                    match <CosmosAccounts<T>>::get(validator.0.clone()) {
-                        Some(substrate_account_id) => {
-                            let mut substrate_account_id_as_bytes: &[u8] = &substrate_account_id.encode();
-
-                            // Try to convert AccountId into AuthorityId.
-                            match pallet_babe::AuthorityId::decode(&mut substrate_account_id_as_bytes) {
-                                Ok(authority_id) => {
-
-                                    // Try to update pallet babe validator weight.
-                                    match <pallet_babe::Module<T>>::assign_authority_weight(
-                                        authority_id.clone(),
-                                        validator.1.clone()
-                                    ) {
-                                        Ok(_) => { },
-                                        Err(_) => { },
-                                    }
-                                },
-                                Err(_) => { }
-                            }
-                        },
-                        None => { }
-                    }
-                }
-
+            Ok(_) => {
                 match abci_interface::commit() {
                     Err(err) => {
                         panic!("Commit failed: {:?}", err);
@@ -573,7 +545,7 @@ pub trait AbciInterface {
         Ok(())
     }
 
-    fn end_block(height: i64) -> Result<Vec<(Vec<u8>, u64)>, DispatchError> {
+    fn end_block(height: i64) -> DispatchResult {
         let result = pallet_abci::get_abci_instance()
             .map_err(|_| "failed to setup connection")?
             .end_block(height)
@@ -605,13 +577,6 @@ pub trait AbciInterface {
             current_cosmos_validators.push(validator_update);
         }
     
-        let new_cosmos_validators = current_cosmos_validators.clone().iter().map(|v| {
-            (
-                v.pub_key.as_ref().unwrap().data.clone(),
-                v.power as u64
-            )
-        }).collect();
-    
         let bytes = pallet_abci::utils::serialize_vec(current_cosmos_validators)
             .map_err(|_| "cannot serialize cosmos validators")?;
 
@@ -621,7 +586,7 @@ pub trait AbciInterface {
             .write(height.to_ne_bytes().to_vec(), bytes)
             .map_err(|_| "failed to write some data into the abci storage")?;
 
-        Ok(new_cosmos_validators)
+        Ok(())
     }
 
     fn commit() -> DispatchResult {
