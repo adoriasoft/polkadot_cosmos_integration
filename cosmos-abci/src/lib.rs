@@ -314,26 +314,19 @@ impl<T: Trait> Module<T> {
 
     #[cfg(feature = "aura")]
     pub fn assign_weights(changed: bool) {
-        // #[cfg(feature = "aura")]
         let mut aura_weighted_authorities: fg_primitives::AuthorityList = Vec::new();
-        // #[cfg(feature = "aura")]
         let validators = <session::Module<T>>::validators();
 
-        // #[cfg(feature = "aura")]
         for validator in validators {
             if let Some(value) = <SubstrateAccounts<T>>::get(validator) {
                 let mut substrate_account_id: &[u8] =
                     &<CosmosAccounts<T>>::get(value.pub_key).encode();
-                match sp_finality_grandpa::AuthorityId::decode(&mut substrate_account_id) {
-                    Ok(authority_id_value) => {
-                        aura_weighted_authorities.push((authority_id_value, value.power as u64));
-                    }
-                    Err(_) => {}
+                if let Ok(authority_id_value) = sp_finality_grandpa::AuthorityId::decode(&mut substrate_account_id) {
+                    aura_weighted_authorities.push((authority_id_value, value.power as u64));
                 }
             };
         }
 
-        // #[cfg(feature = "aura")]
         if let Some((further_wait, median)) = <pallet_grandpa::Module<T>>::stalled() {
             <pallet_grandpa::Module<T>>::schedule_change(
                 aura_weighted_authorities,
