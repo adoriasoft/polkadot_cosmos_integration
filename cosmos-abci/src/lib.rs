@@ -15,9 +15,6 @@ use frame_system::{
 #[cfg(feature = "aura")]
 use pallet_grandpa::fg_primitives;
 use pallet_session as session;
-#[cfg(feature = "babe")]
-#[allow(unused_imports)]
-use sp_consensus_babe;
 use sp_core::{crypto::KeyTypeId, Hasher};
 #[allow(unused_imports)]
 use sp_runtime::{

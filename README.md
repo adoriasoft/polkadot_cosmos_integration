@@ -27,8 +27,8 @@ cargo build
 ```
 
 ```
-For building node with selected consensus pallet
-run `cargo build --no-default-features --features=aura`.
+# For building node with selected consensus
+# run `cargo build --workspace --features "<consensus_pallet_name>" --no-default-features`.
 ```
 
 ## Run
