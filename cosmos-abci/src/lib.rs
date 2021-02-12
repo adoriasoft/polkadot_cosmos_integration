@@ -12,13 +12,14 @@ use frame_support::{
 use frame_system::{
     self as system, ensure_none, ensure_signed, offchain::CreateSignedTransaction, RawOrigin,
 };
+#[cfg(feature = "aura")]
 use pallet_grandpa::fg_primitives;
 use pallet_session as session;
+use pallet_babe;
 #[cfg(feature = "babe")]
 use sp_consensus_babe;
-#[allow(unused_imports)]
-use pallet_babe;
 use sp_core::{crypto::KeyTypeId, Hasher};
+#[allow(unused_imports)]
 use sp_runtime::{
     traits::{Convert, SaturatedConversion, Zero},
     transaction_validity::{
@@ -70,8 +71,7 @@ pub trait Trait:
     + pallet_session::Trait
     + pallet_sudo::Trait
     + pallet_grandpa::Trait
-    // TODO
-    // + pallet_babe::Trait
+    + pallet_babe::Trait
 {
     type AuthorityId: Decode + sp_runtime::RuntimeAppPublic + Default;
     type Call: From<Call<Self>>;
@@ -290,11 +290,26 @@ impl<T: Trait> Module<T> {
     /// Called on block finalize.
     pub fn call_on_finalize(block_number: T::BlockNumber) -> bool {
         match abci_interface::end_block(block_number.saturated_into() as i64) {
-            Ok(_) => match abci_interface::commit() {
-                Err(err) => {
-                    panic!("Commit failed: {:?}", err);
+            Ok(new_cosmos_validators) => {
+                for validator in &new_cosmos_validators {
+                    match <CosmosAccounts<T>>::get(validator.0.clone()) {
+                        Some(_substrate_account_id) => {
+                            // let mut substrate_account_id_as_bytes = T::AccountId::decode(substrate_account_id).unwrap();
+                            //let mut authority_id = sp_consensus_babe::AuthorityId::encode(substrate_account_id_as_bytes);
+                            let _result = <pallet_babe::Module<T>>::assign_authority_weight(
+                                pallet_babe::AuthorityId::default(),
+                                validator.1.clone()
+                            );
+                        },
+                        None => { }
+                    }
                 }
-                _ => true,
+                match abci_interface::commit() {
+                    Err(err) => {
+                        panic!("Commit failed: {:?}", err);
+                    }
+                    _ => true,
+                }
             },
             Err(err) => {
                 panic!("End block failed: {:?}", err);
@@ -313,36 +328,37 @@ impl<T: Trait> Module<T> {
     }
 
     pub fn assign_weights() {
-        let mut authorities_with_updated_weight: fg_primitives::AuthorityList = Vec::new();
-        let validators = <session::Module<T>>::validators();
+        #[cfg(feature = "aura")]
+        let mut weighted_aura_authorities: fg_primitives::AuthorityList = Vec::new();
 
-        for validator in &validators {
+        #[cfg(feature = "aura")]
+        for validator in &<session::Module<T>>::validators() {
             if let Some(value) = <SubstrateAccounts<T>>::get(validator) {
                 let mut substrate_account_id: &[u8] =
                     &<CosmosAccounts<T>>::get(value.pub_key).encode();
                 match sp_finality_grandpa::AuthorityId::decode(&mut substrate_account_id) {
                     Ok(authority_id_value) => {
-                        authorities_with_updated_weight
+                        weighted_aura_authorities
                             .push((authority_id_value, value.power as u64));
                     }
-                    Err(err) => {
-                        debug::info!("Unable to decode AccountId to AuthorityId then try to assign validator weight {:?}", err);
+                    Err(_) => {
+                        debug::info!("Unable to decode AccountId to AuthorityId then try to assign validator weight.");
                     }
                 }
             };
         }
 
-        if !authorities_with_updated_weight.is_empty() {
-            // Update `weight` for each active validator.
+        #[cfg(feature = "aura")]
+        if !weighted_aura_authorities.is_empty() {
             match <pallet_grandpa::Module<T>>::schedule_change(
-                authorities_with_updated_weight,
+                weighted_aura_authorities,
                 Zero::zero(),
                 None,
             ) {
-                Err(err) => {
-                    debug::info!("`PendingChange` already scheduled {:?}", err);
+                Err(_) => {
+                    debug::info!("`PendingChange` already scheduled.");
                 }
-                Ok(_ok) => {
+                Ok(_) => {
                     debug::info!("Schedule new `PendingChange` success.");
                 }
             }
@@ -543,7 +559,7 @@ pub trait AbciInterface {
         Ok(())
     }
 
-    fn end_block(height: i64) -> DispatchResult {
+    fn end_block(height: i64) -> Result<Vec<(Vec<u8>, u64)>, DispatchError> {
         let result = pallet_abci::get_abci_instance()
             .map_err(|_| "failed to setup connection")?
             .end_block(height)
@@ -574,7 +590,14 @@ pub trait AbciInterface {
             }
             current_cosmos_validators.push(validator_update);
         }
-
+    
+        let new_cosmos_validators = current_cosmos_validators.clone().iter().map(|v| {
+            (
+                v.pub_key.as_ref().unwrap().data.clone(),
+                v.power as u64
+            )
+        }).collect();
+    
         let bytes = pallet_abci::utils::serialize_vec(current_cosmos_validators)
             .map_err(|_| "cannot serialize cosmos validators")?;
 
@@ -584,7 +607,7 @@ pub trait AbciInterface {
             .write(height.to_ne_bytes().to_vec(), bytes)
             .map_err(|_| "failed to write some data into the abci storage")?;
 
-        Ok(())
+        Ok(new_cosmos_validators)
     }
 
     fn commit() -> DispatchResult {

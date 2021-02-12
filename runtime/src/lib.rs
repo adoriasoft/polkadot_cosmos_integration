@@ -217,7 +217,7 @@ impl pallet_aura::Trait for Runtime {
     type AuthorityId = AuraId;
 }
 
-#[cfg(feature = "babe")]
+// #[cfg(feature = "babe")]
 pub mod time {
     use super::BlockNumber;
 
@@ -259,7 +259,7 @@ pub mod time {
     pub const DAYS: BlockNumber = HOURS * 24;
 }
 
-#[cfg(feature = "babe")]
+// #[cfg(feature = "babe")]
 parameter_types! {
     pub const EpochDuration: u64 = time::EPOCH_DURATION_IN_SLOTS;
     pub const ExpectedBlockTime: u64 = time::MILLISECS_PER_BLOCK;
@@ -271,6 +271,24 @@ impl pallet_babe::Trait for Runtime {
     type ExpectedBlockTime = ExpectedBlockTime;
     type EpochChangeTrigger = pallet_babe::ExternalTrigger;
     type KeyOwnerProofSystem = Historical;
+    type KeyOwnerProof = <Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(
+        KeyTypeId,
+        pallet_babe::AuthorityId,
+    )>>::Proof;
+    type KeyOwnerIdentification = <Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(
+        KeyTypeId,
+        pallet_babe::AuthorityId,
+    )>>::IdentificationTuple;
+    type HandleEquivocation = ();
+    type WeightInfo = ();
+}
+
+#[cfg(feature = "aura")]
+impl pallet_babe::Trait for Runtime {
+    type EpochDuration = EpochDuration;
+    type ExpectedBlockTime = ExpectedBlockTime;
+    type EpochChangeTrigger = pallet_babe::ExternalTrigger;
+    type KeyOwnerProofSystem = ();
     type KeyOwnerProof = <Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(
         KeyTypeId,
         pallet_babe::AuthorityId,

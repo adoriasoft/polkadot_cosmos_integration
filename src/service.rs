@@ -12,6 +12,7 @@ use sc_service::{error::Error as ServiceError, Configuration, TaskManager};
 use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
 use std::sync::Arc;
 use std::time::Duration;
+#[cfg(feature = "aura")]
 use sp_inherents::InherentDataProviders;
 
 // Our native executor instance.
