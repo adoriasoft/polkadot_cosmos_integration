@@ -10,10 +10,10 @@ use sc_finality_grandpa::{
 use sc_service::{error::Error as ServiceError, Configuration, TaskManager};
 #[cfg(feature = "aura")]
 use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
-use std::sync::Arc;
-use std::time::Duration;
 #[cfg(feature = "aura")]
 use sp_inherents::InherentDataProviders;
+use std::sync::Arc;
+use std::time::Duration;
 
 // Our native executor instance.
 native_executor_instance!(
@@ -112,53 +112,74 @@ pub fn new_partial(
 
 // Returns a new patrial for aura.
 #[cfg(feature = "aura")]
-pub fn new_partial(config: &Configuration) -> Result<sc_service::PartialComponents<
-	FullClient, FullBackend, FullSelectChain,
-	sp_consensus::DefaultImportQueue<Block, FullClient>,
-	sc_transaction_pool::FullPool<Block, FullClient>,
-	(
-		sc_consensus_aura::AuraBlockImport<
-			Block,
-			FullClient,
-			sc_finality_grandpa::GrandpaBlockImport<FullBackend, Block, FullClient, FullSelectChain>,
-			AuraPair
-		>,
-		sc_finality_grandpa::LinkHalf<Block, FullClient, FullSelectChain>
-	)
->, ServiceError> {
-	let inherent_data_providers = sp_inherents::InherentDataProviders::new();
-	let (client, backend, keystore, task_manager) =
-		sc_service::new_full_parts::<Block, RuntimeApi, Executor>(&config)?;
-	let client = Arc::new(client);
-	let select_chain = sc_consensus::LongestChain::new(backend.clone());
-	let transaction_pool = sc_transaction_pool::BasicPool::new_full(
-		config.transaction_pool.clone(),
-		config.prometheus_registry(),
-		task_manager.spawn_handle(),
-		client.clone(),
-	);
-	let (grandpa_block_import, grandpa_link) = sc_finality_grandpa::block_import(
-		client.clone(), &(client.clone() as Arc<_>), select_chain.clone(),
-	)?;
-	let aura_block_import = sc_consensus_aura::AuraBlockImport::<_, _, _, AuraPair>::new(
-		grandpa_block_import.clone(), client.clone(),
-	);
-	let import_queue = sc_consensus_aura::import_queue::<_, _, _, AuraPair, _, _>(
-		sc_consensus_aura::slot_duration(&*client)?,
-		aura_block_import.clone(),
-		Some(Box::new(grandpa_block_import.clone())),
-		None,
-		client.clone(),
-		inherent_data_providers.clone(),
-		&task_manager.spawn_handle(),
-		config.prometheus_registry(),
-		sp_consensus::CanAuthorWithNativeVersion::new(client.executor().clone()),
-	)?;
-	Ok(sc_service::PartialComponents {
-		client, backend, task_manager, import_queue, keystore, select_chain, transaction_pool,
-		inherent_data_providers,
-		other: (aura_block_import, grandpa_link),
-	})
+pub fn new_partial(
+    config: &Configuration,
+) -> Result<
+    sc_service::PartialComponents<
+        FullClient,
+        FullBackend,
+        FullSelectChain,
+        sp_consensus::DefaultImportQueue<Block, FullClient>,
+        sc_transaction_pool::FullPool<Block, FullClient>,
+        (
+            sc_consensus_aura::AuraBlockImport<
+                Block,
+                FullClient,
+                sc_finality_grandpa::GrandpaBlockImport<
+                    FullBackend,
+                    Block,
+                    FullClient,
+                    FullSelectChain,
+                >,
+                AuraPair,
+            >,
+            sc_finality_grandpa::LinkHalf<Block, FullClient, FullSelectChain>,
+        ),
+    >,
+    ServiceError,
+> {
+    let inherent_data_providers = sp_inherents::InherentDataProviders::new();
+    let (client, backend, keystore, task_manager) =
+        sc_service::new_full_parts::<Block, RuntimeApi, Executor>(&config)?;
+    let client = Arc::new(client);
+    let select_chain = sc_consensus::LongestChain::new(backend.clone());
+    let transaction_pool = sc_transaction_pool::BasicPool::new_full(
+        config.transaction_pool.clone(),
+        config.prometheus_registry(),
+        task_manager.spawn_handle(),
+        client.clone(),
+    );
+    let (grandpa_block_import, grandpa_link) = sc_finality_grandpa::block_import(
+        client.clone(),
+        &(client.clone() as Arc<_>),
+        select_chain.clone(),
+    )?;
+    let aura_block_import = sc_consensus_aura::AuraBlockImport::<_, _, _, AuraPair>::new(
+        grandpa_block_import.clone(),
+        client.clone(),
+    );
+    let import_queue = sc_consensus_aura::import_queue::<_, _, _, AuraPair, _, _>(
+        sc_consensus_aura::slot_duration(&*client)?,
+        aura_block_import.clone(),
+        Some(Box::new(grandpa_block_import.clone())),
+        None,
+        client.clone(),
+        inherent_data_providers.clone(),
+        &task_manager.spawn_handle(),
+        config.prometheus_registry(),
+        sp_consensus::CanAuthorWithNativeVersion::new(client.executor().clone()),
+    )?;
+    Ok(sc_service::PartialComponents {
+        client,
+        backend,
+        task_manager,
+        import_queue,
+        keystore,
+        select_chain,
+        transaction_pool,
+        inherent_data_providers,
+        other: (aura_block_import, grandpa_link),
+    })
 }
 
 fn init_chain() -> Result<(), ServiceError> {
