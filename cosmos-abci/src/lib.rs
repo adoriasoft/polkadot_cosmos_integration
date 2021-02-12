@@ -12,7 +12,6 @@ use frame_support::{
 use frame_system::{
     self as system, ensure_none, ensure_signed, offchain::CreateSignedTransaction, RawOrigin,
 };
-use pallet_babe;
 #[cfg(feature = "aura")]
 use pallet_grandpa::fg_primitives;
 use pallet_session as session;
