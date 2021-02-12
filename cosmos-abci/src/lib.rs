@@ -654,7 +654,8 @@ where
     fn on_new_session<'a, I: 'a>(_changed: bool, _validators: I, _queued_validators: I)
     where
         I: Iterator<Item = (&'a T::AccountId, Self::Key)>,
-    { }
+    {
+    }
 
     fn on_genesis_session<'a, I: 'a>(_validators: I)
     where
