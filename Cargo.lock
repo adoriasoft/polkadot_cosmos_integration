@@ -4062,6 +4062,7 @@ dependencies = [
 ]
 
 [[package]]
+<<<<<<< HEAD
 name = "pallet-authorship"
 version = "2.0.0"
 source = "git+https://github.com/maryjanyes/substrate?branch=cosmos-abci-babe-fork#451c07dff06a979ea19b8bb501294d67152a85ad"
@@ -4099,6 +4100,31 @@ dependencies = [
  "sp-staking 2.0.0 (git+https://github.com/maryjanyes/substrate?branch=cosmos-abci-babe-fork)",
  "sp-std 2.0.0 (git+https://github.com/maryjanyes/substrate?branch=cosmos-abci-babe-fork)",
  "sp-timestamp 2.0.0 (git+https://github.com/maryjanyes/substrate?branch=cosmos-abci-babe-fork)",
+=======
+name = "pallet-babe"
+version = "2.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "17e2d59cd974996dd81af46e14eefdf8183b39b11bcfd8efa2c2a3ca7b6d923b"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-authorship",
+ "pallet-session",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "serde",
+ "sp-application-crypto",
+ "sp-consensus-babe",
+ "sp-consensus-vrf",
+ "sp-inherents",
+ "sp-io",
+ "sp-runtime",
+ "sp-session",
+ "sp-staking",
+ "sp-std",
+ "sp-timestamp",
+>>>>>>> feature/update-babe-integration
 ]
 
 [[package]]
@@ -4132,7 +4158,11 @@ dependencies = [
  "pallet-grandpa",
  "pallet-session 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "pallet-sudo",
+<<<<<<< HEAD
  "pallet-timestamp 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+=======
+ "pallet-timestamp",
+>>>>>>> feature/update-babe-integration
  "parity-scale-codec",
  "parking_lot 0.10.2",
  "ripemd160",
@@ -4183,10 +4213,17 @@ dependencies = [
  "sp-application-crypto 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sp-core 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sp-finality-grandpa",
+<<<<<<< HEAD
  "sp-runtime 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sp-session 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sp-staking 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sp-std 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+=======
+ "sp-runtime",
+ "sp-session",
+ "sp-staking",
+ "sp-std",
+>>>>>>> feature/update-babe-integration
 ]
 
 [[package]]
@@ -4225,6 +4262,7 @@ dependencies = [
 ]
 
 [[package]]
+<<<<<<< HEAD
 name = "pallet-session"
 version = "2.0.0"
 source = "git+https://github.com/maryjanyes/substrate?branch=cosmos-abci-babe-fork#451c07dff06a979ea19b8bb501294d67152a85ad"
@@ -4261,6 +4299,9 @@ dependencies = [
 
 [[package]]
 name = "pallet-timestamp"
+=======
+name = "pallet-sudo"
+>>>>>>> feature/update-babe-integration
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ccddd55b713f541dff6ccf063cc7ddbc4fc41e92a9fdad8ec9562a0e3b465016"
@@ -7267,6 +7308,7 @@ dependencies = [
 [[package]]
 name = "sp-io"
 version = "2.0.0"
+<<<<<<< HEAD
 source = "git+https://github.com/maryjanyes/substrate?branch=cosmos-abci-babe-fork#451c07dff06a979ea19b8bb501294d67152a85ad"
 dependencies = [
  "futures 0.3.8",
@@ -7290,12 +7332,19 @@ dependencies = [
 [[package]]
 name = "sp-keyring"
 version = "2.0.0"
+=======
+>>>>>>> feature/update-babe-integration
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3f76feeb27b218d58523931ea2d708b622c3bd96a3be1c3a5895bba0f7a54c13"
 dependencies = [
  "lazy_static",
+<<<<<<< HEAD
  "sp-core 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sp-runtime 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+=======
+ "sp-core",
+ "sp-runtime",
+>>>>>>> feature/update-babe-integration
  "strum",
 ]
 

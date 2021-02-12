@@ -7,15 +7,25 @@ expect_validators_set_1="5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY@5FHneW
 expect_validators_set_2="5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty"
 expect_validators_set_3="5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY"
 
-cosmos_validator_pub_key="0x576df7ddfdbd7d231d141c2d958bb69f9d84856a235afa618f09351395d25612"
+cosmos_validator_pub_key="0xa4f588be5bd917c0933d6fe1ac18d05b25dd5b27890327a57b9137b986736f15"
 
 source ./testing_setup/basic_setup.sh
 source ./testing_setup/test_utils.sh
 
 start_all
-sleep 5s
+sleep 20s
 
-insert_keys
+nsd tx staking create-validator \
+ --amount=10000000stake \
+ --pubkey=cosmosvalconspub1zcjduepq5n6c30jmmytupyeadls6cxxstvja6ke83ypj0ftmjymmnpnndu2s0793yf \
+ --moniker="alex validator" \
+ --chain-id=namechain \
+ --from=alice \
+ --commission-rate="0.10" \
+ --commission-max-rate="0.20" \
+ --commission-max-change-rate="0.01" \
+ --min-self-delegation="1" \
+ --gas-prices="0.025stake"
 
 cd ../../node_testing_ui
 

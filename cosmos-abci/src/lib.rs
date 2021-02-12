@@ -16,9 +16,6 @@ use pallet_babe;
 #[cfg(feature = "aura")]
 use pallet_grandpa::fg_primitives;
 use pallet_session as session;
-#[cfg(feature = "babe")]
-#[allow(unused_imports)]
-use sp_consensus_babe;
 use sp_core::{crypto::KeyTypeId, Hasher};
 #[allow(unused_imports)]
 use sp_runtime::{
@@ -342,38 +339,37 @@ impl<T: Trait> Module<T> {
         Ok(())
     }
 
-    pub fn assign_weights() {
-        #[cfg(feature = "aura")]
-        let mut weighted_aura_authorities: fg_primitives::AuthorityList = Vec::new();
+    #[cfg(feature = "aura")]
+    pub fn assign_weights(changed: bool) {
+        let mut aura_weighted_authorities: fg_primitives::AuthorityList = Vec::new();
+        let validators = <session::Module<T>>::validators();
 
-        #[cfg(feature = "aura")]
-        for validator in &<session::Module<T>>::validators() {
+        for validator in validators {
             if let Some(value) = <SubstrateAccounts<T>>::get(validator) {
                 let mut substrate_account_id: &[u8] =
                     &<CosmosAccounts<T>>::get(value.pub_key).encode();
-                match sp_finality_grandpa::AuthorityId::decode(&mut substrate_account_id) {
-                    Ok(authority_id_value) => {
-                        weighted_aura_authorities.push((authority_id_value, value.power as u64));
-                    }
-                    Err(_) => {}
+                if let Ok(authority_id_value) =
+                    sp_finality_grandpa::AuthorityId::decode(&mut substrate_account_id)
+                {
+                    aura_weighted_authorities.push((authority_id_value, value.power as u64));
                 }
             };
         }
 
-        #[cfg(feature = "aura")]
-        if !weighted_aura_authorities.is_empty() {
-            match <pallet_grandpa::Module<T>>::schedule_change(
-                weighted_aura_authorities,
+        if let Some((further_wait, median)) = <pallet_grandpa::Module<T>>::stalled() {
+            <pallet_grandpa::Module<T>>::schedule_change(
+                aura_weighted_authorities,
+                further_wait,
+                Some(median),
+            )
+            .unwrap();
+        } else if changed {
+            <pallet_grandpa::Module<T>>::schedule_change(
+                aura_weighted_authorities,
                 Zero::zero(),
                 None,
-            ) {
-                Err(_) => {
-                    debug::info!("`PendingChange` already scheduled.");
-                }
-                Ok(_) => {
-                    debug::info!("Schedule new `PendingChange` success.");
-                }
-            }
+            )
+            .unwrap();
         }
     }
 
@@ -571,7 +567,7 @@ pub trait AbciInterface {
         Ok(())
     }
 
-    fn end_block(height: i64) -> Result<Vec<(Vec<u8>, u64)>, DispatchError> {
+    fn end_block(height: i64) -> DispatchResult {
         let result = pallet_abci::get_abci_instance()
             .map_err(|_| "failed to setup connection")?
             .end_block(height)
@@ -618,7 +614,7 @@ pub trait AbciInterface {
             .write(height.to_ne_bytes().to_vec(), bytes)
             .map_err(|_| "failed to write some data into the abci storage")?;
 
-        Ok(new_cosmos_validators)
+        Ok(())
     }
 
     fn commit() -> DispatchResult {
@@ -682,13 +678,10 @@ where
 {
     type Key = T::AuthorityId;
 
-    fn on_new_session<'a, I: 'a>(changed: bool, _validators: I, _queued_validators: I)
+    fn on_new_session<'a, I: 'a>(_changed: bool, _validators: I, _queued_validators: I)
     where
         I: Iterator<Item = (&'a T::AccountId, Self::Key)>,
     {
-        if changed {
-            Self::assign_weights();
-        }
     }
 
     fn on_genesis_session<'a, I: 'a>(_validators: I)

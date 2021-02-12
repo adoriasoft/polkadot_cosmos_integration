@@ -48,7 +48,8 @@ sp-version = { default-features = false, version = '2.0.0' }
 pallet-aura = { default-features = false, version = '2.0.0', optional = true }
 sp-consensus-aura = { default-features = false, version = '0.8.0', optional = true }
 # Babe
-pallet-babe = { git = 'https://github.com/maryjanyes/substrate', branch = 'cosmos-abci-babe-fork', version = '2.0.0', default-features = false }
+# git = 'https://github.com/maryjanyes/substrate', branch = 'cosmos-abci-babe-fork'
+pallet-babe = { default-features = false, version = '2.0.0' }
 sp-consensus-babe = { default-features = false, version = '0.8.0', optional = true }
 
 [build-dependencies]

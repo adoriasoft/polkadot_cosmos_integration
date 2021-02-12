@@ -161,7 +161,7 @@ pub fn new_partial(
     let import_queue = sc_consensus_aura::import_queue::<_, _, _, AuraPair, _, _>(
         sc_consensus_aura::slot_duration(&*client)?,
         aura_block_import.clone(),
-        Some(Box::new(grandpa_block_import.clone())),
+        Some(Box::new(grandpa_block_import)),
         None,
         client.clone(),
         inherent_data_providers.clone(),
