@@ -18,7 +18,9 @@ jobs:
     - name: Publish to crates.io
       run: |
         rm Cargo.toml
-        cd cosmos-abci/abci/
+        cd cosmos-abci/abci_storage/
+        cargo publish
+        cd ../abci/
         cargo publish
         cd ../
         cargo publish
