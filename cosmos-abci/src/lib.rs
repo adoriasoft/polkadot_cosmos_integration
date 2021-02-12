@@ -12,10 +12,10 @@ use frame_support::{
 use frame_system::{
     self as system, ensure_none, ensure_signed, offchain::CreateSignedTransaction, RawOrigin,
 };
+use pallet_babe;
 #[cfg(feature = "aura")]
 use pallet_grandpa::fg_primitives;
 use pallet_session as session;
-use pallet_babe;
 #[cfg(feature = "babe")]
 #[allow(unused_imports)]
 use sp_consensus_babe;
@@ -291,13 +291,11 @@ impl<T: Trait> Module<T> {
     /// Called on block finalize.
     pub fn call_on_finalize(block_number: T::BlockNumber) -> bool {
         match abci_interface::end_block(block_number.saturated_into() as i64) {
-            Ok(_) => {
-                match abci_interface::commit() {
-                    Err(err) => {
-                        panic!("Commit failed: {:?}", err);
-                    }
-                    _ => true,
+            Ok(_) => match abci_interface::commit() {
+                Err(err) => {
+                    panic!("Commit failed: {:?}", err);
                 }
+                _ => true,
             },
             Err(err) => {
                 panic!("End block failed: {:?}", err);
@@ -326,10 +324,9 @@ impl<T: Trait> Module<T> {
                     &<CosmosAccounts<T>>::get(value.pub_key).encode();
                 match sp_finality_grandpa::AuthorityId::decode(&mut substrate_account_id) {
                     Ok(authority_id_value) => {
-                        weighted_aura_authorities
-                            .push((authority_id_value, value.power as u64));
+                        weighted_aura_authorities.push((authority_id_value, value.power as u64));
                     }
-                    Err(_) => { }
+                    Err(_) => {}
                 }
             };
         }
@@ -576,7 +573,7 @@ pub trait AbciInterface {
             }
             current_cosmos_validators.push(validator_update);
         }
-    
+
         let bytes = pallet_abci::utils::serialize_vec(current_cosmos_validators)
             .map_err(|_| "cannot serialize cosmos validators")?;
 
@@ -633,9 +630,9 @@ impl<T: Trait> pallet_session::SessionManager<T::ValidatorId> for Module<T> {
         Self::on_new_session(new_index)
     }
 
-    fn end_session(_end_index: SessionIndex) { }
+    fn end_session(_end_index: SessionIndex) {}
 
-    fn start_session(_start_index: SessionIndex) { }
+    fn start_session(_start_index: SessionIndex) {}
 }
 
 impl<T: Trait> pallet_session::ShouldEndSession<T::BlockNumber> for Module<T> {
@@ -665,5 +662,5 @@ where
     {
     }
 
-    fn on_disabled(_i: usize) { }
+    fn on_disabled(_i: usize) {}
 }
