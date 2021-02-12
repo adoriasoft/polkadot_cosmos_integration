@@ -4018,6 +4018,7 @@ dependencies = [
  "pallet-grandpa",
  "pallet-session",
  "pallet-sudo",
+ "pallet-timestamp",
  "parity-scale-codec",
  "parking_lot 0.10.2",
  "ripemd160",

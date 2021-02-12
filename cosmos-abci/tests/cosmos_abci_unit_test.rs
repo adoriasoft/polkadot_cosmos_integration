@@ -4,6 +4,8 @@ use frame_support::{
 use pallet_cosmos_abci::{Call, Module, Trait, KEY_TYPE};
 use pallet_grandpa::AuthorityId as GrandpaId;
 use pallet_session::*;
+use pallet_babe::*;
+use pallet_timestamp;
 use sp_core::{
     crypto::{key_types::DUMMY, KeyTypeId},
     H256,
@@ -185,6 +187,35 @@ impl frame_system::Trait for Test {
 impl pallet_sudo::Trait for Test {
     type Event = ();
     type Call = Call<Test>;
+}
+
+parameter_types! {
+    pub const EpochDuration: u64 = 2;
+    pub const ExpectedBlockTime: u64 = 1000;
+    pub const MinimumPeriod: u64 = 10;
+}
+
+impl pallet_timestamp::Trait for Test {
+    /// A timestamp: milliseconds since the unix epoch.
+    type Moment = u64;
+    type OnTimestampSet = ();
+    type MinimumPeriod = MinimumPeriod;
+    type WeightInfo = ();
+}
+
+impl pallet_babe::Trait for Test {
+    type EpochDuration = EpochDuration;
+	type ExpectedBlockTime = ExpectedBlockTime;
+	type EpochChangeTrigger = pallet_babe::ExternalTrigger;
+	type KeyOwnerProofSystem = ();
+	type KeyOwnerProof =
+		<Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(KeyTypeId, AuthorityId)>>::Proof;
+	type KeyOwnerIdentification = <Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(
+		KeyTypeId,
+		AuthorityId,
+	)>>::IdentificationTuple;
+	type HandleEquivocation = ();
+	type WeightInfo = ();
 }
 
 impl pallet_grandpa::Trait for Test {
