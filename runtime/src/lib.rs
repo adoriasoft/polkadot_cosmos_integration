@@ -122,15 +122,6 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
     transaction_version: 1,
 };
 
-pub const MILLISECS_PER_BLOCK: u64 = 2000;
-
-pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
-
-// Time is measured by number of blocks.
-pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
-pub const HOURS: BlockNumber = MINUTES * 60;
-pub const DAYS: BlockNumber = HOURS * 24;
-
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]
 pub fn native_version() -> NativeVersion {
@@ -217,7 +208,7 @@ impl pallet_aura::Trait for Runtime {
     type AuthorityId = AuraId;
 }
 
-// #[cfg(feature = "babe")]
+/// Outer module that expose needed time constants.
 pub mod time {
     use super::BlockNumber;
 
@@ -247,11 +238,7 @@ pub mod time {
     pub const PRIMARY_PROBABILITY: (u64, u64) = (1, 4);
 
     pub const EPOCH_DURATION_IN_BLOCKS: BlockNumber = 10 * MINUTES;
-    pub const EPOCH_DURATION_IN_SLOTS: u64 = {
-        const SLOT_FILL_RATE: f64 = MILLISECS_PER_BLOCK as f64 / SLOT_DURATION as f64;
-
-        (EPOCH_DURATION_IN_BLOCKS as f64 * SLOT_FILL_RATE) as u64
-    };
+    pub const EPOCH_DURATION_IN_SLOTS: u64 = 2;
 
     // These time units are defined in number of blocks.
     pub const MINUTES: BlockNumber = 60 / (SECS_PER_BLOCK as BlockNumber);
@@ -259,7 +246,6 @@ pub mod time {
     pub const DAYS: BlockNumber = HOURS * 24;
 }
 
-// #[cfg(feature = "babe")]
 parameter_types! {
     pub const EpochDuration: u64 = time::EPOCH_DURATION_IN_SLOTS;
     pub const ExpectedBlockTime: u64 = time::MILLISECS_PER_BLOCK;
@@ -319,7 +305,7 @@ impl pallet_grandpa::Trait for Runtime {
 }
 
 parameter_types! {
-    pub const MinimumPeriod: u64 = SLOT_DURATION / 2;
+    pub const MinimumPeriod: u64 = time::SLOT_DURATION / time::EPOCH_DURATION_IN_SLOTS;
 }
 
 impl pallet_timestamp::Trait for Runtime {

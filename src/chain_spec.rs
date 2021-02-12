@@ -47,8 +47,20 @@ pub fn to_session_keys(
     }
 }
 
-/// Return initial node session keys.
-// Vec<(GrandpaId, AuraId, AccountId)>
+/// Return initial node session keys as tuple (GrandpaId, AuraId, AccountId) for `babe` consensus.
+#[cfg(feature = "babe")]
+fn initial_poa_keys() -> Vec<(AccountId, AccountId, SessionKeys)> {
+    vec![
+        (
+            get_account_id_from_seed::<ed25519::Public>("Alice"),
+            get_account_id_from_seed::<sr25519::Public>("Alice"),
+            to_session_keys(&Ed25519Keyring::Alice, &Sr25519Keyring::Alice),
+        )
+    ]
+}
+
+/// Return initial node session keys as tuple (GrandpaId, AuraId, AccountId) for `aura` consensus.
+#[cfg(feature = "aura")]
 fn initial_poa_keys() -> Vec<(AccountId, AccountId, SessionKeys)> {
     vec![
         (

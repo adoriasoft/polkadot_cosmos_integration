@@ -56,7 +56,7 @@ wasm-builder-runner = { package = 'substrate-wasm-builder-runner', version = '2.
 
 [features]
 default = ['std', 'babe']
-aura = ['pallet-aura', 'pallet-babe', 'sp-consensus-aura']
+aura = ['pallet-aura', 'sp-consensus-aura', 'pallet-babe']
 babe = ['pallet-babe', 'sp-consensus-babe']
 runtime-benchmarks = [
     'hex-literal',

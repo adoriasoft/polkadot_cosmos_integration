@@ -227,7 +227,7 @@ decl_storage! {
 		/// execution context should always yield zero.
 		Lateness get(fn lateness): T::BlockNumber;
 
-		AuthoritiesWeights get(fn authorities_weights): map hasher(blake2_128_concat) AuthorityId => BabeAuthorityWeight = 0;
+		AuthoritiesWeights get(fn authorities_weights): map hasher(blake2_128_concat) AuthorityId => BabeAuthorityWeight = 1;
 	}
 	add_extra_genesis {
 		config(authorities): Vec<(AuthorityId, BabeAuthorityWeight)>;
@@ -241,7 +241,6 @@ decl_module! {
 		/// The number of **slots** that an epoch takes. We couple sessions to
 		/// epochs, i.e. we start a new session once the new epoch begins.
 		const EpochDuration: u64 = T::EpochDuration::get();
-
 		/// The expected average block time at which BABE should be creating
 		/// blocks. Since BABE is probabilistic it is not trivial to figure out
 		/// what the expected average block time should be based on the slot

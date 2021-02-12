@@ -58,7 +58,7 @@ std = [
 	'sp-std/std',
 	'sp-api/std',
 	'sp-runtime-interface/std',
-	'pallet-abci',
 	'sp-consensus-babe/std',
+	'pallet-abci',
 	'abci-storage'
 ]
