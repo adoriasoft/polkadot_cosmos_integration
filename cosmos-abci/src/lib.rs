@@ -313,12 +313,10 @@ impl<T: Trait> Module<T> {
         Ok(())
     }
 
-    pub fn assign_weights() {
-        #[cfg(feature = "aura")]
-        let mut weighted_aura_authorities: fg_primitives::AuthorityList = Vec::new();
-
-        #[cfg(feature = "aura")]
-        for validator in &<session::Module<T>>::validators() {
+    pub fn assign_weights(changed: bool) {
+        let mut authorities_with_updated_weight: fg_primitives::AuthorityList = Vec::new();
+        let validators = <session::Module<T>>::validators();
+        for validator in validators {
             if let Some(value) = <SubstrateAccounts<T>>::get(validator) {
                 let mut substrate_account_id: &[u8] =
                     &<CosmosAccounts<T>>::get(value.pub_key).encode();
@@ -331,20 +329,20 @@ impl<T: Trait> Module<T> {
             };
         }
 
-        #[cfg(feature = "aura")]
-        if !weighted_aura_authorities.is_empty() {
-            match <pallet_grandpa::Module<T>>::schedule_change(
-                weighted_aura_authorities,
+        if let Some((further_wait, median)) = <pallet_grandpa::Module<T>>::stalled() {
+            <pallet_grandpa::Module<T>>::schedule_change(
+                authorities_with_updated_weight,
+                further_wait,
+                Some(median),
+            )
+            .unwrap();
+        } else if changed {
+            <pallet_grandpa::Module<T>>::schedule_change(
+                authorities_with_updated_weight,
                 Zero::zero(),
                 None,
-            ) {
-                Err(_) => {
-                    debug::info!("`PendingChange` already scheduled.");
-                }
-                Ok(_) => {
-                    debug::info!("Schedule new `PendingChange` success.");
-                }
-            }
+            )
+            .unwrap();
         }
     }
 
@@ -647,13 +645,11 @@ where
 {
     type Key = T::AuthorityId;
 
-    fn on_new_session<'a, I: 'a>(changed: bool, _validators: I, _queued_validators: I)
+    fn on_new_session<'a, I: 'a>(_changed: bool, _validators: I, _queued_validators: I)
     where
         I: Iterator<Item = (&'a T::AccountId, Self::Key)>,
     {
-        if changed {
-            Self::assign_weights();
-        }
+        // Self::assign_weights(changed);
     }
 
     fn on_genesis_session<'a, I: 'a>(_validators: I)
