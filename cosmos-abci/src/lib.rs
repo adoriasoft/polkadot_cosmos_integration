@@ -313,32 +313,38 @@ impl<T: Trait> Module<T> {
         Ok(())
     }
 
+    #[cfg(feature = "aura")]
     pub fn assign_weights(changed: bool) {
-        let mut authorities_with_updated_weight: fg_primitives::AuthorityList = Vec::new();
+        // #[cfg(feature = "aura")]
+        let mut aura_weighted_authorities: fg_primitives::AuthorityList = Vec::new();
+        // #[cfg(feature = "aura")]
         let validators = <session::Module<T>>::validators();
+
+        // #[cfg(feature = "aura")]
         for validator in validators {
             if let Some(value) = <SubstrateAccounts<T>>::get(validator) {
                 let mut substrate_account_id: &[u8] =
                     &<CosmosAccounts<T>>::get(value.pub_key).encode();
                 match sp_finality_grandpa::AuthorityId::decode(&mut substrate_account_id) {
                     Ok(authority_id_value) => {
-                        weighted_aura_authorities.push((authority_id_value, value.power as u64));
+                        aura_weighted_authorities.push((authority_id_value, value.power as u64));
                     }
                     Err(_) => {}
                 }
             };
         }
 
+        // #[cfg(feature = "aura")]
         if let Some((further_wait, median)) = <pallet_grandpa::Module<T>>::stalled() {
             <pallet_grandpa::Module<T>>::schedule_change(
-                authorities_with_updated_weight,
+                aura_weighted_authorities,
                 further_wait,
                 Some(median),
             )
             .unwrap();
         } else if changed {
             <pallet_grandpa::Module<T>>::schedule_change(
-                authorities_with_updated_weight,
+                aura_weighted_authorities,
                 Zero::zero(),
                 None,
             )
@@ -648,9 +654,7 @@ where
     fn on_new_session<'a, I: 'a>(_changed: bool, _validators: I, _queued_validators: I)
     where
         I: Iterator<Item = (&'a T::AccountId, Self::Key)>,
-    {
-        // Self::assign_weights(changed);
-    }
+    { }
 
     fn on_genesis_session<'a, I: 'a>(_validators: I)
     where
