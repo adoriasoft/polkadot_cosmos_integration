@@ -16,8 +16,7 @@ pallet-session = { version = '2.0.0', features = ["historical" ], default-featur
 pallet-sudo = { version = '2.0.0', default-features = false }
 pallet-grandpa = { version = '2.0.0', default-features = false }
 pallet-babe = { version = '2.0.0', default-features = false }
-# TODO Connect babe via.
-# git = 'https://github.com/maryjanyes/substrate', branch = 'cosmos-abci-babe-fork'
+# TODO Connect babe from registry https://github.com/maryjanyes/substrate.
 pallet-timestamp = { version = '2.0.0', default-features = false }
 codec = { package = 'parity-scale-codec', version = '1.3.0', features = ['derive'], default-features = false }
 frame-support = { version = '2.0.0', default-features = false }
