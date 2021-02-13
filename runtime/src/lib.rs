@@ -108,7 +108,6 @@ pub mod opaque {
         pub struct SessionKeys {
             pub babe: Babe,
             pub grandpa: Grandpa,
-            pub abci: CosmosAbci,
         }
     }
 }
@@ -380,7 +379,7 @@ impl pallet_session::Trait for Runtime {
     #[cfg(feature = "aura")]
     type SessionHandler = (Aura, CosmosAbci, Grandpa);
     #[cfg(feature = "babe")]
-    type SessionHandler = (Babe, CosmosAbci, Grandpa);
+    type SessionHandler = <opaque::SessionKeys as OpaqueKeys>::KeyTypeIdProviders;
     type Keys = opaque::SessionKeys;
     type DisabledValidatorsThreshold = DisabledValidatorsThreshold;
     type WeightInfo = ();

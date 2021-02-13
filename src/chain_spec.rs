@@ -37,16 +37,16 @@ pub fn to_session_keys(
     sr25519_keyring: &Sr25519Keyring,
 ) -> SessionKeys {
     SessionKeys {
-        abci: sr25519_keyring.to_owned().public().into(),
         grandpa: ed25519_keyring.to_owned().public().into(),
         #[cfg(feature = "aura")]
         aura: sr25519_keyring.to_owned().public().into(),
+        #[cfg(feature = "aura")]
+        abci: sr25519_keyring.to_owned().public().into(),
         #[cfg(feature = "babe")]
         babe: sr25519_keyring.to_owned().public().into(),
     }
 }
 
-/// Return initial node session keys as tuple (GrandpaId, AuraId, AccountId) for `aura` consensus.
 fn initial_poa_keys() -> Vec<(AccountId, AccountId, SessionKeys)> {
     vec![
         (
