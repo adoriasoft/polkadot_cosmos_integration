@@ -309,9 +309,8 @@ impl<T: Trait> Module<T> {
         Ok(())
     }
 
-    #[cfg(feature = "aura")]
     pub fn assign_weights(changed: bool) {
-        let mut aura_weighted_authorities: fg_primitives::AuthorityList = Vec::new();
+        let mut authorities_with_updated_weight = Vec::new();
         let validators = <session::Module<T>>::validators();
 
         for validator in validators {
@@ -321,21 +320,21 @@ impl<T: Trait> Module<T> {
                 if let Ok(authority_id_value) =
                     sp_finality_grandpa::AuthorityId::decode(&mut substrate_account_id)
                 {
-                    aura_weighted_authorities.push((authority_id_value, value.power as u64));
+                    authorities_with_updated_weight.push((authority_id_value, value.power as u64));
                 }
             };
         }
 
         if let Some((further_wait, median)) = <pallet_grandpa::Module<T>>::stalled() {
             <pallet_grandpa::Module<T>>::schedule_change(
-                aura_weighted_authorities,
+                authorities_with_updated_weight,
                 further_wait,
                 Some(median),
             )
             .unwrap();
         } else if changed {
             <pallet_grandpa::Module<T>>::schedule_change(
-                aura_weighted_authorities,
+                authorities_with_updated_weight,
                 Zero::zero(),
                 None,
             )
@@ -646,6 +645,7 @@ where
     where
         I: Iterator<Item = (&'a T::AccountId, Self::Key)>,
     {
+        // Self::assign_weights(_changed);
     }
 
     fn on_genesis_session<'a, I: 'a>(_validators: I)

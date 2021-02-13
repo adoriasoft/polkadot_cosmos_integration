@@ -30,20 +30,8 @@ type FullBackend = sc_service::TFullBackend<Block>;
 /// Longest selected chain type include FullBackend, Block.
 type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
 
-#[allow(dead_code)]
-#[cfg(feature = "aura")]
-type AccountTypeBlockImport = sc_consensus_aura::AuraBlockImport<
-    Block,
-    FullClient,
-    sc_finality_grandpa::GrandpaBlockImport<FullBackend, Block, FullClient, FullSelectChain>,
-    AuraPair,
->;
-#[cfg(feature = "babe")]
 type FullGrandpaBlockImport =
     sc_finality_grandpa::GrandpaBlockImport<FullBackend, Block, FullClient, FullSelectChain>;
-#[cfg(feature = "babe")]
-type AccountTypeBlockImport =
-    sc_consensus_babe::BabeBlockImport<Block, FullClient, FullGrandpaBlockImport>;
 
 // Returns a new patrial for babe.
 #[cfg(feature = "babe")]
@@ -57,7 +45,7 @@ pub fn new_partial(
         sp_consensus::DefaultImportQueue<Block, FullClient>,
         sc_transaction_pool::FullPool<Block, FullClient>,
         (
-            AccountTypeBlockImport,
+            sc_consensus_babe::BabeBlockImport<Block, FullClient, FullGrandpaBlockImport>,
             sc_finality_grandpa::LinkHalf<Block, FullClient, FullSelectChain>,
             sc_consensus_babe::BabeLink<Block>,
         ),
@@ -122,17 +110,7 @@ pub fn new_partial(
         sp_consensus::DefaultImportQueue<Block, FullClient>,
         sc_transaction_pool::FullPool<Block, FullClient>,
         (
-            sc_consensus_aura::AuraBlockImport<
-                Block,
-                FullClient,
-                sc_finality_grandpa::GrandpaBlockImport<
-                    FullBackend,
-                    Block,
-                    FullClient,
-                    FullSelectChain,
-                >,
-                AuraPair,
-            >,
+            sc_consensus_aura::AuraBlockImport<Block, FullClient, FullGrandpaBlockImport, AuraPair>,
             sc_finality_grandpa::LinkHalf<Block, FullClient, FullSelectChain>,
         ),
     >,
