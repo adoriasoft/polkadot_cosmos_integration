@@ -27,8 +27,10 @@ cargo build
 ```
 
 ```
-# For building node with selected consensus
-# run `cargo build --workspace --features "<consensus_pallet_name>" --no-default-features`.
+For building node with selected consensus
+- cargo build -Z package-features --package pallet-cosmos-abci --features "std <consensus_pallet_name>" --no-default-features
+- cargo build -Z package-features --package runtime --features "std <consensus_pallet_name>" --no-default-features
+- cargo build --workspace --features "<consensus_pallet_name>" --no-default-features
 ```
 
 ## Run
