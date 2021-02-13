@@ -40,7 +40,7 @@ lazy_static = '1.2.0'
 testcontainers = '0.10'
 
 [features]
-default = ['std', 'babe']
+default = ['std', 'aura']
 aura = []
 babe = ['sp-consensus-babe']
 std = [
