@@ -26,6 +26,13 @@ Build Wasm and native code:
 cargo build
 ```
 
+```
+For building node with selected consensus
+- cargo build -Z package-features --package pallet-cosmos-abci --features "std <consensus_pallet_name>" --no-default-features
+- cargo build -Z package-features --package runtime --features "std <consensus_pallet_name>" --no-default-features
+- cargo build --workspace --features "<consensus_pallet_name>" --no-default-features
+```
+
 ## Run
 
 Before running substrate node, you should build and start cosmos node. Go to the our fork of the [cosmos-sdk](https://github.com/adoriasoft/cosmos-sdk/tree/master), switch to the branch [feature/add_nameservice](https://github.com/adoriasoft/cosmos-sdk/tree/feature/add_nameservice), then just follow [instractions](https://github.com/adoriasoft/cosmos-sdk/tree/feature/add_nameservice/simapp).

@@ -12,9 +12,9 @@ use frame_support::{
 use frame_system::{
     self as system, ensure_none, ensure_signed, offchain::CreateSignedTransaction, RawOrigin,
 };
-use pallet_grandpa::fg_primitives;
 use pallet_session as session;
 use sp_core::{crypto::KeyTypeId, Hasher};
+#[allow(unused_imports)]
 use sp_runtime::{
     traits::{Convert, SaturatedConversion, Zero},
     transaction_validity::{
@@ -66,6 +66,7 @@ pub trait Trait:
     + pallet_session::Trait
     + pallet_sudo::Trait
     + pallet_grandpa::Trait
+    + pallet_babe::Trait
 {
     type AuthorityId: Decode + sp_runtime::RuntimeAppPublic + Default;
     type Call: From<Call<Self>>;
@@ -307,20 +308,17 @@ impl<T: Trait> Module<T> {
     }
 
     pub fn assign_weights(changed: bool) {
-        let mut authorities_with_updated_weight: fg_primitives::AuthorityList = Vec::new();
+        let mut authorities_with_updated_weight = Vec::new();
         let validators = <session::Module<T>>::validators();
+
         for validator in validators {
             if let Some(value) = <SubstrateAccounts<T>>::get(validator) {
                 let mut substrate_account_id: &[u8] =
                     &<CosmosAccounts<T>>::get(value.pub_key).encode();
-                match sp_finality_grandpa::AuthorityId::decode(&mut substrate_account_id) {
-                    Ok(authority_id_value) => {
-                        authorities_with_updated_weight
-                            .push((authority_id_value, value.power as u64));
-                    }
-                    Err(err) => {
-                        debug::info!("Unable to decode AccountId to AuthorityId then try to assign validator weight {:?}", err);
-                    }
+                if let Ok(authority_id_value) =
+                    sp_finality_grandpa::AuthorityId::decode(&mut substrate_account_id)
+                {
+                    authorities_with_updated_weight.push((authority_id_value, value.power as u64));
                 }
             };
         }
@@ -645,7 +643,7 @@ where
     where
         I: Iterator<Item = (&'a T::AccountId, Self::Key)>,
     {
-        // Self::assign_weights(changed);
+        // Self::assign_weights(_changed);
     }
 
     fn on_genesis_session<'a, I: 'a>(_validators: I)
