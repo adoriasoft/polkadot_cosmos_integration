@@ -567,7 +567,7 @@ pub trait AbciInterface {
         Ok(())
     }
 
-    fn end_block(height: i64) -> DispatchResult {
+    fn end_block(height: i64) -> Result<Vec<(Vec<u8>, u64)>, DispatchError> {
         let result = pallet_abci::get_abci_instance()
             .map_err(|_| "failed to setup connection")?
             .end_block(height)
@@ -614,7 +614,7 @@ pub trait AbciInterface {
             .write(height.to_ne_bytes().to_vec(), bytes)
             .map_err(|_| "failed to write some data into the abci storage")?;
 
-        Ok(())
+        Ok(new_cosmos_validators)
     }
 
     fn commit() -> DispatchResult {
