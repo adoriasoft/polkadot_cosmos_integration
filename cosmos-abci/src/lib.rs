@@ -12,8 +12,6 @@ use frame_support::{
 use frame_system::{
     self as system, ensure_none, ensure_signed, offchain::CreateSignedTransaction, RawOrigin,
 };
-#[cfg(feature = "aura")]
-use pallet_grandpa::fg_primitives;
 use pallet_session as session;
 use sp_core::{crypto::KeyTypeId, Hasher};
 #[allow(unused_imports)]
