@@ -13,7 +13,8 @@ use frame_system::{
     self as system, ensure_none, ensure_signed, offchain::CreateSignedTransaction, RawOrigin,
 };
 #[cfg(feature = "aura")]
-use pallet_grandpa::fg_primitives;
+use sp_finality_grandpa;
+use pallet_grandpa;
 use pallet_session as session;
 use sp_core::{crypto::KeyTypeId, Hasher};
 #[allow(unused_imports)]
@@ -68,7 +69,6 @@ pub trait Trait:
     + pallet_session::Trait
     + pallet_sudo::Trait
     + pallet_grandpa::Trait
-    + pallet_babe::Trait
 {
     type AuthorityId: Decode + sp_runtime::RuntimeAppPublic + Default;
     type Call: From<Call<Self>>;
@@ -309,6 +309,7 @@ impl<T: Trait> Module<T> {
         Ok(())
     }
 
+    #[cfg(feature = "aura")]
     pub fn assign_weights(changed: bool) {
         let mut authorities_with_updated_weight = Vec::new();
         let validators = <session::Module<T>>::validators();
@@ -644,9 +645,7 @@ where
     fn on_new_session<'a, I: 'a>(_changed: bool, _validators: I, _queued_validators: I)
     where
         I: Iterator<Item = (&'a T::AccountId, Self::Key)>,
-    {
-        // Self::assign_weights(_changed);
-    }
+    { }
 
     fn on_genesis_session<'a, I: 'a>(_validators: I)
     where
