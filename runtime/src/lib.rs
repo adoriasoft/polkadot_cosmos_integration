@@ -203,11 +203,6 @@ impl frame_system::Trait for Runtime {
     type SystemWeightInfo = ();
 }
 
-#[cfg(feature = "aura")]
-impl pallet_aura::Trait for Runtime {
-    type AuthorityId = AuraId;
-}
-
 /// Outer module that expose needed time constants.
 pub mod time {
     use super::BlockNumber;
@@ -270,21 +265,8 @@ impl pallet_babe::Trait for Runtime {
 }
 
 #[cfg(feature = "aura")]
-impl pallet_babe::Trait for Runtime {
-    type EpochDuration = EpochDuration;
-    type ExpectedBlockTime = ExpectedBlockTime;
-    type EpochChangeTrigger = pallet_babe::ExternalTrigger;
-    type KeyOwnerProofSystem = ();
-    type KeyOwnerProof = <Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(
-        KeyTypeId,
-        pallet_babe::AuthorityId,
-    )>>::Proof;
-    type KeyOwnerIdentification = <Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(
-        KeyTypeId,
-        pallet_babe::AuthorityId,
-    )>>::IdentificationTuple;
-    type HandleEquivocation = ();
-    type WeightInfo = ();
+impl pallet_aura::Trait for Runtime {
+    type AuthorityId = AuraId;
 }
 
 impl pallet_grandpa::Trait for Runtime {

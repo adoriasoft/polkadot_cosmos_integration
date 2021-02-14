@@ -61,6 +61,18 @@ pub trait CosmosAbci {
 }
 
 /// The pallet configuration trait.
+#[cfg(feature = "aura")]
+pub trait Trait:
+    CreateSignedTransaction<Call<Self>>
+    + pallet_session::Trait
+    + pallet_sudo::Trait
+    + pallet_grandpa::Trait
+{
+    type AuthorityId: Decode + sp_runtime::RuntimeAppPublic + Default;
+    type Call: From<Call<Self>>;
+    type Subscription: SubscriptionManager;
+}
+#[cfg(feature = "babe")]
 pub trait Trait:
     CreateSignedTransaction<Call<Self>>
     + pallet_session::Trait

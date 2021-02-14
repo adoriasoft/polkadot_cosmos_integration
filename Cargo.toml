@@ -80,8 +80,8 @@ substrate-build-script-utils = '2.0.0'
 
 [features]
 default = ['aura']
-aura = ['sc-consensus-aura', 'sp-consensus-aura']
-babe = ['sc-consensus-babe', 'sp-consensus-babe']
+aura = ['sc-consensus-aura', 'sp-consensus-aura', 'node-template-runtime/aura', 'pallet-cosmos-abci/aura']
+babe = ['sc-consensus-babe', 'sp-consensus-babe', 'node-template-runtime/babe', 'pallet-cosmos-abci/babe']
 runtime-benchmarks = ['node-template-runtime/runtime-benchmarks']
 
 [patch.crates-io]
