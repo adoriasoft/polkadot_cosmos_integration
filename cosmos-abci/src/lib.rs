@@ -370,8 +370,9 @@ impl<T: Trait> Module<T> {
                 }
             }
 
-            if !new_substrate_validators.is_empty()
-                && current_substarte_validators != new_substrate_validators
+            if 
+                !new_substrate_validators.is_empty() &&
+                current_substarte_validators != new_substrate_validators
             {
                 return Some(new_substrate_validators);
             }
