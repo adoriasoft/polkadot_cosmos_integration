@@ -55,9 +55,9 @@ sp-consensus-babe = { default-features = false, version = '0.8.0', optional = tr
 wasm-builder-runner = { package = 'substrate-wasm-builder-runner', version = '2.0.0' }
 
 [features]
-default = ['std', 'aura']
-aura = ['pallet-aura', 'sp-consensus-aura', 'pallet-babe']
-babe = ['pallet-babe', 'sp-consensus-babe']
+default = ['std']
+aura = ['pallet-aura', 'sp-consensus-aura', 'pallet-cosmos-abci/aura']
+babe = ['pallet-babe', 'sp-consensus-babe', 'pallet-cosmos-abci/babe']
 runtime-benchmarks = [
     'hex-literal',
     'frame-benchmarking',
