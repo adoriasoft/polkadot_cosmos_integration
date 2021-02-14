@@ -41,6 +41,7 @@ pub const COSMOS_ACCOUNT_DEFAULT_PUB_KEY_TYPE: &str = "ed25519";
 /// Priority for unsigned transaction.
 pub const UNSIGNED_TXS_PRIORITY: u64 = 100;
 pub const SESSION_BLOCKS_PERIOD: u32 = 5;
+#[allow(dead_code)]
 const LAST_COSMOS_VALIDATORS_KEY: &[u8; 22] = b"last_cosmos_validators";
 
 /// The KeyType ID.
