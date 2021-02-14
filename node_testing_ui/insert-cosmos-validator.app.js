@@ -19,10 +19,10 @@ async function init() {
             if (substrate_address && cosmos_address) {
                 const signer = getBlockchainAccount(substrate_address);
                 try {
-                    const txHash = await api.tx.cosmosAbci
+                    await api.tx.cosmosAbci
                         .insertCosmosAccount(cosmos_address)
                         .signAndSend(signer);
-                    resovle(txHash.toString());
+                    resovle(signer.address);
                 } catch (err) {
                     resovle(err);
                 }

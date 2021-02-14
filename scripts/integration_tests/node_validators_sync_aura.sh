@@ -12,6 +12,7 @@ expect_validators_set_1="5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY@5FHneW
 expect_validators_set_2="5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty"
 expect_validators_set_3="5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY"
 
+# The node key from `$HOME/.nsd/config/priv_validator_key.json` pub_key=>value.
 cosmos_validator_pub_key="0xa4f588be5bd917c0933d6fe1ac18d05b25dd5b27890327a57b9137b986736f15"
 
 source ./testing_setup/basic_setup.sh
