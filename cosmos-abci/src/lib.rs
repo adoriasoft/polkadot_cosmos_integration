@@ -40,7 +40,9 @@ type OptionalLedger<AccountId> = Option<(AccountId, Balance)>;
 pub const COSMOS_ACCOUNT_DEFAULT_PUB_KEY_TYPE: &str = "ed25519";
 /// Priority for unsigned transaction.
 pub const UNSIGNED_TXS_PRIORITY: u64 = 100;
-pub const SESSION_BLOCKS_PERIOD: u32 = 2;
+pub const SESSION_BLOCKS_PERIOD: u32 = 5;
+#[allow(dead_code)]
+const LAST_COSMOS_VALIDATORS_KEY: &[u8; 22] = b"last_cosmos_validators";
 
 /// The KeyType ID.
 pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"abci");
@@ -232,14 +234,6 @@ decl_module! {
 
 /// Implementation of additional methods for pallet configuration trait.
 impl<T: Trait> Module<T> {
-    fn get_corresponding_height(session_index: SessionIndex) -> u32 {
-        if session_index > 2 {
-            (session_index - 2) * SESSION_BLOCKS_PERIOD
-        } else {
-            0
-        }
-    }
-
     // The abci transaction call.
     pub fn call_abci_transaction(data: Vec<u8>) -> DispatchResult {
         let block_number = <system::Module<T>>::block_number();
@@ -352,15 +346,13 @@ impl<T: Trait> Module<T> {
         }
     }
 
-    pub fn on_new_session(new_session_index: SessionIndex) -> Option<Vec<T::ValidatorId>> {
+    pub fn on_new_session(_new_session_index: SessionIndex) -> Option<Vec<T::ValidatorId>> {
         // Sessions starts after end_block() with number 2.
         // For some reason two first sessions is skipped.
 
         let current_substarte_validators = <session::Module<T>>::validators();
 
-        let corresponding_height = Self::get_corresponding_height(new_session_index);
-        let next_cosmos_validators =
-            abci_interface::get_cosmos_validators(corresponding_height.into()).unwrap();
+        let next_cosmos_validators = abci_interface::get_last_cosmos_validators().unwrap();
 
         if !next_cosmos_validators.is_empty() {
             let mut new_substrate_validators: Vec<T::ValidatorId> = vec![];
@@ -385,6 +377,10 @@ impl<T: Trait> Module<T> {
             if !new_substrate_validators.is_empty()
                 && current_substarte_validators != new_substrate_validators
             {
+                debug::info!(
+                    "on_new_session() new_substrate_validators: {:?}",
+                    new_substrate_validators
+                );
                 return Some(new_substrate_validators);
             }
         }
@@ -457,6 +453,33 @@ pub trait AbciInterface {
         match abci_storage::get_abci_storage_instance()
             .map_err(|_| "failed to get abci storage instance")?
             .get(height.to_ne_bytes().to_vec())
+            .map_err(|_| "failed to get value from the abci storage")?
+        {
+            Some(bytes) => {
+                let validators = pallet_abci::utils::deserialize_vec::<
+                    pallet_abci::protos::ValidatorUpdate,
+                >(&bytes)
+                .map_err(|_| "cannot deserialize ValidatorUpdate vector")?;
+
+                let mut response = Vec::new();
+                for val in validators {
+                    if let Some(key) = val.pub_key {
+                        response.push(utils::CosmosAccount {
+                            pub_key: key.data,
+                            power: val.power,
+                        });
+                    }
+                }
+                Ok(response)
+            }
+            None => Ok(Vec::new()),
+        }
+    }
+
+    fn get_last_cosmos_validators() -> Result<Vec<utils::CosmosAccount>, DispatchError> {
+        match abci_storage::get_abci_storage_instance()
+            .map_err(|_| "failed to get abci storage instance")?
+            .get(LAST_COSMOS_VALIDATORS_KEY.to_vec())
             .map_err(|_| "failed to get value from the abci storage")?
         {
             Some(bytes) => {
@@ -584,7 +607,12 @@ pub trait AbciInterface {
         // save it in the storage
         abci_storage::get_abci_storage_instance()
             .map_err(|_| "failed to get abci storage instance")?
-            .write(height.to_ne_bytes().to_vec(), bytes)
+            .write(height.to_ne_bytes().to_vec(), bytes.clone())
+            .map_err(|_| "failed to write some data into the abci storage")?;
+
+        abci_storage::get_abci_storage_instance()
+            .map_err(|_| "failed to get abci storage instance")?
+            .write(LAST_COSMOS_VALIDATORS_KEY.to_vec(), bytes)
             .map_err(|_| "failed to write some data into the abci storage")?;
 
         Ok(())

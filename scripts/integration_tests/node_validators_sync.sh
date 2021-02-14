@@ -36,6 +36,7 @@ cd ../../node_testing_ui
 
 validators_set=$(node ./get-validators.app.js)
 assert_eq "$validators_set" $expect_validators_set_1
+
 node ./insert-cosmos-validator.app.js //Bob $cosmos_validator_pub_key
 sleep 30s
 

@@ -233,7 +233,7 @@ pub mod time {
     pub const PRIMARY_PROBABILITY: (u64, u64) = (1, 4);
 
     pub const EPOCH_DURATION_IN_BLOCKS: BlockNumber = 10 * MINUTES;
-    pub const EPOCH_DURATION_IN_SLOTS: u64 = 2;
+    pub const EPOCH_DURATION_IN_SLOTS: u64 = pallet_cosmos_abci::SESSION_BLOCKS_PERIOD as u64;
 
     // These time units are defined in number of blocks.
     pub const MINUTES: BlockNumber = 60 / (SECS_PER_BLOCK as BlockNumber);
