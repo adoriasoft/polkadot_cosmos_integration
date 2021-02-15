@@ -80,13 +80,13 @@ validators_set=$(node ./get-validators.app.js)
 assert_eq "$validators_set" $expect_validators_set_2
 
 node ./insert-cosmos-validator.app.js //Alice $cosmos_validator_pub_key1
-sleep 30s
+sleep 50s
 
 validators_set=$(node ./get-validators.app.js)
 assert_eq "$validators_set" $expect_validators_set_3
 
 node ./insert-cosmos-validator.app.js //Bob $cosmos_validator_pub_key2
-sleep 30s
+sleep 50s
 
 validators_set=$(node ./get-validators.app.js)
 assert_eq "$validators_set" $expect_validators_set_1 $expect_validators_set_4

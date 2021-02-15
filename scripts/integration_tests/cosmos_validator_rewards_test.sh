@@ -40,6 +40,11 @@ assert_eq "$validators_set" $expect_validators_set_1
 
 sleep 30s
 
+value=$(nscli q bank balances $(nscli keys show jack -a))
+echo "$value"
+expected=$'- amount: \"1000\"\n  denom: nametoken\n- amount: \"89995000\"\n  denom: stake'
+assert_eq "$value" "$expected"
+
 # withdraw rewards
 nscli tx distribution withdraw-all-rewards --chain-id=namechain --from=$(nscli keys show jack -a) -y
 sleep 5s
@@ -58,7 +63,7 @@ sleep 5s
 
 value=$(nscli q bank balances $(nscli keys show jack -a))
 echo "$value"
-expected=$'- amount: \"1000\"\n  denom: nametoken\n- amount: \"0\"\n  denom: stake'
+expected=$'- amount: \"1000\"\n  denom: nametoken\n- amount: \"89995000\"\n  denom: stake'
 assert_ne "$value" "$expected"
 
 test_passed "cosmos_validator_rewards_test test passed"
