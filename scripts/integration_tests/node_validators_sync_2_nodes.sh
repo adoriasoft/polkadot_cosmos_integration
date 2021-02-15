@@ -89,7 +89,7 @@ node ./insert-cosmos-validator.app.js //Bob $cosmos_validator_pub_key2
 sleep 30s
 
 validators_set=$(node ./get-validators.app.js)
-assert_eq "$validators_set" $expect_validators_set_4
+assert_eq "$validators_set" $expect_validators_set_1 $expect_validators_set_4
 
 test_passed "node_validators_sync_2_nodes test passed"
 
