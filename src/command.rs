@@ -65,6 +65,7 @@ use std::fs;
 use std::io::{self, Write};
 
 // TODO: make it as a separate cmd command
+#[allow(dead_code)]
 fn remove_abci_storage(config: &Configuration) -> sc_cli::Result<()> {
     // TODO: fix it afer substarte update
     let config_dir = config
@@ -118,10 +119,10 @@ pub fn run() -> sc_cli::Result<()> {
             let runner = cli.create_runner(cmd)?;
             runner.sync_run(|config| cmd.run(config.chain_spec, config.network))
         }
-        Some(Subcommand::PurgeAbciStorage(ref cmd)) => {
+        /* Some(Subcommand::PurgeAbciStorage(ref cmd)) => {
             let runner = cli.create_runner(cmd)?;
             runner.sync_run(|config| cmd.run(&config))
-        }
+        } */
         Some(Subcommand::CheckBlock(ref cmd)) => {
             let runner = cli.create_runner(cmd)?;
             runner.async_run(|config| {
@@ -171,8 +172,7 @@ pub fn run() -> sc_cli::Result<()> {
         Some(Subcommand::PurgeChain(ref cmd)) => {
             let runner = cli.create_runner(cmd)?;
             runner.sync_run(|config| {
-                remove_abci_storage(&config)?;
-                cmd.run(config.database)
+                cmd.run(&config)
             })
         }
         Some(Subcommand::Revert(ref cmd)) => {
