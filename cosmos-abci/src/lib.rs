@@ -12,9 +12,9 @@ use frame_support::{
 use frame_system::{
     self as system, ensure_none, ensure_signed, offchain::CreateSignedTransaction, RawOrigin,
 };
-use pallet_grandpa::fg_primitives;
 use pallet_session as session;
 use sp_core::{crypto::KeyTypeId, Hasher};
+#[allow(unused_imports)]
 use sp_runtime::{
     traits::{Convert, SaturatedConversion, Zero},
     transaction_validity::{
@@ -40,7 +40,9 @@ type OptionalLedger<AccountId> = Option<(AccountId, Balance)>;
 pub const COSMOS_ACCOUNT_DEFAULT_PUB_KEY_TYPE: &str = "ed25519";
 /// Priority for unsigned transaction.
 pub const UNSIGNED_TXS_PRIORITY: u64 = 100;
-pub const SESSION_BLOCKS_PERIOD: u32 = 2;
+pub const SESSION_BLOCKS_PERIOD: u32 = 5;
+#[allow(dead_code)]
+const LAST_COSMOS_VALIDATORS_KEY: &[u8; 22] = b"last_cosmos_validators";
 
 /// The KeyType ID.
 pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"abci");
@@ -61,11 +63,24 @@ pub trait CosmosAbci {
 }
 
 /// The pallet configuration trait.
+#[cfg(feature = "aura")]
 pub trait Trait:
     CreateSignedTransaction<Call<Self>>
     + pallet_session::Trait
     + pallet_sudo::Trait
     + pallet_grandpa::Trait
+{
+    type AuthorityId: Decode + sp_runtime::RuntimeAppPublic + Default;
+    type Call: From<Call<Self>>;
+    type Subscription: SubscriptionManager;
+}
+#[cfg(feature = "babe")]
+pub trait Trait:
+    CreateSignedTransaction<Call<Self>>
+    + pallet_session::Trait
+    + pallet_sudo::Trait
+    + pallet_grandpa::Trait
+    + pallet_babe::Trait
 {
     type AuthorityId: Decode + sp_runtime::RuntimeAppPublic + Default;
     type Call: From<Call<Self>>;
@@ -219,14 +234,6 @@ decl_module! {
 
 /// Implementation of additional methods for pallet configuration trait.
 impl<T: Trait> Module<T> {
-    fn get_corresponding_height(session_index: SessionIndex) -> u32 {
-        if session_index > 2 {
-            (session_index - 2) * SESSION_BLOCKS_PERIOD
-        } else {
-            0
-        }
-    }
-
     // The abci transaction call.
     pub fn call_abci_transaction(data: Vec<u8>) -> DispatchResult {
         let block_number = <system::Module<T>>::block_number();
@@ -307,20 +314,17 @@ impl<T: Trait> Module<T> {
     }
 
     pub fn assign_weights(changed: bool) {
-        let mut authorities_with_updated_weight: fg_primitives::AuthorityList = Vec::new();
+        let mut authorities_with_updated_weight = Vec::new();
         let validators = <session::Module<T>>::validators();
+
         for validator in validators {
             if let Some(value) = <SubstrateAccounts<T>>::get(validator) {
                 let mut substrate_account_id: &[u8] =
                     &<CosmosAccounts<T>>::get(value.pub_key).encode();
-                match sp_finality_grandpa::AuthorityId::decode(&mut substrate_account_id) {
-                    Ok(authority_id_value) => {
-                        authorities_with_updated_weight
-                            .push((authority_id_value, value.power as u64));
-                    }
-                    Err(err) => {
-                        debug::info!("Unable to decode AccountId to AuthorityId then try to assign validator weight {:?}", err);
-                    }
+                if let Ok(authority_id_value) =
+                    sp_finality_grandpa::AuthorityId::decode(&mut substrate_account_id)
+                {
+                    authorities_with_updated_weight.push((authority_id_value, value.power as u64));
                 }
             };
         }
@@ -342,15 +346,13 @@ impl<T: Trait> Module<T> {
         }
     }
 
-    pub fn on_new_session(new_session_index: SessionIndex) -> Option<Vec<T::ValidatorId>> {
+    pub fn on_new_session(_new_session_index: SessionIndex) -> Option<Vec<T::ValidatorId>> {
         // Sessions starts after end_block() with number 2.
         // For some reason two first sessions is skipped.
 
         let current_substarte_validators = <session::Module<T>>::validators();
 
-        let corresponding_height = Self::get_corresponding_height(new_session_index);
-        let next_cosmos_validators =
-            abci_interface::get_cosmos_validators(corresponding_height.into()).unwrap();
+        let next_cosmos_validators = abci_interface::get_last_cosmos_validators().unwrap();
 
         if !next_cosmos_validators.is_empty() {
             let mut new_substrate_validators: Vec<T::ValidatorId> = vec![];
@@ -375,6 +377,10 @@ impl<T: Trait> Module<T> {
             if !new_substrate_validators.is_empty()
                 && current_substarte_validators != new_substrate_validators
             {
+                debug::info!(
+                    "on_new_session() new_substrate_validators: {:?}",
+                    new_substrate_validators
+                );
                 return Some(new_substrate_validators);
             }
         }
@@ -447,6 +453,33 @@ pub trait AbciInterface {
         match abci_storage::get_abci_storage_instance()
             .map_err(|_| "failed to get abci storage instance")?
             .get(height.to_ne_bytes().to_vec())
+            .map_err(|_| "failed to get value from the abci storage")?
+        {
+            Some(bytes) => {
+                let validators = pallet_abci::utils::deserialize_vec::<
+                    pallet_abci::protos::ValidatorUpdate,
+                >(&bytes)
+                .map_err(|_| "cannot deserialize ValidatorUpdate vector")?;
+
+                let mut response = Vec::new();
+                for val in validators {
+                    if let Some(key) = val.pub_key {
+                        response.push(utils::CosmosAccount {
+                            pub_key: key.data,
+                            power: val.power,
+                        });
+                    }
+                }
+                Ok(response)
+            }
+            None => Ok(Vec::new()),
+        }
+    }
+
+    fn get_last_cosmos_validators() -> Result<Vec<utils::CosmosAccount>, DispatchError> {
+        match abci_storage::get_abci_storage_instance()
+            .map_err(|_| "failed to get abci storage instance")?
+            .get(LAST_COSMOS_VALIDATORS_KEY.to_vec())
             .map_err(|_| "failed to get value from the abci storage")?
         {
             Some(bytes) => {
@@ -574,7 +607,12 @@ pub trait AbciInterface {
         // save it in the storage
         abci_storage::get_abci_storage_instance()
             .map_err(|_| "failed to get abci storage instance")?
-            .write(height.to_ne_bytes().to_vec(), bytes)
+            .write(height.to_ne_bytes().to_vec(), bytes.clone())
+            .map_err(|_| "failed to write some data into the abci storage")?;
+
+        abci_storage::get_abci_storage_instance()
+            .map_err(|_| "failed to get abci storage instance")?
+            .write(LAST_COSMOS_VALIDATORS_KEY.to_vec(), bytes)
             .map_err(|_| "failed to write some data into the abci storage")?;
 
         Ok(())
@@ -645,7 +683,7 @@ where
     where
         I: Iterator<Item = (&'a T::AccountId, Self::Key)>,
     {
-        // Self::assign_weights(changed);
+        // Self::assign_weights(_changed);
     }
 
     fn on_genesis_session<'a, I: 'a>(_validators: I)

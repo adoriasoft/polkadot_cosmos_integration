@@ -41,8 +41,8 @@ services:
       ABCI_SERVER_URL: tcp://first_cosmos:26658
       ABCI_GENESIS_STATE_PATH: /genesis.json
     volumes:
-      # - ./res:/res
-      - ~/.nsd/config/genesis.json:/genesis.json
+      - ./res:/res
+      - ./genesis.json:/genesis.json
     ports:
       - "9933:9933"
       - "9944:9944"
@@ -81,8 +81,8 @@ services:
       ABCI_SERVER_URL: tcp://second_cosmos:26658
       ABCI_GENESIS_STATE_PATH: /genesis.json
     volumes:
-      # - ./res:/res
-      - ~/.nsd/config/genesis.json:/genesis.json
+      - ./res:/res
+      - ./genesis.json:/genesis.json
     ports:
       - "19933:9933"
       - "19944:9944"

@@ -1,6 +1,6 @@
 use node_template_runtime::{
-    opaque::SessionKeys, AccountId, AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig,
-    SessionConfig, Signature, SudoConfig, SystemConfig, WASM_BINARY,
+    opaque::SessionKeys, AccountId, BalancesConfig, GenesisConfig, GrandpaConfig, SessionConfig,
+    Signature, SudoConfig, SystemConfig, WASM_BINARY,
 };
 use sc_service::ChainType;
 use sp_core::{ed25519, sr25519, Pair, Public};
@@ -31,19 +31,22 @@ where
     AccountPublic::from(get_from_seed::<TPublic>(seed)).into_account()
 }
 
-/// Return an session keys.
+/// Return an Aura or Babe/Grandpa session keys.
 pub fn to_session_keys(
     ed25519_keyring: &Ed25519Keyring,
     sr25519_keyring: &Sr25519Keyring,
 ) -> SessionKeys {
     SessionKeys {
-        aura: sr25519_keyring.to_owned().public().into(),
-        abci: sr25519_keyring.to_owned().public().into(),
         grandpa: ed25519_keyring.to_owned().public().into(),
+        #[cfg(feature = "aura")]
+        aura: sr25519_keyring.to_owned().public().into(),
+        #[cfg(feature = "aura")]
+        abci: sr25519_keyring.to_owned().public().into(),
+        #[cfg(feature = "babe")]
+        babe: sr25519_keyring.to_owned().public().into(),
     }
 }
 
-/// Return initial node session keys.
 fn initial_poa_keys() -> Vec<(AccountId, AccountId, SessionKeys)> {
     vec![
         (
@@ -174,7 +177,12 @@ fn testnet_genesis(
                 .collect(),
         }),
         // Keys already setted by pallet_session.
-        pallet_aura: Some(AuraConfig {
+        #[cfg(feature = "aura")]
+        pallet_aura: Some(node_template_runtime::AuraConfig {
+            authorities: vec![],
+        }),
+        #[cfg(feature = "babe")]
+        pallet_babe: Some(node_template_runtime::BabeConfig {
             authorities: vec![],
         }),
         pallet_grandpa: Some(GrandpaConfig {

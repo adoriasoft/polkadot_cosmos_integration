@@ -1,5 +1,10 @@
 #!/bin/bash
 
+#! This test runs one node of the substarte and corresponding to it one cosmos node
+#! 1. Set up 1 cosmos validators using the `nsd tx staking create-validator` command.
+#! 2. Match fist cosmos validator to the substarte validator Bob, so as a result we expect that susbrate will change the validator list to the one Bob
+#! 3. Match the same first cosmos validator to the another subsrate validator Alice, so as a result we expect that susbrate will change the validator list to the one Alice
+
 trap "exit" INT TERM ERR
 trap "kill 0" EXIT
 
@@ -31,6 +36,7 @@ cd ../../node_testing_ui
 
 validators_set=$(node ./get-validators.app.js)
 assert_eq "$validators_set" $expect_validators_set_1
+
 node ./insert-cosmos-validator.app.js //Bob $cosmos_validator_pub_key
 sleep 30s
 
