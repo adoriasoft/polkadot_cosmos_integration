@@ -346,7 +346,7 @@ impl<T: Trait> Module<T> {
         }
     }
 
-    pub fn call_on_new_session(new_session_index: SessionIndex) -> Option<Vec<T::ValidatorId>> {
+    pub fn call_on_new_session(_new_session_index: SessionIndex) -> Option<Vec<T::ValidatorId>> {
         // Sessions starts after end_block() with number 2.
         // For some reason two first sessions is skipped.
 
