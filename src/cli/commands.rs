@@ -1,9 +1,9 @@
+use sc_cli::CliConfiguration;
+use sc_service::Configuration;
 use std::fmt::Debug;
-use std::{fs, io};
 use std::io::Write;
+use std::{fs, io};
 use structopt::StructOpt;
-use sc_service::{Configuration};
-use sc_cli::{CliConfiguration};
 
 pub use pallet_abci;
 
@@ -11,13 +11,13 @@ pub use pallet_abci;
 #[derive(Debug, StructOpt)]
 pub struct PurgeAbciStorageCmd {
     #[allow(missing_docs)]
-	#[structopt(flatten)]
-	pub shared_params: sc_cli::SharedParams,
+    #[structopt(flatten)]
+    pub shared_params: sc_cli::SharedParams,
 }
 
 impl PurgeAbciStorageCmd {
-	/// Run the purge command.
-	pub fn run(&self, config: &Configuration) -> sc_cli::Result<()> {
+    /// Run the purge command.
+    pub fn run(&self, config: &Configuration) -> sc_cli::Result<()> {
         let chain_spec_id = config.chain_spec.id();
 
         println!("Remove storage of node with spec_id {:?}", chain_spec_id);
@@ -36,7 +36,7 @@ impl PurgeAbciStorageCmd {
 
         io::stdout().flush().expect("failed to flush stdout");
 
-		match fs::remove_dir_all(&db_path) {
+        match fs::remove_dir_all(&db_path) {
             Ok(_) => {
                 println!("{:?} removed.", &db_name);
                 Ok(())
@@ -46,11 +46,11 @@ impl PurgeAbciStorageCmd {
                 Ok(())
             }
         }
-	}
+    }
 }
 
 impl CliConfiguration for PurgeAbciStorageCmd {
     fn shared_params(&self) -> &sc_cli::SharedParams {
-		&self.shared_params
-	}
+        &self.shared_params
+    }
 }
