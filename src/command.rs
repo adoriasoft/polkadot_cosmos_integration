@@ -118,6 +118,12 @@ pub fn run() -> sc_cli::Result<()> {
             let runner = cli.create_runner(cmd)?;
             runner.sync_run(|config| cmd.run(config.chain_spec, config.network))
         }
+        Some(Subcommand::PurgeAbciStorage(ref cmd)) => {
+            let runner = cli.create_runner(cmd)?;
+            runner.sync_run(|config| {
+                cmd.run(&config)
+            })
+        }
         Some(Subcommand::CheckBlock(ref cmd)) => {
             let runner = cli.create_runner(cmd)?;
             runner.async_run(|config| {

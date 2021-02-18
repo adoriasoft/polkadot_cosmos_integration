@@ -1,5 +1,6 @@
 use sc_cli::RunCmd;
 use structopt::StructOpt;
+pub mod commands;
 
 #[derive(Debug, StructOpt)]
 pub struct Cli {
@@ -12,6 +13,9 @@ pub struct Cli {
 
 #[derive(Debug, StructOpt)]
 pub enum Subcommand {
+    /// Remove a rocks db storage.
+    PurgeAbciStorage(commands::PurgeAbciStorageCmd),
+
     /// Build a chain specification.
     BuildSpec(sc_cli::BuildSpecCmd),
 

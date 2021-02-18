@@ -346,7 +346,11 @@ impl<T: Trait> Module<T> {
         }
     }
 
+<<<<<<< Updated upstream
     pub fn on_new_session(_new_session_index: SessionIndex) -> Option<Vec<T::ValidatorId>> {
+=======
+    pub fn call_new_session(new_session_index: SessionIndex) -> Option<Vec<T::ValidatorId>> {
+>>>>>>> Stashed changes
         // Sessions starts after end_block() with number 2.
         // For some reason two first sessions is skipped.
 
@@ -360,6 +364,27 @@ impl<T: Trait> Module<T> {
                 if let Some(substrate_account_id) =
                     <CosmosAccounts<T>>::get(&cosmos_validator.pub_key)
                 {
+                    #[cfg(feature = "babe")]
+                    let mut substrate_account_id_as_bytes: &[u8] =
+                        &substrate_account_id.encode();
+
+                    #[cfg(feature = "babe")]
+                    // Assign new weight for authority only if selected consensus is `babe`.
+                    match pallet_babe::AuthorityId::decode(
+                        &mut substrate_account_id_as_bytes,
+                    ) {
+                        Ok(authority_id) => {
+                            match <pallet_babe::Module<T>>::assign_authority_weight(
+                                authority_id.clone(),
+                                cosmos_validator.power as u64,
+                            ) {
+                                Ok(_) => {}
+                                Err(_) => {}
+                            }
+                        }
+                        Err(_) => {}
+                    }
+
                     // update cosmos validator in the substrate storage
                     let convertable =
                         <T as pallet_session::Trait>::ValidatorIdOf::convert(substrate_account_id)
@@ -659,7 +684,7 @@ impl<T: Trait> Convert<T::AccountId, Option<utils::Exposure<T::AccountId, Balanc
 
 impl<T: Trait> pallet_session::SessionManager<T::ValidatorId> for Module<T> {
     fn new_session(new_index: SessionIndex) -> Option<Vec<T::ValidatorId>> {
-        Self::on_new_session(new_index)
+        Self::call_new_session(new_index)
     }
 
     fn end_session(_end_index: SessionIndex) {}

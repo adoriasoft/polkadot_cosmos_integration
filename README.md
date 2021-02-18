@@ -75,7 +75,7 @@ Follow to the scripts/integration_tests directory
 Purge any existing developer chain state:
 
 ```sh
-rm -rf abci_storage_rocksdb
+./target/release/node-template purge-abci-storage --dev
 ./target/release/node-template purge-chain --dev
 ```
 
