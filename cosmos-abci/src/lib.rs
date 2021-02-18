@@ -360,24 +360,6 @@ impl<T: Trait> Module<T> {
                 if let Some(substrate_account_id) =
                     <CosmosAccounts<T>>::get(&cosmos_validator.pub_key)
                 {
-                    #[cfg(feature = "babe")]
-                    let mut substrate_account_id_as_bytes: &[u8] = &substrate_account_id.encode();
-
-                    #[cfg(feature = "babe")]
-                    // Assign new weight for authority only if selected consensus is `babe`.
-                    match pallet_babe::AuthorityId::decode(&mut substrate_account_id_as_bytes) {
-                        Ok(authority_id) => {
-                            match <pallet_babe::Module<T>>::assign_authority_weight(
-                                authority_id.clone(),
-                                cosmos_validator.power as u64,
-                            ) {
-                                Ok(_) => {}
-                                Err(_) => {}
-                            }
-                        }
-                        Err(_) => {}
-                    }
-
                     // update cosmos validator in the substrate storage
                     let convertable =
                         <T as pallet_session::Trait>::ValidatorIdOf::convert(substrate_account_id)
