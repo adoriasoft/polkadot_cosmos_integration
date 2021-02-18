@@ -8,26 +8,26 @@ pub use pallet_abci;
 
 /// The `purge-abci-storage` command used to remove abci storage.
 #[derive(Debug, StructOpt)]
-pub struct PurgeAbciStorageCmd {
+pub struct PurgeChainWithStorageCmd {
     #[allow(missing_docs)]
     #[structopt(flatten)]
     pub shared_params: sc_cli::SharedParams,
     #[structopt(short = "y")]
-	pub yes: bool,
+    pub yes: bool,
 }
 
 fn remove_rocks_db(db_name: &str, db_path: path::PathBuf) {
     match fs::remove_dir_all(&db_path) {
         Ok(_) => {
             println!("{:?} removed.", &db_name);
-        },
+        }
         Err(_) => {
             println!("{:?} did not exist.", &db_path);
         }
     }
 }
 
-impl PurgeAbciStorageCmd {
+impl PurgeChainWithStorageCmd {
     /// Run the purge command.
     pub fn run(&self, config: &Configuration) -> sc_cli::Result<()> {
         let chain_spec_id = config.chain_spec.id();
@@ -55,13 +55,13 @@ impl PurgeAbciStorageCmd {
             io::stdin().read_line(&mut input)?;
             let input = input.trim();
 
-            match input.chars().nth(0) {
+            match input.chars().next() {
                 Some('y') | Some('Y') => {
                     remove_rocks_db(rocks_db_name, db_path);
-                },
+                }
                 _ => {
                     println!("Aborted");
-                },
+                }
             }
         } else {
             remove_rocks_db(rocks_db_name, db_path);
@@ -76,8 +76,8 @@ impl PurgeAbciStorageCmd {
                 log: shared_params.log.clone(),
             },
             database_params: sc_cli::DatabaseParams {
-                database: database_params.database.clone(),
-                database_cache_size: database_params.database_cache_size.clone(),
+                database: database_params.database,
+                database_cache_size: database_params.database_cache_size,
             },
         };
 
@@ -87,7 +87,7 @@ impl PurgeAbciStorageCmd {
     }
 }
 
-impl CliConfiguration for PurgeAbciStorageCmd {
+impl CliConfiguration for PurgeChainWithStorageCmd {
     fn shared_params(&self) -> &sc_cli::SharedParams {
         &self.shared_params
     }

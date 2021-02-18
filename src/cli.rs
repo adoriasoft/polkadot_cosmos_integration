@@ -13,9 +13,6 @@ pub struct Cli {
 
 #[derive(Debug, StructOpt)]
 pub enum Subcommand {
-    // Remove a rocks db storage.
-    // PurgeAbciStorage(commands::PurgeAbciStorageCmd),
-
     /// Build a chain specification.
     BuildSpec(sc_cli::BuildSpecCmd),
 
@@ -32,7 +29,7 @@ pub enum Subcommand {
     ImportBlocks(sc_cli::ImportBlocksCmd),
 
     /// Remove the whole chain.
-    PurgeChain(commands::PurgeAbciStorageCmd),
+    PurgeChain(commands::PurgeChainWithStorageCmd),
 
     /// Revert the chain to a previous state.
     Revert(sc_cli::RevertCmd),
