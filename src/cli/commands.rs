@@ -13,8 +13,8 @@ pub struct PurgeChainWithStorageCmd {
     #[structopt(flatten)]
     pub shared_params: sc_cli::SharedParams,
     #[allow(missing_docs)]
-	#[structopt(flatten)]
-	pub database_params: sc_cli::DatabaseParams,
+    #[structopt(flatten)]
+    pub database_params: sc_cli::DatabaseParams,
     #[structopt(short = "y")]
     pub yes: bool,
 }
@@ -83,8 +83,8 @@ impl PurgeChainWithStorageCmd {
                     database_cache_size: database_params.database_cache_size,
                 },
             };
-    
-            let _o = purge_chain_cmd.run(config.database.clone());    
+
+            let _o = purge_chain_cmd.run(config.database.clone());
         }
 
         Ok(())
@@ -96,6 +96,6 @@ impl CliConfiguration for PurgeChainWithStorageCmd {
         &self.shared_params
     }
     fn database_params(&self) -> Option<&sc_cli::DatabaseParams> {
-		Some(&self.database_params)
-	}
+        Some(&self.database_params)
+    }
 }
