@@ -75,7 +75,7 @@ Follow to the scripts/integration_tests directory
 Purge any existing developer chain state:
 
 ```sh
-./target/release/node-template purge-chain --dev -y
+./target/release/node-template purge-chain --dev
 ```
 
 Start a development chain with:
