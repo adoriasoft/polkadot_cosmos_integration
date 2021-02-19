@@ -84,7 +84,9 @@ impl PurgeChainWithStorageCmd {
                 },
             };
 
-            let _o = purge_chain_cmd.run(config.database.clone());
+            let result = purge_chain_cmd.run(config.database.clone());
+
+            return result;
         }
 
         Ok(())
