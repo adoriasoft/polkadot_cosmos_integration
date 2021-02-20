@@ -37,4 +37,7 @@ pub enum Subcommand {
     /// The custom benchmark subcommmand benchmarking runtime pallets.
     #[structopt(name = "benchmark", about = "Benchmark runtime pallets.")]
     Benchmark(frame_benchmarking_cli::BenchmarkCmd),
+
+    /// The command for setting the server path and genesis state path for abci.
+    SetAbciNodeOptions(commands::SetAbciNodeOptionsCmd),
 }

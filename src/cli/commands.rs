@@ -1,7 +1,7 @@
 use sc_cli::CliConfiguration;
 use sc_service::Configuration;
 use std::fmt::Debug;
-use std::{fs, io, path};
+use std::{fs, io, path, process, str, env};
 use structopt::StructOpt;
 
 pub use pallet_abci;
@@ -94,6 +94,51 @@ impl PurgeChainWithStorageCmd {
 }
 
 impl CliConfiguration for PurgeChainWithStorageCmd {
+    fn shared_params(&self) -> &sc_cli::SharedParams {
+        &self.shared_params
+    }
+    fn database_params(&self) -> Option<&sc_cli::DatabaseParams> {
+        Some(&self.database_params)
+    }
+}
+
+/// The `set-abci-node-options` command used to remove abci storage.
+#[derive(Debug, StructOpt)]
+pub struct SetAbciNodeOptionsCmd {
+    #[allow(missing_docs)]
+    #[structopt(flatten)]
+    pub shared_params: sc_cli::SharedParams,
+    #[allow(missing_docs)]
+    #[structopt(flatten)]
+    pub database_params: sc_cli::DatabaseParams,
+    #[structopt(long = "abci_genesis_path")]
+    pub abci_genesis_path: String,
+    #[structopt(long = "abci_server_url")]
+    pub abci_server_url: String,
+}
+
+impl SetAbciNodeOptionsCmd {
+    /// Set node abci options as bash variables command.
+    pub fn run(&self, _: &Configuration) -> sc_cli::Result<()> {
+        /* let set_abci_genesis_sh = process::Command::new("ls")
+            .env("ABCI_GENESIS_STATE_PATH", "path/to/1")
+            .spawn()
+            .arg(format!("export ABCI_GENESIS_STATE_PATH={}", &self.abci_server_url))
+            .output()
+            .expect("failed to execute process");
+        let set_abci_server_url_sh = process::Command::new("ls")
+            .env("ABCI_SERVER_URL", "path/to/2")
+            .spawn()
+            .arg(format!("export ABCI_SERVER_URL={}", &self.abci_server_url))
+            .output()
+            .expect("failed to execute process");
+        // println!("{:?}", str::from_utf8(&set_abci_genesis_sh.stdout).unwrap());
+        // println!("{:?}", str::from_utf8(&set_abci_server_url_sh.stdout).unwrap()); */
+        Ok(())
+    }
+}
+
+impl sc_cli::CliConfiguration for SetAbciNodeOptionsCmd {
     fn shared_params(&self) -> &sc_cli::SharedParams {
         &self.shared_params
     }
