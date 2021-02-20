@@ -1,5 +1,6 @@
 use sc_cli::RunCmd;
 use structopt::StructOpt;
+pub mod commands;
 
 #[derive(Debug, StructOpt)]
 pub struct Cli {
@@ -28,7 +29,7 @@ pub enum Subcommand {
     ImportBlocks(sc_cli::ImportBlocksCmd),
 
     /// Remove the whole chain.
-    PurgeChain(sc_cli::PurgeChainCmd),
+    PurgeChain(commands::PurgeChainWithStorageCmd),
 
     /// Revert the chain to a previous state.
     Revert(sc_cli::RevertCmd),

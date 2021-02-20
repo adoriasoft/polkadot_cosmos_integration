@@ -346,7 +346,7 @@ impl<T: Trait> Module<T> {
         }
     }
 
-    pub fn on_new_session(_new_session_index: SessionIndex) -> Option<Vec<T::ValidatorId>> {
+    pub fn call_on_new_session(_new_session_index: SessionIndex) -> Option<Vec<T::ValidatorId>> {
         // Sessions starts after end_block() with number 2.
         // For some reason two first sessions is skipped.
 
@@ -659,7 +659,7 @@ impl<T: Trait> Convert<T::AccountId, Option<utils::Exposure<T::AccountId, Balanc
 
 impl<T: Trait> pallet_session::SessionManager<T::ValidatorId> for Module<T> {
     fn new_session(new_index: SessionIndex) -> Option<Vec<T::ValidatorId>> {
-        Self::on_new_session(new_index)
+        Self::call_on_new_session(new_index)
     }
 
     fn end_session(_end_index: SessionIndex) {}
