@@ -1,9 +1,6 @@
 /// Method for getting gRPC url form active env.
 pub fn get_server_url() -> String {
-    match std::env::var("ABCI_SERVER_URL") {
-        Ok(val) => val,
-        Err(_) => DEFAULT_ABCI_URL.to_owned(),
-    }
+    crate::utils::get_node_option_argument(crate::utils::NodeOptionVariables::AbciServerUrl)
 }
 
 pub fn get_storage_name() -> String {

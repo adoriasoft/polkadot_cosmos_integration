@@ -144,12 +144,6 @@ pub fn run() -> sc_cli::Result<()> {
                     .into())
             }
         },
-        Some(Subcommand::SetAbciNodeOptions(ref cmd)) => {
-            let runner = cli.create_runner(cmd)?;
-            runner.sync_run(|config| {
-                cmd.run(&config)
-            })
-        },
         None => {
             let runner = cli.create_runner(&cli.run)?;
             runner.run_node_until_exit(|config| match config.role {

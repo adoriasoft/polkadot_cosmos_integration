@@ -6,7 +6,10 @@ pub mod commands;
 pub struct Cli {
     #[structopt(subcommand)]
     pub subcommand: Option<Subcommand>,
-
+    #[structopt(long = "abci_genesis_state_path")]
+    pub path_to_genesis: String,
+    #[structopt(long = "abci_server_url")]
+    pub abci_server_url: String,
     #[structopt(flatten)]
     pub run: RunCmd,
 }
@@ -37,7 +40,4 @@ pub enum Subcommand {
     /// The custom benchmark subcommmand benchmarking runtime pallets.
     #[structopt(name = "benchmark", about = "Benchmark runtime pallets.")]
     Benchmark(frame_benchmarking_cli::BenchmarkCmd),
-
-    /// The command for setting the server path and genesis state path for abci.
-    SetAbciNodeOptions(commands::SetAbciNodeOptionsCmd),
 }
