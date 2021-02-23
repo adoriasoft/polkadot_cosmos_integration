@@ -17,14 +17,12 @@ function clean_tmp() {
 
 function clean_substrate() {
     echo "Clean Substrate"
-    export ABCI_GENESIS_STATE_PATH=$HOME/.nsd/config/genesis.json
-    ./../../target/debug/node-template purge-chain --dev -y
+    ./../../target/debug/node-template --abci_genesis_state_path $HOME/.nsd/config/genesis.json purge-chain --dev -y
 }
 
 function start_substrate() {
     echo "Run Substrate"
-    export ABCI_GENESIS_STATE_PATH=$HOME/.nsd/config/genesis.json
-    ./../../target/debug/node-template --dev --bob &> tmp/substrate_log.log &
+    ./../../target/debug/node-template --abci_genesis_state_path $HOME/.nsd/config/genesis.json --abci_server_url tcp://localhost:26658 --abci_rpc_url 127.0.0.1:26657 --dev --bob &> tmp/substrate_log.log &
     export SUBSTRATE_PID=$!
 }
 
@@ -44,15 +42,8 @@ function start_cosmos() {
  
 function start_substrate_1() {
     echo "Run Substrate node 1"
-    export ABCI_GENESIS_STATE_PATH=$HOME/.nsd/config/genesis.json
-    export ABCI_SERVER_URL=tcp://localhost:26660
-    export ABCI_RPC_SERVER_URL=127.0.0.1:26659
-    ./../../target/debug/node-template --base-path=$SUBSTRATE_NODE_1_HOME --chain=local --alice &> tmp/substrate_node_1_log.log &
+    ./../../target/debug/node-template --abci_genesis_state_path $HOME/.nsd/config/genesis.json --abci_server_url tcp://localhost:26660 --abci_rpc_url 127.0.0.1:26659 --base-path=$SUBSTRATE_NODE_1_HOME --chain=local --alice &> tmp/substrate_node_1_log.log &
     export SUBSTRATE_NODE_1_PID=$!
-
-    unset ABCI_SERVER_URL
-    unset DEFAULT_ABCI_RPC_URL
-    unset ABCI_GENESIS_STATE_PATH
 }
 
 function clean_substrate_1() {
@@ -69,15 +60,8 @@ function stop_substrate_1() {
 
 function start_substrate_2() {
     echo "Run Substrate node 2"
-    export ABCI_GENESIS_STATE_PATH=$HOME/.nsd/config/genesis.json
-    export ABCI_SERVER_URL=tcp://localhost:26662
-    export ABCI_RPC_SERVER_URL=127.0.0.1:26661
-    ./../../target/debug/node-template --base-path=$SUBSTRATE_NODE_2_HOME --chain=local --bob &> tmp/substrate_node_2_log.log &
+    ./../../target/debug/node-template --abci_genesis_state_path $HOME/.nsd/config/genesis.json --abci_server_url tcp://localhost:26662 --abci_rpc_url 127.0.0.1:26661 --base-path=$SUBSTRATE_NODE_2_HOME --chain=local --bob &> tmp/substrate_node_2_log.log &
     export SUBSTRATE_NODE_2_PID=$!
-
-    unset ABCI_SERVER_URL
-    unset DEFAULT_ABCI_RPC_URL
-    unset ABCI_GENESIS_STATE_PATH
 }
 
 function clean_substrate_2() {
