@@ -19,7 +19,7 @@ use crate::cli::{Cli, Subcommand};
 use crate::{chain_spec, service};
 use node_template_runtime::Block;
 use sc_cli::{ChainSpec, Role, RuntimeVersion, SubstrateCli};
-use sc_service::{PartialComponents};
+use sc_service::PartialComponents;
 
 impl SubstrateCli for Cli {
     fn impl_name() -> String {
@@ -117,9 +117,7 @@ pub fn run() -> sc_cli::Result<()> {
         }
         Some(Subcommand::PurgeChain(ref cmd)) => {
             let runner = cli.create_runner(cmd)?;
-            runner.sync_run(|config| {
-                cmd.run(&config)
-            })
+            runner.sync_run(|config| cmd.run(&config))
         }
         Some(Subcommand::Revert(ref cmd)) => {
             let runner = cli.create_runner(cmd)?;
@@ -143,7 +141,7 @@ pub fn run() -> sc_cli::Result<()> {
 				You can enable it with `--features runtime-benchmarks`."
                     .into())
             }
-        },
+        }
         None => {
             let runner = cli.create_runner(&cli.run)?;
             runner.run_node_until_exit(|config| match config.role {

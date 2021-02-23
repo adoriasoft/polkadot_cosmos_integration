@@ -3,7 +3,7 @@ use std::fs;
 
 struct ArgIds {
     server_url_temp_id: usize,
-    genesis_state_path_temp_id: usize
+    genesis_state_path_temp_id: usize,
 }
 
 pub enum NodeOptionVariables {
@@ -36,7 +36,10 @@ pub fn deserialize_vec<'a, T: serde::Deserialize<'a>>(
 }
 
 fn get_genesis_from_file() -> Result<String, Box<dyn std::error::Error>> {
-    let app_state = fs::read_to_string(get_node_option_argument(NodeOptionVariables::AbciGenesisStatePath)).map_err(|_| "Error opening app state file")?;
+    let app_state = fs::read_to_string(get_node_option_argument(
+        NodeOptionVariables::AbciGenesisStatePath,
+    ))
+    .map_err(|_| "Error opening app state file")?;
     Ok(app_state)
 }
 
@@ -104,28 +107,22 @@ pub fn get_node_option_argument(option_name: NodeOptionVariables) -> String {
         server_url_temp_id: 0,
         genesis_state_path_temp_id: 0,
     };
-    let mut arg_id = 0;
     let abci_server_url_option = "--abci_server_url";
     let abci_genesis_state_path_option = "--abci_genesis_state_path";
 
-    for arg in &node_args {
+    for (arg_id, arg) in node_args.iter().enumerate() {
         if arg == abci_server_url_option {
-            arg_ids.server_url_temp_id = arg_id+1;
+            arg_ids.server_url_temp_id = arg_id + 1;
         } else if arg == abci_genesis_state_path_option {
-            arg_ids.genesis_state_path_temp_id = arg_id+1;
+            arg_ids.genesis_state_path_temp_id = arg_id + 1;
         }
-        arg_id = arg_id+1;
     }
 
     let abci_server_url = &node_args[arg_ids.server_url_temp_id];
     let abci_genesis_state_path = &node_args[arg_ids.genesis_state_path_temp_id];
 
     match option_name {
-        NodeOptionVariables::AbciServerUrl => {
-            abci_server_url.to_string()
-        },
-        NodeOptionVariables::AbciGenesisStatePath => {
-            abci_genesis_state_path.to_string()
-        }
+        NodeOptionVariables::AbciServerUrl => abci_server_url.to_string(),
+        NodeOptionVariables::AbciGenesisStatePath => abci_genesis_state_path.to_string(),
     }
 }
