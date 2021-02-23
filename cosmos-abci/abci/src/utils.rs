@@ -4,11 +4,13 @@ use std::fs;
 struct ArgIds {
     server_url_temp_id: usize,
     genesis_state_path_temp_id: usize,
+    rpc_url_temp_id: usize,
 }
 
 pub enum NodeOptionVariables {
     AbciServerUrl,
     AbciGenesisStatePath,
+    AbciRPCUrl,
 }
 
 pub struct GenesisInfo {
@@ -36,19 +38,27 @@ pub fn deserialize_vec<'a, T: serde::Deserialize<'a>>(
 }
 
 fn get_genesis_from_file() -> Result<String, Box<dyn std::error::Error>> {
-    let app_state = fs::read_to_string(get_node_option_argument(
-        NodeOptionVariables::AbciGenesisStatePath,
-    ))
-    .map_err(|_| "Error opening app state file")?;
+    let mut path: String = "/fake/path/to/genesis".to_owned();
+
+    match get_option_from_node_args(NodeOptionVariables::AbciGenesisStatePath) {
+        Some(_path) => {
+            path = _path.to_owned();
+        },
+        None => { }
+    }
+
+    let app_state = fs::read_to_string(&path).map_err(|_| "Error opening app state file")?;
     Ok(app_state)
 }
 
 pub fn get_abci_genesis() -> String {
     match get_genesis_from_file() {
         Ok(v) => v,
-        _ => std::env::var("ABCI_GENESIS_STATE")
-            .map_err(|_| "Failed to get abci genesis state file")
-            .unwrap(),
+        _ => {
+            std::env::var("ABCI_GENESIS_STATE")
+                .map_err(|_| "Failed to get abci genesis state file")
+                .unwrap()
+        }
     }
 }
 
@@ -101,28 +111,44 @@ pub fn parse_cosmos_genesis_file(genesis: &str) -> Result<GenesisInfo, Box<dyn s
     Ok(result)
 }
 
-pub fn get_node_option_argument(option_name: NodeOptionVariables) -> String {
+pub fn get_option_from_node_args(option_name: NodeOptionVariables) -> Option<String> {
     let node_args: Vec<String> = std::env::args().collect();
     let mut arg_ids = ArgIds {
         server_url_temp_id: 0,
         genesis_state_path_temp_id: 0,
+        rpc_url_temp_id: 0,
     };
     let abci_server_url_option = "--abci_server_url";
     let abci_genesis_state_path_option = "--abci_genesis_state_path";
+    let abci_rpc_url_option = "--abci_rpc_url";
 
     for (arg_id, arg) in node_args.iter().enumerate() {
         if arg == abci_server_url_option {
             arg_ids.server_url_temp_id = arg_id + 1;
         } else if arg == abci_genesis_state_path_option {
             arg_ids.genesis_state_path_temp_id = arg_id + 1;
+        } else if arg == abci_rpc_url_option {
+            arg_ids.rpc_url_temp_id = arg_id + 1;
         }
     }
 
-    let abci_server_url = &node_args[arg_ids.server_url_temp_id];
-    let abci_genesis_state_path = &node_args[arg_ids.genesis_state_path_temp_id];
+    let mut abci_server_url = None;
+    let mut abci_genesis_state_path = None;
+    let mut abci_rpc_url = None;
+
+    if arg_ids.server_url_temp_id != 0 {
+        abci_server_url = Some(node_args[arg_ids.server_url_temp_id].to_string());
+    }
+    if arg_ids.genesis_state_path_temp_id != 0 {
+        abci_genesis_state_path = Some(node_args[arg_ids.genesis_state_path_temp_id].to_string());
+    }
+    if arg_ids.rpc_url_temp_id != 0 {
+        abci_rpc_url = Some(node_args[arg_ids.rpc_url_temp_id].to_string());
+    }
 
     match option_name {
-        NodeOptionVariables::AbciServerUrl => abci_server_url.to_string(),
-        NodeOptionVariables::AbciGenesisStatePath => abci_genesis_state_path.to_string(),
+        NodeOptionVariables::AbciServerUrl => abci_server_url,
+        NodeOptionVariables::AbciGenesisStatePath => abci_genesis_state_path,
+        NodeOptionVariables::AbciRPCUrl => abci_rpc_url
     }
 }
