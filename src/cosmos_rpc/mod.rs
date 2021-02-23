@@ -21,8 +21,10 @@ pub const FAILED_TO_DECODE_TX_MSG: &str = "Failde to decode tx.";
 
 /// Method for getting RPC server url form active env.
 pub fn get_abci_rpc_url() -> String {
-    pallet_abci::utils::get_option_from_node_args(pallet_abci::utils::NodeOptionVariables::AbciRPCUrl)
-        .unwrap_or(DEFAULT_ABCI_RPC_URL.to_owned())
+    pallet_abci::utils::get_option_from_node_args(
+        pallet_abci::utils::NodeOptionVariables::AbciRPCUrl,
+    )
+    .unwrap_or_else(|| DEFAULT_ABCI_RPC_URL.to_owned())
 }
 
 /// Method for start RPC server.

@@ -40,11 +40,8 @@ pub fn deserialize_vec<'a, T: serde::Deserialize<'a>>(
 fn get_genesis_from_file() -> Result<String, Box<dyn std::error::Error>> {
     let mut path: String = "/fake/path/to/genesis".to_owned();
 
-    match get_option_from_node_args(NodeOptionVariables::AbciGenesisStatePath) {
-        Some(_path) => {
-            path = _path.to_owned();
-        },
-        None => { }
+    if let Some(_path) = get_option_from_node_args(NodeOptionVariables::AbciGenesisStatePath) {
+        path = _path;
     }
 
     let app_state = fs::read_to_string(&path).map_err(|_| "Error opening app state file")?;
@@ -54,11 +51,9 @@ fn get_genesis_from_file() -> Result<String, Box<dyn std::error::Error>> {
 pub fn get_abci_genesis() -> String {
     match get_genesis_from_file() {
         Ok(v) => v,
-        _ => {
-            std::env::var("ABCI_GENESIS_STATE")
-                .map_err(|_| "Failed to get abci genesis state file")
-                .unwrap()
-        }
+        _ => std::env::var("ABCI_GENESIS_STATE")
+            .map_err(|_| "Failed to get abci genesis state file")
+            .unwrap(),
     }
 }
 
@@ -149,6 +144,6 @@ pub fn get_option_from_node_args(option_name: NodeOptionVariables) -> Option<Str
     match option_name {
         NodeOptionVariables::AbciServerUrl => abci_server_url,
         NodeOptionVariables::AbciGenesisStatePath => abci_genesis_state_path,
-        NodeOptionVariables::AbciRPCUrl => abci_rpc_url
+        NodeOptionVariables::AbciRPCUrl => abci_rpc_url,
     }
 }

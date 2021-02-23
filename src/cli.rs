@@ -6,11 +6,26 @@ pub mod commands;
 pub struct Cli {
     #[structopt(subcommand)]
     pub subcommand: Option<Subcommand>,
-    #[structopt(long = "abci_genesis_state_path", about = "ABCI Genesis state path", default_value = "")]
+    /// ABCI Genesis state path
+    #[structopt(
+        long = "abci_genesis_state_path",
+        about = "ABCI Genesis state path",
+        default_value = ""
+    )]
     pub path_to_genesis: String,
-    #[structopt(long = "abci_server_url", about = "Path to ABCI server", default_value = "")]
+    /// Path to ABCI server
+    #[structopt(
+        long = "abci_server_url",
+        about = "Path to ABCI server",
+        default_value = ""
+    )]
     pub abci_server_url: String,
-    #[structopt(long = "abci_rpc_url", about = "Path to ABCI RPC server", default_value = "")]
+    /// Path to ABCI RPC server
+    #[structopt(
+        long = "abci_rpc_url",
+        about = "Path to ABCI RPC server",
+        default_value = ""
+    )]
     pub abci_rpc_url: String,
     #[structopt(flatten)]
     pub run: RunCmd,

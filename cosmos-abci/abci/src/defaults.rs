@@ -1,6 +1,7 @@
 /// Method for getting gRPC url form active env.
 pub fn get_server_url() -> String {
-    crate::utils::get_option_from_node_args(crate::utils::NodeOptionVariables::AbciServerUrl).unwrap_or(DEFAULT_ABCI_URL.to_owned())
+    crate::utils::get_option_from_node_args(crate::utils::NodeOptionVariables::AbciServerUrl)
+        .unwrap_or_else(|| DEFAULT_ABCI_URL.to_owned())
 }
 
 pub fn get_storage_name() -> String {
