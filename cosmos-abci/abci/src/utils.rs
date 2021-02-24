@@ -37,17 +37,12 @@ pub fn deserialize_vec<'a, T: serde::Deserialize<'a>>(
     Ok(bincode::deserialize(bytes).map_err(|_| "cannot deserialize")?)
 }
 
-fn get_genesis_from_file() -> Result<String, ()> {
+fn get_genesis_from_file() -> Result<String, String> {
     if let Some(_path) = get_option_from_node_args(NodeOptionVariables::AbciGenesisStatePath) {
-        match fs::read_to_string(&_path) {
-            Ok(genesis_state) => {
-                return Ok(genesis_state);
-            },
-            Err(_) => { }
-        }
-        Err(())
+        let app_genesis_state = fs::read_to_string(&_path).map_err(|e| e.to_string())?;
+        Ok(app_genesis_state)
     } else {
-        Err(())
+        Err("ABCI path to Genesis state not provided.".to_string())
     }
 }
 
