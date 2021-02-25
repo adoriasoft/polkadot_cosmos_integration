@@ -81,7 +81,13 @@ Purge any existing developer chain state:
 Start a development chain with:
 
 ```sh
-./target/release/node-template --dev
+./target/release/node-template --abci_genesis_state_path $HOME/.nsd/config/genesis.json --abci_server_url tcp://localhost:26658 --abci_rpc_url 127.0.0.1:26657 --dev
+```
+
+To get detailed info about options that available for node:
+
+```sh
+./target/release/node-template --help
 ```
 
 Detailed logs may be shown by running the node with the following environment variables set: `RUST_LOG=debug RUST_BACKTRACE=1 cargo run -- --dev`.

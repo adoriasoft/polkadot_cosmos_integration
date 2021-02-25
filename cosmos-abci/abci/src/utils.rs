@@ -1,5 +1,17 @@
 use chrono::DateTime;
-use std::{fs, path::PathBuf};
+use std::fs;
+
+struct ArgIds {
+    server_url_temp_id: usize,
+    genesis_state_path_temp_id: usize,
+    rpc_url_temp_id: usize,
+}
+
+pub enum NodeOptionVariables {
+    AbciServerUrl,
+    AbciGenesisStatePath,
+    AbciRPCUrl,
+}
 
 pub struct GenesisInfo {
     pub time_seconds: i64,
@@ -25,12 +37,13 @@ pub fn deserialize_vec<'a, T: serde::Deserialize<'a>>(
     Ok(bincode::deserialize(bytes).map_err(|_| "cannot deserialize")?)
 }
 
-fn get_genesis_from_file() -> Result<String, Box<dyn std::error::Error>> {
-    let path: PathBuf = std::env::var("ABCI_GENESIS_STATE_PATH")
-        .map_err(|_| "Failed to get app state file path")?
-        .into();
-    let app_state = fs::read_to_string(&path).map_err(|_| "Error opening app state file")?;
-    Ok(app_state)
+fn get_genesis_from_file() -> Result<String, String> {
+    if let Some(_path) = get_option_from_node_args(NodeOptionVariables::AbciGenesisStatePath) {
+        let app_genesis_state = fs::read_to_string(&_path).map_err(|e| e.to_string())?;
+        Ok(app_genesis_state)
+    } else {
+        Err("ABCI path to Genesis state not provided.".to_string())
+    }
 }
 
 pub fn get_abci_genesis() -> String {
@@ -89,4 +102,46 @@ pub fn parse_cosmos_genesis_file(genesis: &str) -> Result<GenesisInfo, Box<dyn s
     };
 
     Ok(result)
+}
+
+pub fn get_option_from_node_args(option_name: NodeOptionVariables) -> Option<String> {
+    let node_args: Vec<String> = std::env::args().collect();
+    let mut arg_ids = ArgIds {
+        server_url_temp_id: 0,
+        genesis_state_path_temp_id: 0,
+        rpc_url_temp_id: 0,
+    };
+    let abci_server_url_option = "--abci_server_url";
+    let abci_genesis_state_path_option = "--abci_genesis_state_path";
+    let abci_rpc_url_option = "--abci_rpc_url";
+
+    for (arg_id, arg) in node_args.iter().enumerate() {
+        if arg == abci_server_url_option {
+            arg_ids.server_url_temp_id = arg_id + 1;
+        } else if arg == abci_genesis_state_path_option {
+            arg_ids.genesis_state_path_temp_id = arg_id + 1;
+        } else if arg == abci_rpc_url_option {
+            arg_ids.rpc_url_temp_id = arg_id + 1;
+        }
+    }
+
+    let mut abci_server_url = None;
+    let mut abci_genesis_state_path = None;
+    let mut abci_rpc_url = None;
+
+    if arg_ids.server_url_temp_id != 0 {
+        abci_server_url = Some(node_args[arg_ids.server_url_temp_id].to_string());
+    }
+    if arg_ids.genesis_state_path_temp_id != 0 {
+        abci_genesis_state_path = Some(node_args[arg_ids.genesis_state_path_temp_id].to_string());
+    }
+    if arg_ids.rpc_url_temp_id != 0 {
+        abci_rpc_url = Some(node_args[arg_ids.rpc_url_temp_id].to_string());
+    }
+
+    match option_name {
+        NodeOptionVariables::AbciServerUrl => abci_server_url,
+        NodeOptionVariables::AbciGenesisStatePath => abci_genesis_state_path,
+        NodeOptionVariables::AbciRPCUrl => abci_rpc_url,
+    }
 }

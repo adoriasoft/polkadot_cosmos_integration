@@ -21,10 +21,10 @@ pub const FAILED_TO_DECODE_TX_MSG: &str = "Failde to decode tx.";
 
 /// Method for getting RPC server url form active env.
 pub fn get_abci_rpc_url() -> String {
-    match std::env::var("ABCI_RPC_SERVER_URL") {
-        Ok(val) => val,
-        Err(_) => DEFAULT_ABCI_RPC_URL.to_owned(),
-    }
+    pallet_abci::utils::get_option_from_node_args(
+        pallet_abci::utils::NodeOptionVariables::AbciRPCUrl,
+    )
+    .unwrap_or_else(|| DEFAULT_ABCI_RPC_URL.to_owned())
 }
 
 /// Method for start RPC server.
@@ -318,9 +318,10 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
     });
 
     std::thread::spawn(move || {
+        let rpc_url = get_abci_rpc_url();
         let server = ServerBuilder::new(io)
             .threads(3)
-            .start_http(&get_abci_rpc_url().as_str().parse().unwrap())
+            .start_http(&rpc_url.as_str().parse().unwrap())
             .unwrap();
         server.wait();
     });

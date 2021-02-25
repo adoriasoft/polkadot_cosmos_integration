@@ -222,9 +222,9 @@ pub fn new_full(config: Configuration) -> Result<TaskManager, ServiceError> {
         .to_path_buf()
         .join("chains")
         .join(config.chain_spec.id());
-
-    // Init Abci instance
     let abci_server_url = &pallet_abci::get_server_url();
+
+    // Init ABCI instance.
     pallet_abci::set_abci_instance(Box::new(
         pallet_abci::grpc::AbciinterfaceGrpc::connect(abci_server_url)
             .map_err(|_| "failed to connect")
