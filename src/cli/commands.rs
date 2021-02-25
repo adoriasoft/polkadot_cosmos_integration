@@ -1,7 +1,8 @@
 use sc_cli::CliConfiguration;
 use sc_service::Configuration;
 use std::fmt::Debug;
-use std::{fs, io, path};
+use std::io::{self, Write};
+use std::{fs, path};
 use structopt::StructOpt;
 
 pub use pallet_abci;
@@ -52,7 +53,8 @@ impl PurgeChainWithStorageCmd {
         if self.yes {
             remove_rocks_db(rocks_db_name, db_path);
         } else {
-            println!("Are you sure to remove {:?}? [y/N]: ", &db_path);
+            print!("Are you sure to reset state? [y/N]: ");
+            std::io::stdout().flush().expect("failed to flush stdout");
 
             let mut input = String::new();
             io::stdin().read_line(&mut input)?;
