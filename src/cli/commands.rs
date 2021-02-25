@@ -1,8 +1,8 @@
 use sc_cli::CliConfiguration;
 use sc_service::Configuration;
 use std::fmt::Debug;
-use std::{fs, path};
 use std::io::{self, Write};
+use std::{fs, path};
 use structopt::StructOpt;
 
 pub use pallet_abci;
