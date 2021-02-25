@@ -7,6 +7,7 @@ use frame_support::{
     codec::{Decode, Encode},
     debug, decl_module, decl_storage,
     dispatch::{DispatchResult, Vec},
+    traits::OneSessionHandler,
     weights::Weight,
 };
 use frame_system::{
@@ -64,23 +65,25 @@ pub trait CosmosAbci {
 
 /// The pallet configuration trait.
 #[cfg(feature = "aura")]
-pub trait Trait:
-    CreateSignedTransaction<Call<Self>>
-    + pallet_session::Trait
-    + pallet_sudo::Trait
-    + pallet_grandpa::Trait
+pub trait Config:
+    frame_system::Config
+    + CreateSignedTransaction<Call<Self>>
+    + pallet_session::Config
+    + pallet_sudo::Config
+    + pallet_grandpa::Config
 {
     type AuthorityId: Decode + sp_runtime::RuntimeAppPublic + Default;
     type Call: From<Call<Self>>;
     type Subscription: SubscriptionManager;
 }
 #[cfg(feature = "babe")]
-pub trait Trait:
-    CreateSignedTransaction<Call<Self>>
-    + pallet_session::Trait
-    + pallet_sudo::Trait
-    + pallet_grandpa::Trait
-    + pallet_babe::Trait
+pub trait Config:
+    frame_system::Config
+    + CreateSignedTransaction<Call<Self>>
+    + pallet_session::Config
+    + pallet_sudo::Config
+    + pallet_grandpa::Config
+    + pallet_babe::Config
 {
     type AuthorityId: Decode + sp_runtime::RuntimeAppPublic + Default;
     type Call: From<Call<Self>>;
@@ -136,9 +139,9 @@ tuple_impls! { A B C D E F G H I J K L M N }
 tuple_impls! { A B C D E F G H I J K L M N O }
 tuple_impls! { A B C D E F G H I J K L M N O P }
 
-impl<T: Trait> sp_runtime::BoundToRuntimeAppPublic for Module<T>
+impl<T: Config> sp_runtime::BoundToRuntimeAppPublic for Module<T>
 where
-    <T as Trait>::AuthorityId: sp_runtime::RuntimeAppPublic,
+    <T as Config>::AuthorityId: sp_runtime::RuntimeAppPublic,
 {
     type Public = T::AuthorityId;
 }
@@ -150,16 +153,16 @@ pub struct ABCITxs {
 }
 
 decl_storage! {
-    trait Store for Module<T: Trait> as ABCITxStorage {
+    trait Store for Module<T: Config> as ABCITxStorage {
         ABCITxStorage get(fn abci_tx): map hasher(blake2_128_concat) T::BlockNumber => ABCITxs;
         CosmosAccounts get(fn cosmos_accounts): map hasher(blake2_128_concat) Vec<u8> => Option<T::AccountId> = None;
         AccountLedger get(fn account_ledgers): map hasher(blake2_128_concat) T::AccountId => OptionalLedger<T::AccountId>;
-        SubstrateAccounts get(fn substrate_accounts): map hasher(blake2_128_concat) <T as session::Trait>::ValidatorId => Option<utils::CosmosAccount> = None;
+        SubstrateAccounts get(fn substrate_accounts): map hasher(blake2_128_concat) <T as session::Config>::ValidatorId => Option<utils::CosmosAccount> = None;
     }
 }
 
 decl_module! {
-    pub struct Module<T: Trait> for enum Call where origin: T::Origin {
+    pub struct Module<T: Config> for enum Call where origin: T::Origin {
         // Block initialization.
         fn on_initialize(block_number: T::BlockNumber) -> Weight {
             0
@@ -177,7 +180,7 @@ decl_module! {
         ) -> DispatchResult {
             let origin_signed = ensure_signed(origin)?;
             <AccountLedger<T>>::insert(&origin_signed, Some((&origin_signed, 0)));
-            let convertable = <T as pallet_session::Trait>::ValidatorIdOf::convert(origin_signed.clone())
+            let convertable = <T as pallet_session::Config>::ValidatorIdOf::convert(origin_signed.clone())
                 .unwrap();
             <CosmosAccounts<T>>::insert(&cosmos_account_pub_key, &origin_signed);
             <SubstrateAccounts<T>>::insert(&convertable, utils::CosmosAccount {
@@ -190,7 +193,7 @@ decl_module! {
         // Remove Cosmos node account.
         #[weight = 0]
         fn remove_cosmos_account(origin) -> DispatchResult {
-            let convertable = <T as session::Trait>::ValidatorIdOf::convert(ensure_signed(origin)?)
+            let convertable = <T as session::Config>::ValidatorIdOf::convert(ensure_signed(origin)?)
                 .unwrap();
             if let Some(cosmos_account) = <SubstrateAccounts<T>>::get(&convertable) {
                 <CosmosAccounts<T>>::remove(&cosmos_account.pub_key);
@@ -212,7 +215,7 @@ decl_module! {
         fn offchain_worker(block_number: T::BlockNumber) {
             if let Some(bytes) = abci_interface::storage_get(b"abci_current_height".to_vec()).unwrap() {
                 let mut height: u32 = u32::from_ne_bytes(bytes.as_slice().try_into().unwrap());
-                while height != block_number.saturated_into() as u32 {
+                while height != block_number.saturated_into::<u32>() {
                     height += 1;
                     if height !=0 {
                         let block_hash = <system::Module<T>>::block_hash(T::BlockNumber::from(height));
@@ -227,13 +230,13 @@ decl_module! {
             }
 
             abci_interface::storage_write(b"abci_current_height".to_vec(),
-            (block_number.saturated_into() as u32).to_ne_bytes().to_vec()).unwrap();
+            (block_number.saturated_into::<u32>()).to_ne_bytes().to_vec()).unwrap();
         }
     }
 }
 
 /// Implementation of additional methods for pallet configuration trait.
-impl<T: Trait> Module<T> {
+impl<T: Config> Module<T> {
     // The abci transaction call.
     pub fn call_abci_transaction(data: Vec<u8>) -> DispatchResult {
         let block_number = <system::Module<T>>::block_number();
@@ -275,9 +278,8 @@ impl<T: Trait> Module<T> {
                 active_cosmos_validators.push(value);
             };
         }
-
         if let Err(err) = abci_interface::begin_block(
-            block_number.saturated_into() as i64,
+            block_number.saturated_into::<u32>() as i64,
             block_hash.as_ref().to_vec(),
             parent_hash.as_ref().to_vec(),
             extrinsics_root.as_ref().to_vec(),
@@ -290,7 +292,7 @@ impl<T: Trait> Module<T> {
 
     /// Called on block finalize.
     pub fn call_on_finalize(block_number: T::BlockNumber) -> bool {
-        match abci_interface::end_block(block_number.saturated_into() as i64) {
+        match abci_interface::end_block(block_number.saturated_into::<u32>() as i64) {
             Ok(_) => match abci_interface::commit() {
                 Err(err) => {
                     panic!("Commit failed: {:?}", err);
@@ -362,7 +364,7 @@ impl<T: Trait> Module<T> {
                 {
                     // update cosmos validator in the substrate storage
                     let convertable =
-                        <T as pallet_session::Trait>::ValidatorIdOf::convert(substrate_account_id)
+                        <T as pallet_session::Config>::ValidatorIdOf::convert(substrate_account_id)
                             .unwrap();
                     new_substrate_validators.push(convertable.clone());
                     <SubstrateAccounts<T>>::insert(convertable, cosmos_validator);
@@ -389,7 +391,7 @@ impl<T: Trait> Module<T> {
 }
 
 /// The implementation of ValidateUnsigned trait for module.
-impl<T: Trait> frame_support::unsigned::ValidateUnsigned for Module<T> {
+impl<T: Config> frame_support::unsigned::ValidateUnsigned for Module<T> {
     type Call = Call<T>;
 
     fn validate_unsigned(_source: TransactionSource, call: &Self::Call) -> TransactionValidity {
@@ -410,7 +412,7 @@ impl<T: Trait> frame_support::unsigned::ValidateUnsigned for Module<T> {
 }
 
 /// The implementation for CosmosAbci trait for pallet.
-impl<T: Trait> CosmosAbci for Module<T> {
+impl<T: Config> CosmosAbci for Module<T> {
     fn check_tx(data: Vec<u8>) -> Result<u64, DispatchError> {
         <T::Subscription as SubscriptionManager>::on_check_tx(data.clone())?;
         abci_interface::check_tx(data)
@@ -627,14 +629,14 @@ pub trait AbciInterface {
     }
 }
 
-impl<T: Trait> sp_runtime::offchain::storage_lock::BlockNumberProvider for Module<T> {
+impl<T: Config> sp_runtime::offchain::storage_lock::BlockNumberProvider for Module<T> {
     type BlockNumber = T::BlockNumber;
     fn current_block_number() -> Self::BlockNumber {
         <frame_system::Module<T>>::block_number()
     }
 }
 
-impl<T: Trait> Convert<T::AccountId, Option<T::AccountId>> for utils::StashOf<T> {
+impl<T: Config> Convert<T::AccountId, Option<T::AccountId>> for utils::StashOf<T> {
     fn convert(controller: T::AccountId) -> Option<T::AccountId> {
         let account_ledger: OptionalLedger<T::AccountId> =
             <Module<T>>::account_ledgers(&controller);
@@ -645,7 +647,7 @@ impl<T: Trait> Convert<T::AccountId, Option<T::AccountId>> for utils::StashOf<T>
     }
 }
 
-impl<T: Trait> Convert<T::AccountId, Option<utils::Exposure<T::AccountId, Balance>>>
+impl<T: Config> Convert<T::AccountId, Option<utils::Exposure<T::AccountId, Balance>>>
     for utils::ExposureOf<T>
 {
     fn convert(_validator: T::AccountId) -> Option<utils::Exposure<T::AccountId, Balance>> {
@@ -657,7 +659,7 @@ impl<T: Trait> Convert<T::AccountId, Option<utils::Exposure<T::AccountId, Balanc
     }
 }
 
-impl<T: Trait> pallet_session::SessionManager<T::ValidatorId> for Module<T> {
+impl<T: Config> pallet_session::SessionManager<T::ValidatorId> for Module<T> {
     fn new_session(new_index: SessionIndex) -> Option<Vec<T::ValidatorId>> {
         Self::call_on_new_session(new_index)
     }
@@ -667,15 +669,9 @@ impl<T: Trait> pallet_session::SessionManager<T::ValidatorId> for Module<T> {
     fn start_session(_start_index: SessionIndex) {}
 }
 
-impl<T: Trait> pallet_session::ShouldEndSession<T::BlockNumber> for Module<T> {
-    fn should_end_session(_: T::BlockNumber) -> bool {
-        true
-    }
-}
-
-impl<T: Trait> pallet_session::OneSessionHandler<T::AccountId> for Module<T>
+impl<T: Config> OneSessionHandler<T::AccountId> for Module<T>
 where
-    <T as Trait>::AuthorityId: sp_runtime::RuntimeAppPublic,
+    T: pallet_session::Config,
 {
     type Key = T::AuthorityId;
 
