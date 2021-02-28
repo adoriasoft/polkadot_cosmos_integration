@@ -10,9 +10,7 @@ use frame_support::{
     traits::OneSessionHandler,
     weights::Weight,
 };
-use frame_system::{
-    self as system, ensure_none, ensure_signed, offchain::CreateSignedTransaction, RawOrigin,
-};
+use frame_system::{self as system, ensure_none, ensure_signed, RawOrigin};
 use pallet_session as session;
 use sp_core::{crypto::KeyTypeId, Hasher};
 #[allow(unused_imports)]
@@ -66,11 +64,7 @@ pub trait CosmosAbci {
 /// The pallet configuration trait.
 #[cfg(feature = "aura")]
 pub trait Config:
-    frame_system::Config
-    + CreateSignedTransaction<Call<Self>>
-    + pallet_session::Config
-    + pallet_sudo::Config
-    + pallet_grandpa::Config
+    frame_system::Config + pallet_session::Config + pallet_sudo::Config + pallet_grandpa::Config
 {
     type AuthorityId: Decode + sp_runtime::RuntimeAppPublic + Default;
     type Call: From<Call<Self>>;
@@ -79,7 +73,6 @@ pub trait Config:
 #[cfg(feature = "babe")]
 pub trait Config:
     frame_system::Config
-    + CreateSignedTransaction<Call<Self>>
     + pallet_session::Config
     + pallet_sudo::Config
     + pallet_grandpa::Config

@@ -54,6 +54,8 @@ sc-basic-authorship = '0.9.0'
 sc-cli = { features = ['wasmtime'], version = '0.9.0' }
 sc-client-api = '3.0.0'
 sc-consensus = '0.9.0'
+sc-telemetry = '3.0.0'
+sc-keystore = '3.0.0'
 sc-executor = { features = ['wasmtime'], version = '0.9.0' }
 sc-finality-grandpa = '0.9.0'
 sc-rpc = '3.0.0'
