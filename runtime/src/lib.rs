@@ -38,7 +38,7 @@ use frame_system::offchain::SubmitTransaction;
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
     construct_runtime, debug,
-    dispatch::CallableCallFor,
+    dispatch::Callable,
     parameter_types,
     traits::{Imbalance, KeyOwnerProofSystem, Randomness, ReservableCurrency},
     weights::{
@@ -554,7 +554,7 @@ impl_runtime_apis! {
             tx: <Block as BlockT>::Extrinsic,
         ) -> TransactionValidity {
             let mut res = Executive::validate_transaction(source, tx.clone())?;
-            if let Some(&pallet_cosmos_abci::Call::abci_transaction(ref val)) = <CallableCallFor<CosmosAbci, Runtime>>::is_sub_type(&tx.function) {
+            if let Some(&pallet_cosmos_abci::Call::abci_transaction(ref val)) = <dyn Callable<Runtime>>::is_sub_type(&tx.function) {
                 let diff = <CosmosAbci as pallet_cosmos_abci::CosmosAbci>::check_tx(val.clone()).map_err(|_e| {
                     match _e {
                         sp_runtime::DispatchError::Module { error, .. } => InvalidTransaction::Custom(error),
