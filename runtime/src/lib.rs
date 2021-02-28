@@ -38,8 +38,9 @@ use frame_system::offchain::SubmitTransaction;
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
     construct_runtime, debug,
-    dispatch::Callable,
+    dispatch::CallableCallFor,
     parameter_types,
+    traits::IsSubType,
     traits::{Imbalance, KeyOwnerProofSystem, Randomness, ReservableCurrency},
     weights::{
         constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -465,7 +466,7 @@ construct_runtime!(
         Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
         TransactionPayment: pallet_transaction_payment::{Module, Storage},
         Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
-        CosmosAbci: pallet_cosmos_abci::{Module, Call, ValidateUnsigned}
+        CosmosAbci: pallet_cosmos_abci::{Module, Call, ValidateUnsigned},
     }
 );
 
@@ -554,7 +555,7 @@ impl_runtime_apis! {
             tx: <Block as BlockT>::Extrinsic,
         ) -> TransactionValidity {
             let mut res = Executive::validate_transaction(source, tx.clone())?;
-            if let Some(&pallet_cosmos_abci::Call::abci_transaction(ref val)) = <dyn Callable<Runtime>>::is_sub_type(&tx.function) {
+            if let Some(&pallet_cosmos_abci::Call::abci_transaction(ref val)) = IsSubType::<CallableCallFor<CosmosAbci, Runtime>>::is_sub_type(&tx.function) {
                 let diff = <CosmosAbci as pallet_cosmos_abci::CosmosAbci>::check_tx(val.clone()).map_err(|_e| {
                     match _e {
                         sp_runtime::DispatchError::Module { error, .. } => InvalidTransaction::Custom(error),
