@@ -203,7 +203,7 @@ fn remote_keystore(_url: &String) -> Result<Arc<LocalKeystore>, &'static str> {
 }
 
 /// Builds a new service for a full client.
-pub fn new_full(config: Configuration) -> Result<TaskManager, ServiceError> {
+pub fn new_full(mut config: Configuration) -> Result<TaskManager, ServiceError> {
     // TODO: fix it afer substarte update
     let config_dir = config
         .base_path
@@ -344,7 +344,7 @@ pub fn new_full(config: Configuration) -> Result<TaskManager, ServiceError> {
             network_status_sinks,
             system_rpc_tx,
             config,
-            telemetry_span: Some(telemetry_span),
+            // telemetry_span: Some(telemetry_span),
         })?;
 
     if role.is_authority() {
@@ -453,7 +453,7 @@ pub fn new_full(config: Configuration) -> Result<TaskManager, ServiceError> {
 }
 
 /// Builds a new service for a light client.
-pub fn new_light(config: Configuration) -> Result<TaskManager, ServiceError> {
+pub fn new_light(mut config: Configuration) -> Result<TaskManager, ServiceError> {
     let (client, backend, keystore_container, mut task_manager, on_demand) =
         sc_service::new_light_parts::<Block, RuntimeApi, Executor>(&config)?;
 
@@ -553,7 +553,7 @@ pub fn new_light(config: Configuration) -> Result<TaskManager, ServiceError> {
         network,
         network_status_sinks,
         system_rpc_tx,
-        telemetry_span: Some(telemetry_span),
+        // telemetry_span: Some(telemetry_span),
     })?;
 
     network_starter.start_network();
