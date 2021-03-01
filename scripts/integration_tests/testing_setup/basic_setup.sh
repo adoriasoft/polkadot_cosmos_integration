@@ -17,12 +17,12 @@ function clean_tmp() {
 
 function clean_substrate() {
     echo "Clean Substrate"
-    ./../../target/debug/node-template --abci_genesis_state_path $HOME/.nsd/config/genesis.json purge-chain --dev -y
+    ./../../target/debug/node-template purge-chain --dev -y
 }
 
 function start_substrate() {
     echo "Run Substrate"
-    ./../../target/debug/node-template --abci_genesis_state_path $HOME/.nsd/config/genesis.json --abci_server_url tcp://localhost:26658 --abci_rpc_url 127.0.0.1:26657 --dev --bob &> tmp/substrate_log.log &
+    ./../../target/debug/node-template --abci_genesis_state_path $HOME/.nsd/config/genesis.json --dev --bob &> tmp/substrate_log.log &
     export SUBSTRATE_PID=$!
 }
 
