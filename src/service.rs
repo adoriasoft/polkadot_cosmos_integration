@@ -29,6 +29,7 @@ type FullBackend = sc_service::TFullBackend<Block>;
 /// Longest selected chain type include FullBackend, Block.
 type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
 
+#[cfg(feature = "babe")]
 type FullGrandpaBlockImport =
     sc_finality_grandpa::GrandpaBlockImport<FullBackend, Block, FullClient, FullSelectChain>;
 
@@ -82,7 +83,93 @@ fn init_chain() -> Result<(), ServiceError> {
     Ok(())
 }
 
+#[cfg(feature = "aura")]
+pub fn new_partial(
+    config: &Configuration,
+) -> Result<
+    sc_service::PartialComponents<
+        FullClient,
+        FullBackend,
+        FullSelectChain,
+        sp_consensus::DefaultImportQueue<Block, FullClient>,
+        sc_transaction_pool::FullPool<Block, FullClient>,
+        (
+            sc_consensus_aura::AuraBlockImport<
+                Block,
+                FullClient,
+                sc_finality_grandpa::GrandpaBlockImport<
+                    FullBackend,
+                    Block,
+                    FullClient,
+                    FullSelectChain,
+                >,
+                AuraPair,
+            >,
+            sc_finality_grandpa::LinkHalf<Block, FullClient, FullSelectChain>,
+        ),
+    >,
+    ServiceError,
+> {
+    if config.keystore_remote.is_some() {
+        return Err(ServiceError::Other(format!(
+            "Remote Keystores are not supported."
+        )));
+    }
+
+    let inherent_data_providers = sp_inherents::InherentDataProviders::new();
+
+    let (client, backend, keystore_container, task_manager) =
+        sc_service::new_full_parts::<Block, RuntimeApi, Executor>(&config)?;
+
+    let client = Arc::new(client);
+
+    let select_chain = sc_consensus::LongestChain::new(backend.clone());
+
+    let transaction_pool = sc_transaction_pool::BasicPool::new_full(
+        config.transaction_pool.clone(),
+        config.role.is_authority().into(),
+        config.prometheus_registry(),
+        task_manager.spawn_handle(),
+        client.clone(),
+    );
+
+    let (grandpa_block_import, grandpa_link) = sc_finality_grandpa::block_import(
+        client.clone(),
+        &(client.clone() as Arc<_>),
+        select_chain.clone(),
+    )?;
+
+    let block_import = sc_consensus_aura::AuraBlockImport::<_, _, _, AuraPair>::new(
+        grandpa_block_import.clone(),
+        client.clone(),
+    );
+
+    let import_queue = sc_consensus_aura::import_queue::<_, _, _, AuraPair, _, _>(
+        sc_consensus_aura::slot_duration(&*client)?,
+        block_import.clone(),
+        Some(Box::new(grandpa_block_import)),
+        client.clone(),
+        inherent_data_providers.clone(),
+        &task_manager.spawn_handle(),
+        config.prometheus_registry(),
+        sp_consensus::CanAuthorWithNativeVersion::new(client.executor().clone()),
+    )?;
+
+    return Ok(sc_service::PartialComponents {
+        client,
+        backend,
+        task_manager,
+        import_queue,
+        keystore_container,
+        select_chain,
+        transaction_pool,
+        inherent_data_providers,
+        other: (block_import, grandpa_link),
+    });
+}
+
 // Returns a new patrial for babe.
+#[cfg(feature = "babe")]
 pub fn new_partial(
     config: &Configuration,
 ) -> Result<
@@ -129,46 +216,12 @@ pub fn new_partial(
         select_chain.clone(),
     )?;
 
-    #[cfg(feature = "aura")]
-    let block_import = sc_consensus_aura::AuraBlockImport::<_, _, _, AuraPair>::new(
-        grandpa_block_import.clone(),
-        client.clone(),
-    );
-
-    #[cfg(feature = "aura")]
-    let import_queue = sc_consensus_aura::import_queue::<_, _, _, AuraPair, _, _>(
-        sc_consensus_aura::slot_duration(&*client)?,
-        aura_block_import.clone(),
-        Some(Box::new(grandpa_block_import)),
-        None,
-        client.clone(),
-        inherent_data_providers.clone(),
-        &task_manager.spawn_handle(),
-        config.prometheus_registry(),
-        sp_consensus::CanAuthorWithNativeVersion::new(client.executor().clone()),
-    )?;
-
-    #[cfg(feature = "aura")]
-    return Ok(sc_service::PartialComponents {
-        client,
-        backend,
-        task_manager,
-        import_queue,
-        keystore,
-        select_chain,
-        transaction_pool,
-        inherent_data_providers,
-        other: (aura_block_import, grandpa_link),
-    });
-
-    #[cfg(feature = "babe")]
     let (block_import, babe_link) = sc_consensus_babe::block_import(
         sc_consensus_babe::Config::get_or_compute(&*client)?,
         grandpa_block_import.clone(),
         client.clone(),
     )?;
 
-    #[cfg(feature = "babe")]
     let import_queue = sc_consensus_babe::import_queue(
         babe_link.clone(),
         block_import.clone(),
@@ -181,7 +234,6 @@ pub fn new_partial(
         sp_consensus::CanAuthorWithNativeVersion::new(client.executor().clone()),
     )?;
 
-    #[cfg(feature = "babe")]
     return Ok(sc_service::PartialComponents {
         client,
         backend,
@@ -327,9 +379,6 @@ pub fn new_full(mut config: Configuration) -> Result<TaskManager, ServiceError> 
         })
     };
 
-    let telemetry_span = TelemetrySpan::new();
-    let _telemetry_span_entered = telemetry_span.enter();
-
     let (_rpc_handlers, telemetry_connection_notifier) =
         sc_service::spawn_tasks(sc_service::SpawnTasksParams {
             network: network.clone(),
@@ -344,7 +393,6 @@ pub fn new_full(mut config: Configuration) -> Result<TaskManager, ServiceError> 
             network_status_sinks,
             system_rpc_tx,
             config,
-            // telemetry_span: Some(telemetry_span),
         })?;
 
     if role.is_authority() {
@@ -359,7 +407,7 @@ pub fn new_full(mut config: Configuration) -> Result<TaskManager, ServiceError> 
             sp_consensus::CanAuthorWithNativeVersion::new(client.executor().clone());
 
         #[cfg(feature = "aura")]
-        let aura = sc_consensus_aura::start_aura::<_, _, _, _, _, AuraPair, _, _, _>(
+        let aura = sc_consensus_aura::start_aura::<_, _, _, _, _, AuraPair, _, _, _, _>(
             sc_consensus_aura::slot_duration(&*client)?,
             client.clone(),
             select_chain,
@@ -494,8 +542,7 @@ pub fn new_light(mut config: Configuration) -> Result<TaskManager, ServiceError>
     #[cfg(feature = "aura")]
     let import_queue = sc_consensus_aura::import_queue::<_, _, _, AuraPair, _, _>(
         sc_consensus_aura::slot_duration(&*client)?,
-        grandpa_block_import,
-        None,
+        aura_block_import,
         Some(Box::new(grandpa_block_import)),
         client.clone(),
         InherentDataProviders::new(),
@@ -503,6 +550,7 @@ pub fn new_light(mut config: Configuration) -> Result<TaskManager, ServiceError>
         config.prometheus_registry(),
         sp_consensus::NeverCanAuthor,
     )?;
+
     #[cfg(feature = "babe")]
     let import_queue = sc_consensus_babe::import_queue(
         babe_link,
@@ -553,7 +601,6 @@ pub fn new_light(mut config: Configuration) -> Result<TaskManager, ServiceError>
         network,
         network_status_sinks,
         system_rpc_tx,
-        // telemetry_span: Some(telemetry_span),
     })?;
 
     network_starter.start_network();
