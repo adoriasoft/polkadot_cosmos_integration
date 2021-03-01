@@ -266,16 +266,6 @@ pub fn new_full(mut config: Configuration) -> Result<TaskManager, ServiceError> 
         .to_path_buf()
         .join("chains")
         .join(config.chain_spec.id());
-    let abci_server_url = &pallet_abci::get_server_url();
-
-    // Init ABCI instance.
-    pallet_abci::set_abci_instance(Box::new(
-        pallet_abci::grpc::AbciinterfaceGrpc::connect(abci_server_url)
-            .map_err(|_| "failed to connect")
-            .unwrap(),
-    ))
-    .map_err(|_| "failed to set abci instance")
-    .unwrap();
 
     let abci_storage_name = &pallet_abci::get_storage_name();
     abci_storage::set_abci_storage_instance(Box::new(

@@ -370,49 +370,6 @@ impl pallet_cosmos_abci::Config for Runtime {
 /// The payload being signed in transactions.
 pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
 
-// impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for Runtime
-// where
-//     Call: From<LocalCall>,
-// {
-//     fn create_transaction<C: frame_system::offchain::AppCrypto<Self::Public, Self::Signature>>(
-//         call: Call,
-//         public: <Signature as sp_runtime::traits::Verify>::Signer,
-//         account: Address,
-//         nonce: Index,
-//     ) -> Option<(
-//         Call,
-//         <UncheckedExtrinsic as sp_runtime::traits::Extrinsic>::SignaturePayload,
-//     )> {
-//         let tip = 0;
-//         // take the biggest period possible.
-//         let period = BlockHashCount::get()
-//             .checked_next_power_of_two()
-//             .map(|c| c / 2)
-//             .unwrap_or(2) as u64;
-//         // The `System::block_number` is initialized with `n+1`,
-//         // so the actual block number is `n`.
-//         let current_block = System::block_number() as u64 - 1;
-//         let era = Era::mortal(period, current_block);
-//         let extra = (
-//             frame_system::CheckSpecVersion::<Runtime>::new(),
-//             frame_system::CheckTxVersion::<Runtime>::new(),
-//             frame_system::CheckGenesis::<Runtime>::new(),
-//             frame_system::CheckEra::<Runtime>::from(era),
-//             frame_system::CheckNonce::<Runtime>::from(nonce),
-//             frame_system::CheckWeight::<Runtime>::new(),
-//             pallet_transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
-//         );
-//         let raw_payload = SignedPayload::new(call, extra)
-//             .map_err(|e| {
-//                 debug::warn!("Unable to create signed payload: {:?}", e);
-//             })
-//             .ok()?;
-//         let signature = raw_payload.using_encoded(|payload| C::sign(payload, public))?;
-//         let (call, extra, _) = raw_payload.deconstruct();
-//         Some((call, (account, signature, extra)))
-//     }
-// }
-
 impl frame_system::offchain::SigningTypes for Runtime {
     type Public = <Signature as sp_runtime::traits::Verify>::Signer;
     type Signature = Signature;
@@ -437,10 +394,10 @@ construct_runtime!(
         System: frame_system::{Module, Call, Config, Storage, Event<T>},
         RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Module, Call, Storage},
         Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent},
-        Aura: pallet_aura::{Module, Config<T>},
-        Session: pallet_session::{Module, Call, Storage, Event, Config<T>},
-        Grandpa: pallet_grandpa::{Module, Call, Storage, Config, Event},
         Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
+        Session: pallet_session::{Module, Call, Storage, Event, Config<T>},
+        Aura: pallet_aura::{Module, Config<T>},
+        Grandpa: pallet_grandpa::{Module, Call, Storage, Config, Event},
         TransactionPayment: pallet_transaction_payment::{Module, Storage},
         Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
         CosmosAbci: pallet_cosmos_abci::{Module, Call, ValidateUnsigned},
@@ -456,11 +413,11 @@ construct_runtime!(
         System: frame_system::{Module, Call, Config, Storage, Event<T>},
         RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Module, Call, Storage},
         Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent},
-        Babe: pallet_babe::{Module, Call, Storage, Config, Inherent, ValidateUnsigned},
+        Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
         Session: pallet_session::{Module, Call, Storage, Event, Config<T>},
+        Babe: pallet_babe::{Module, Call, Storage, Config, Inherent, ValidateUnsigned},
         Historical: pallet_session_historical::{Module},
         Grandpa: pallet_grandpa::{Module, Call, Storage, Config, Event},
-        Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
         TransactionPayment: pallet_transaction_payment::{Module, Storage},
         Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
         CosmosAbci: pallet_cosmos_abci::{Module, Call, ValidateUnsigned},
