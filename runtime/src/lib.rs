@@ -395,11 +395,11 @@ construct_runtime!(
         RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Module, Call, Storage},
         Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent},
         Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
-        Session: pallet_session::{Module, Call, Storage, Event, Config<T>},
         Aura: pallet_aura::{Module, Config<T>},
         Grandpa: pallet_grandpa::{Module, Call, Storage, Config, Event},
         TransactionPayment: pallet_transaction_payment::{Module, Storage},
         Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
+        Session: pallet_session::{Module, Call, Storage, Event, Config<T>},
         CosmosAbci: pallet_cosmos_abci::{Module, Call, ValidateUnsigned},
     }
 );
