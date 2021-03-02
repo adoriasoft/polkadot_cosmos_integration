@@ -3,7 +3,7 @@ use node_template_runtime::{
     Signature, SudoConfig, SystemConfig, WASM_BINARY,
 };
 use sc_service::ChainType;
-use sp_core::{ed25519, sr25519, Pair, Public};
+use sp_core::{sr25519, Pair, Public};
 use sp_keyring::{Ed25519Keyring, Sr25519Keyring};
 use sp_runtime::traits::{IdentifyAccount, Verify};
 
