@@ -20,10 +20,10 @@ pub struct PurgeChainWithStorageCmd {
     pub yes: bool,
 }
 
-fn remove_rocks_db(db_name: &str, db_path: path::PathBuf) {
+fn remove_rocks_db(db_path: path::PathBuf) {
     match fs::remove_dir_all(&db_path) {
         Ok(_) => {
-            println!("{:?} removed.", &db_name);
+            println!("{:?} removed.", &db_path);
         }
         Err(_) => {
             println!("{:?} did not exist.", &db_path);
@@ -51,7 +51,7 @@ impl PurgeChainWithStorageCmd {
         let db_path = config_dir.join(&rocks_db_name);
 
         if self.yes {
-            remove_rocks_db(rocks_db_name, db_path);
+            remove_rocks_db(db_path);
         } else {
             print!("Are you sure to reset state? [y/N]: ");
             std::io::stdout().flush().expect("failed to flush stdout");
@@ -62,7 +62,7 @@ impl PurgeChainWithStorageCmd {
 
             match input.chars().next() {
                 Some('y') | Some('Y') => {
-                    remove_rocks_db(rocks_db_name, db_path);
+                    remove_rocks_db(db_path);
                     confirm_removal = true;
                 }
                 _ => {
