@@ -7,13 +7,14 @@ use frame_support::{
     codec::{Decode, Encode},
     debug, decl_module, decl_storage,
     dispatch::{DispatchResult, Vec},
+    traits::Randomness,
     weights::Weight,
 };
 use frame_system::{
     self as system, ensure_none, ensure_signed, offchain::CreateSignedTransaction, RawOrigin,
 };
 use pallet_session as session;
-use sp_core::{crypto::KeyTypeId, Hasher};
+use sp_core::{crypto::KeyTypeId, Hasher, H256};
 #[allow(unused_imports)]
 use sp_runtime::{
     traits::{Convert, SaturatedConversion, Zero},
@@ -73,6 +74,7 @@ pub trait Trait:
     type AuthorityId: Decode + sp_runtime::RuntimeAppPublic + Default;
     type Call: From<Call<Self>>;
     type Subscription: SubscriptionManager;
+    type RandomnessSource: Randomness<H256>;
 }
 #[cfg(feature = "babe")]
 pub trait Trait:
@@ -85,6 +87,7 @@ pub trait Trait:
     type AuthorityId: Decode + sp_runtime::RuntimeAppPublic + Default;
     type Call: From<Call<Self>>;
     type Subscription: SubscriptionManager;
+    type RandomnessSource: Randomness<H256>;
 }
 
 /// The pallet Subscription manager trait.
@@ -149,9 +152,18 @@ pub struct ABCITxs {
     data_array: Vec<Vec<u8>>,
 }
 
+#[derive(Encode, Decode, Clone, RuntimeDebug)]
+pub struct AbciBlock<T: Trait> {
+    block_hash: T::Hash,
+    parent_hash: T::Hash,
+    extrinsics_root: T::Hash,
+    block_height: T::BlockNumber,
+}
+
 decl_storage! {
-    trait Store for Module<T: Trait> as ABCITxStorage {
+    trait Store for Module<T: Trait> as AbciPalletStorage {
         ABCITxStorage get(fn abci_tx): map hasher(blake2_128_concat) T::BlockNumber => ABCITxs;
+        AbciBlockStorage get(fn abci_block): map hasher(blake2_128_concat) T::BlockNumber => Option<AbciBlock<T>> = None;
         CosmosAccounts get(fn cosmos_accounts): map hasher(blake2_128_concat) Vec<u8> => Option<T::AccountId> = None;
         AccountLedger get(fn account_ledgers): map hasher(blake2_128_concat) T::AccountId => OptionalLedger<T::AccountId>;
         SubstrateAccounts get(fn substrate_accounts): map hasher(blake2_128_concat) <T as session::Trait>::ValidatorId => Option<utils::CosmosAccount> = None;
@@ -162,11 +174,41 @@ decl_module! {
     pub struct Module<T: Trait> for enum Call where origin: T::Origin {
         // Block initialization.
         fn on_initialize(block_number: T::BlockNumber) -> Weight {
+            debug::info!("on_initialize() 1 block_number: {:?}", block_number);
+            match <AbciBlockStorage<T>>::get(block_number) {
+                Some(_) => {}
+                None => {
+                    // if we process this block first time
+                    debug::info!("on_initialize() 2 block_number: {:?}", block_number);
+                    // get parent block
+                    let mut parent_hash = T::Hashing::hash(&vec![]);
+                    if !(block_number -1.into()).is_zero() {
+                        parent_hash = <AbciBlockStorage<T>>::get(block_number - 1.into()).expect("can not find the previoud abci block").block_hash;
+                    }
+
+                    // create random
+                    let random = T::RandomnessSource::random(&vec![]);
+
+                    let extrinsics_root = T::Hashing::hash(random.as_bytes());
+                    let block_hash = T::Hashing::hash(&[extrinsics_root.as_ref(), parent_hash.as_ref()].concat());
+
+                    let abci_block = AbciBlock::<T>{block_height: block_number,
+                         extrinsics_root: extrinsics_root,
+                         block_hash: block_hash,
+                         parent_hash: parent_hash};
+
+                    <AbciBlockStorage<T>>::insert(block_number, abci_block.clone());
+                    Self::call_on_initialize(abci_block.block_height, abci_block.block_hash, abci_block.parent_hash, abci_block.extrinsics_root);
+                }
+            };
+
             0
         }
 
         // Block finalization.
         fn on_finalize(block_number: T::BlockNumber) {
+            debug::info!("on_finalize() block_number: {:?}", block_number);
+            Self::call_on_finalize(block_number);
         }
 
         // Insert Cosmos node account.
@@ -210,24 +252,24 @@ decl_module! {
 
         // Offchain worker logic.
         fn offchain_worker(block_number: T::BlockNumber) {
-            if let Some(bytes) = abci_interface::storage_get(b"abci_current_height".to_vec()).unwrap() {
-                let mut height: u32 = u32::from_ne_bytes(bytes.as_slice().try_into().unwrap());
-                while height != block_number.saturated_into() as u32 {
-                    height += 1;
-                    if height !=0 {
-                        let block_hash = <system::Module<T>>::block_hash(T::BlockNumber::from(height));
-                        let parent_hash = <system::Module<T>>::block_hash(T::BlockNumber::from(height - 1));
-                        // TODO: fix it, calculate the original extrinsics_root of the block
-                        let extrinsic_data = <system::Module<T>>::extrinsic_data(0);
-                        let extrinsics_root = T::Hashing::hash(extrinsic_data.as_slice());
+            // if let Some(bytes) = abci_interface::storage_get(b"abci_current_height".to_vec()).unwrap() {
+            //     let mut height: u32 = u32::from_ne_bytes(bytes.as_slice().try_into().unwrap());
+            //     while height != block_number.saturated_into() as u32 {
+            //         height += 1;
+            //         if height !=0 {
+            //             let block_hash = <system::Module<T>>::block_hash(T::BlockNumber::from(height));
+            //             let parent_hash = <system::Module<T>>::block_hash(T::BlockNumber::from(height - 1));
+            //             // TODO: fix it, calculate the original extrinsics_root of the block
+            //             let extrinsic_data = <system::Module<T>>::extrinsic_data(0);
+            //             let extrinsics_root = T::Hashing::hash(extrinsic_data.as_slice());
 
-                        Self::call_offchain_worker(T::BlockNumber::from(height), block_hash, parent_hash, extrinsics_root);
-                    }
-                }
-            }
+            //             Self::call_offchain_worker(T::BlockNumber::from(height), block_hash, parent_hash, extrinsics_root);
+            //         }
+            //     }
+            // }
 
-            abci_interface::storage_write(b"abci_current_height".to_vec(),
-            (block_number.saturated_into() as u32).to_ne_bytes().to_vec()).unwrap();
+            // abci_interface::storage_write(b"abci_current_height".to_vec(),
+            // (block_number.saturated_into() as u32).to_ne_bytes().to_vec()).unwrap();
         }
     }
 }
@@ -236,10 +278,9 @@ decl_module! {
 impl<T: Trait> Module<T> {
     // The abci transaction call.
     pub fn call_abci_transaction(data: Vec<u8>) -> DispatchResult {
-        let block_number = <system::Module<T>>::block_number();
-        let mut abci_txs: ABCITxs = <ABCITxStorage<T>>::get(block_number);
-        abci_txs.data_array.push(data);
-        <ABCITxStorage<T>>::insert(block_number, abci_txs);
+        <Self as CosmosAbci>::deliver_tx(data)
+            .map_err(|e| debug::error!("deliver_tx() error: {:?}", e))
+            .unwrap();
         Ok(())
     }
 

@@ -376,6 +376,7 @@ impl pallet_cosmos_abci::Trait for Runtime {
     type AuthorityId = pallet_cosmos_abci::crypto::Public;
     type Call = Call;
     type Subscription = ();
+    type RandomnessSource = RandomnessCollectiveFlip;
 }
 
 /// The payload being signed in transactions.
