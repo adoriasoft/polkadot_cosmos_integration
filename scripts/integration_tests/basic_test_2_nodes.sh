@@ -24,24 +24,56 @@ sleep 5s
 
 sleep 20s
 
-## basic test
-nscli tx nameservice buy-name jack.id 5nametoken --node tcp://localhost:26659 --from jack --chain-id namechain -y
-sleep 20s
-nscli tx nameservice set-name jack.id hello_world --node tcp://localhost:26661 --from jack --chain-id namechain -y
+# Check the amounts on the cosmos node 1
+value=$(nscli q bank balances $(nscli keys show jack -a) --node tcp://localhost:26659)
+echo "$value"
+expected=$'- amount: \"1000\"\n  denom: nametoken\n- amount: \"100000000\"\n  denom: stake'
+assert_eq "$value" "$expected"
+
+value=$(nscli q bank balances $(nscli keys show alice -a) --node tcp://localhost:26659)
+echo "$value"
+expected=$'- amount: \"1000\"\n  denom: nametoken\n- amount: \"100000000\"\n  denom: stake'
+assert_eq "$value" "$expected"
+
+# Check the amounts on the cosmos node 2
+value=$(nscli q bank balances $(nscli keys show jack -a) --node tcp://localhost:26661)
+echo "$value"
+expected=$'- amount: \"1000\"\n  denom: nametoken\n- amount: \"100000000\"\n  denom: stake'
+assert_eq "$value" "$expected"
+
+value=$(nscli q bank balances $(nscli keys show alice -a) --node tcp://localhost:26661)
+echo "$value"
+expected=$'- amount: \"1000\"\n  denom: nametoken\n- amount: \"100000000\"\n  denom: stake'
+assert_eq "$value" "$expected"
+
+# Send 25000000 stake tokens from Jack to Alice
+nscli tx send  $(nscli keys show jack -a) $(nscli keys show alice -a) 25000000stake --chain-id=namechain --from jack --node tcp://localhost:26659 -y
 sleep 20s
 
-value=$(nscli query nameservice resolve jack.id --node tcp://localhost:26659)
-assert_eq "$value" "value: hello_world"
-value=$(nscli query nameservice resolve jack.id --node tcp://localhost:26661)
-assert_eq "$value" "value: hello_world"
-
-nscli tx nameservice set-name jack.id hello_universe --node tcp://localhost:26659 --from jack --chain-id namechain -y
+nscli tx send  $(nscli keys show jack -a) $(nscli keys show alice -a) 25000000stake --chain-id=namechain --from jack --node tcp://localhost:26661 -y
 sleep 20s
 
-value=$(nscli query nameservice resolve jack.id --node tcp://localhost:26659)
-assert_eq "$value" "value: hello_universe"
-value=$(nscli query nameservice resolve jack.id --node tcp://localhost:26661)
-assert_eq "$value" "value: hello_universe"
+# Check the amounts on the cosmos node 1
+value=$(nscli q bank balances $(nscli keys show jack -a) --node tcp://localhost:26659)
+echo "$value"
+expected=$'- amount: \"1000\"\n  denom: nametoken\n- amount: \"50000000\"\n  denom: stake'
+assert_eq "$value" "$expected"
+
+value=$(nscli q bank balances $(nscli keys show alice -a) --node tcp://localhost:26659)
+echo "$value"
+expected=$'- amount: \"1000\"\n  denom: nametoken\n- amount: \"150000000\"\n  denom: stake'
+assert_eq "$value" "$expected"
+
+# Check the amounts on the cosmos node 2
+value=$(nscli q bank balances $(nscli keys show jack -a) --node tcp://localhost:26661)
+echo "$value"
+expected=$'- amount: \"1000\"\n  denom: nametoken\n- amount: \"50000000\"\n  denom: stake'
+assert_eq "$value" "$expected"
+
+value=$(nscli q bank balances $(nscli keys show alice -a) --node tcp://localhost:26661)
+echo "$value"
+expected=$'- amount: \"1000\"\n  denom: nametoken\n- amount: \"150000000\"\n  denom: stake'
+assert_eq "$value" "$expected"
 
 test_passed "basic test 2 nodes"
 

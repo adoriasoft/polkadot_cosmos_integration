@@ -48,7 +48,7 @@ function start_substrate_1() {
 
 function clean_substrate_1() {
     echo "Clean Substrate node 1"
-    ./../../target/debug/node-template purge-chain --base-path=$SUBSTRATE_NODE_1_HOME --chain=local
+    ./../../target/debug/node-template purge-chain --base-path=$SUBSTRATE_NODE_1_HOME --chain=local -y
 }
 
 function stop_substrate_1() {
@@ -66,7 +66,7 @@ function start_substrate_2() {
 
 function clean_substrate_2() {
     echo "Clean Substrate node 2"
-    ./../../target/debug/node-template purge-chain --base-path=$SUBSTRATE_NODE_2_HOME --chain=local
+    ./../../target/debug/node-template purge-chain --base-path=$SUBSTRATE_NODE_2_HOME --chain=local -y
 }
 
 function stop_substrate_2() {
