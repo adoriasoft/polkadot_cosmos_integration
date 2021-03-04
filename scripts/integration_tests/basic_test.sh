@@ -10,20 +10,30 @@ source ./testing_setup/basic_setup.sh
 start_all
 sleep 20s
 
+# Check the amounts
+value=$(nscli q bank balances $(nscli keys show jack -a))
+echo "$value"
+expected=$'- amount: \"1000\"\n  denom: nametoken\n- amount: \"100000000\"\n  denom: stake'
+assert_eq "$value" "$expected"
 
-## basic test
-nscli tx nameservice buy-name jack.id 5nametoken --from jack --chain-id namechain -y
+value=$(nscli q bank balances $(nscli keys show alice -a))
+echo "$value"
+expected=$'- amount: \"1000\"\n  denom: nametoken\n- amount: \"100000000\"\n  denom: stake'
+assert_eq "$value" "$expected"
+
+# Send 50000000 stake tokens from Jack to Alice
+nscli tx send  $(nscli keys show jack -a) $(nscli keys show alice -a) 50000000stake --chain-id=namechain --from jack -y
 sleep 20s
-nscli tx nameservice set-name jack.id hello_world --from jack --chain-id namechain -y
-sleep 20s
 
-value=$(nscli query nameservice resolve jack.id)
-assert_eq "$value" "value: hello_world"
+# Check the amounts
+value=$(nscli q bank balances $(nscli keys show jack -a))
+echo "$value"
+expected=$'- amount: \"1000\"\n  denom: nametoken\n- amount: \"50000000\"\n  denom: stake'
+assert_eq "$value" "$expected"
 
-nscli tx nameservice set-name jack.id hello_universe --from jack --chain-id namechain -y
-sleep 20s
-
-value=$(nscli query nameservice resolve jack.id)
-assert_eq "$value" "value: hello_universe"
+value=$(nscli q bank balances $(nscli keys show alice -a))
+echo "$value"
+expected=$'- amount: \"1000\"\n  denom: nametoken\n- amount: \"150000000\"\n  denom: stake'
+assert_eq "$value" "$expected"
 
 test_passed "basic test"

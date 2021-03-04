@@ -11,14 +11,24 @@ start_all
 sleep 20s
 
 ## stoping nodes test
+# Check the amounts
 
-nscli tx nameservice buy-name jack.id 5nametoken --from jack --chain-id namechain -y
-sleep 20s
-nscli tx nameservice set-name jack.id hello_world --from jack --chain-id namechain -y
+value=$(nscli q bank balances $(nscli keys show jack -a))
+echo "$value"
+expected=$'- amount: \"1000\"\n  denom: nametoken\n- amount: \"100000000\"\n  denom: stake'
+assert_eq "$value" "$expected"
+
+value=$(nscli q bank balances $(nscli keys show alice -a))
+echo "$value"
+expected=$'- amount: \"1000\"\n  denom: nametoken\n- amount: \"100000000\"\n  denom: stake'
+assert_eq "$value" "$expected"
+
+# Send 50000000 stake tokens from Jack to Alice
+nscli tx send  $(nscli keys show jack -a) $(nscli keys show alice -a) 50000000stake --chain-id=namechain --from jack -y
 sleep 20s
 
-value=$(nscli query nameservice resolve jack.id)
-assert_eq "$value" "value: hello_world"
+
+# stoping nodes
 
 for i in {1..100}
 do 
@@ -31,8 +41,17 @@ sleep 1s
 start_substrate
 sleep 5s
 
-value=$(nscli query nameservice resolve jack.id)
-assert_eq "$value" "value: hello_world"
+# Check the amounts
+value=$(nscli q bank balances $(nscli keys show jack -a))
+echo "$value"
+expected=$'- amount: \"1000\"\n  denom: nametoken\n- amount: \"50000000\"\n  denom: stake'
+assert_eq "$value" "$expected"
+
+value=$(nscli q bank balances $(nscli keys show alice -a))
+echo "$value"
+expected=$'- amount: \"1000\"\n  denom: nametoken\n- amount: \"150000000\"\n  denom: stake'
+assert_eq "$value" "$expected"
+
 done 
 
 test_passed "stoping nodes test"
