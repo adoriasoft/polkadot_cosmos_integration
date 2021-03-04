@@ -1,44 +1,41 @@
 syntax = "proto3";
-package tendermint.abci.types;
-option  go_package = "github.com/tendermint/tendermint/abci/types";
+package tendermint.abci;
+
+option go_package = "github.com/tendermint/tendermint/abci/types";
 
 // For more information on gogo.proto, see:
 // https://github.com/gogo/protobuf/blob/master/extensions.md
-import "third_party/proto/gogoproto/gogo.proto";
-import "crypto/merkle/merkle.proto";
-import "libs/kv/types.proto";
+import "tendermint/crypto/proof.proto";
+import "tendermint/types/types.proto";
+import "tendermint/crypto/keys.proto";
+import "tendermint/types/params.proto";
 import "google/protobuf/timestamp.proto";
-import "google/protobuf/duration.proto";
+import "gogoproto/gogo.proto";
 
 // This file is copied from http://github.com/tendermint/abci
 // NOTE: When using custom types, mind the warnings.
 // https://github.com/gogo/protobuf/blob/master/custom_types.md#warnings-and-issues
-
-option (gogoproto.marshaler_all)        = true;
-option (gogoproto.unmarshaler_all)      = true;
-option (gogoproto.sizer_all)            = true;
-option (gogoproto.goproto_registration) = true;
-// Generate tests
-option (gogoproto.populate_all) = true;
-option (gogoproto.equal_all)    = true;
-option (gogoproto.testgen_all)  = true;
 
 //----------------------------------------
 // Request types
 
 message Request {
   oneof value {
-    RequestEcho       echo        = 2;
-    RequestFlush      flush       = 3;
-    RequestInfo       info        = 4;
-    RequestSetOption  set_option  = 5;
-    RequestInitChain  init_chain  = 6;
-    RequestQuery      query       = 7;
-    RequestBeginBlock begin_block = 8;
-    RequestCheckTx    check_tx    = 9;
-    RequestDeliverTx  deliver_tx  = 19;
-    RequestEndBlock   end_block   = 11;
-    RequestCommit     commit      = 12;
+    RequestEcho               echo                 = 1;
+    RequestFlush              flush                = 2;
+    RequestInfo               info                 = 3;
+    RequestSetOption          set_option           = 4;
+    RequestInitChain          init_chain           = 5;
+    RequestQuery              query                = 6;
+    RequestBeginBlock         begin_block          = 7;
+    RequestCheckTx            check_tx             = 8;
+    RequestDeliverTx          deliver_tx           = 9;
+    RequestEndBlock           end_block            = 10;
+    RequestCommit             commit               = 11;
+    RequestListSnapshots      list_snapshots       = 12;
+    RequestOfferSnapshot      offer_snapshot       = 13;
+    RequestLoadSnapshotChunk  load_snapshot_chunk  = 14;
+    RequestApplySnapshotChunk apply_snapshot_chunk = 15;
   }
 }
 
@@ -61,11 +58,13 @@ message RequestSetOption {
 }
 
 message RequestInitChain {
-  google.protobuf.Timestamp time     = 1 [(gogoproto.nullable) = false, (gogoproto.stdtime) = true];
-  string                    chain_id = 2;
-  ConsensusParams           consensus_params = 3;
-  repeated ValidatorUpdate  validators       = 4 [(gogoproto.nullable) = false];
-  bytes                     app_state_bytes  = 5;
+  google.protobuf.Timestamp time = 1
+      [(gogoproto.nullable) = false, (gogoproto.stdtime) = true];
+  string                   chain_id         = 2;
+  ConsensusParams          consensus_params = 3;
+  repeated ValidatorUpdate validators       = 4 [(gogoproto.nullable) = false];
+  bytes                    app_state_bytes  = 5;
+  int64                    initial_height   = 6;
 }
 
 message RequestQuery {
@@ -76,15 +75,15 @@ message RequestQuery {
 }
 
 message RequestBeginBlock {
-  bytes             hash                 = 1;
-  Header            header               = 2 [(gogoproto.nullable) = false];
-  LastCommitInfo    last_commit_info     = 3 [(gogoproto.nullable) = false];
-  repeated Evidence byzantine_validators = 4 [(gogoproto.nullable) = false];
+  bytes                   hash                 = 1;
+  tendermint.types.Header header               = 2 [(gogoproto.nullable) = false];
+  LastCommitInfo          last_commit_info     = 3 [(gogoproto.nullable) = false];
+  repeated Evidence       byzantine_validators = 4 [(gogoproto.nullable) = false];
 }
 
 enum CheckTxType {
-  New     = 0;
-  Recheck = 1;
+  NEW     = 0 [(gogoproto.enumvalue_customname) = "New"];
+  RECHECK = 1 [(gogoproto.enumvalue_customname) = "Recheck"];
 }
 
 message RequestCheckTx {
@@ -102,23 +101,51 @@ message RequestEndBlock {
 
 message RequestCommit {}
 
+// lists available snapshots
+message RequestListSnapshots {
+}
+
+// offers a snapshot to the application
+message RequestOfferSnapshot {
+  Snapshot snapshot = 1;  // snapshot offered by peers
+  bytes    app_hash = 2;  // light client-verified app hash for snapshot height
+}
+
+// loads a snapshot chunk
+message RequestLoadSnapshotChunk {
+  uint64 height = 1;
+  uint32 format = 2;
+  uint32 chunk  = 3;
+}
+
+// Applies a snapshot chunk
+message RequestApplySnapshotChunk {
+  uint32 index  = 1;
+  bytes  chunk  = 2;
+  string sender = 3;
+}
+
 //----------------------------------------
 // Response types
 
 message Response {
   oneof value {
-    ResponseException  exception   = 1;
-    ResponseEcho       echo        = 2;
-    ResponseFlush      flush       = 3;
-    ResponseInfo       info        = 4;
-    ResponseSetOption  set_option  = 5;
-    ResponseInitChain  init_chain  = 6;
-    ResponseQuery      query       = 7;
-    ResponseBeginBlock begin_block = 8;
-    ResponseCheckTx    check_tx    = 9;
-    ResponseDeliverTx  deliver_tx  = 10;
-    ResponseEndBlock   end_block   = 11;
-    ResponseCommit     commit      = 12;
+    ResponseException          exception            = 1;
+    ResponseEcho               echo                 = 2;
+    ResponseFlush              flush                = 3;
+    ResponseInfo               info                 = 4;
+    ResponseSetOption          set_option           = 5;
+    ResponseInitChain          init_chain           = 6;
+    ResponseQuery              query                = 7;
+    ResponseBeginBlock         begin_block          = 8;
+    ResponseCheckTx            check_tx             = 9;
+    ResponseDeliverTx          deliver_tx           = 10;
+    ResponseEndBlock           end_block            = 11;
+    ResponseCommit             commit               = 12;
+    ResponseListSnapshots      list_snapshots       = 13;
+    ResponseOfferSnapshot      offer_snapshot       = 14;
+    ResponseLoadSnapshotChunk  load_snapshot_chunk  = 15;
+    ResponseApplySnapshotChunk apply_snapshot_chunk = 16;
   }
 }
 
@@ -154,19 +181,20 @@ message ResponseSetOption {
 message ResponseInitChain {
   ConsensusParams          consensus_params = 1;
   repeated ValidatorUpdate validators       = 2 [(gogoproto.nullable) = false];
+  bytes                    app_hash         = 3;
 }
 
 message ResponseQuery {
   uint32 code = 1;
   // bytes data = 2; // use "value" instead.
-  string                         log       = 3;  // nondeterministic
-  string                         info      = 4;  // nondeterministic
-  int64                          index     = 5;
-  bytes                          key       = 6;
-  bytes                          value     = 7;
-  tendermint.crypto.merkle.Proof proof     = 8;
-  int64                          height    = 9;
-  string                         codespace = 10;
+  string                     log       = 3;  // nondeterministic
+  string                     info      = 4;  // nondeterministic
+  int64                      index     = 5;
+  bytes                      key       = 6;
+  bytes                      value     = 7;
+  tendermint.crypto.ProofOps proof_ops = 8;
+  int64                      height    = 9;
+  string                     codespace = 10;
 }
 
 message ResponseBeginBlock {
@@ -179,8 +207,8 @@ message ResponseCheckTx {
   bytes          data       = 2;
   string         log        = 3;  // nondeterministic
   string         info       = 4;  // nondeterministic
-  int64          gas_wanted = 5;
-  int64          gas_used   = 6;
+  int64          gas_wanted = 5 [json_name = "gas_wanted"];
+  int64          gas_used   = 6 [json_name = "gas_used"];
   repeated Event events     = 7
       [(gogoproto.nullable) = false, (gogoproto.jsontag) = "events,omitempty"];
   string codespace = 8;
@@ -191,17 +219,18 @@ message ResponseDeliverTx {
   bytes          data       = 2;
   string         log        = 3;  // nondeterministic
   string         info       = 4;  // nondeterministic
-  int64          gas_wanted = 5;
-  int64          gas_used   = 6;
+  int64          gas_wanted = 5 [json_name = "gas_wanted"];
+  int64          gas_used   = 6 [json_name = "gas_used"];
   repeated Event events     = 7
       [(gogoproto.nullable) = false, (gogoproto.jsontag) = "events,omitempty"];
   string codespace = 8;
 }
 
 message ResponseEndBlock {
-  repeated ValidatorUpdate validator_updates       = 1 [(gogoproto.nullable) = false];
-  ConsensusParams          consensus_param_updates = 2;
-  repeated Event           events                  = 3
+  repeated ValidatorUpdate validator_updates = 1
+      [(gogoproto.nullable) = false];
+  ConsensusParams consensus_param_updates = 2;
+  repeated Event  events                  = 3
       [(gogoproto.nullable) = false, (gogoproto.jsontag) = "events,omitempty"];
 }
 
@@ -211,15 +240,52 @@ message ResponseCommit {
   int64 retain_height = 3;
 }
 
+message ResponseListSnapshots {
+  repeated Snapshot snapshots = 1;
+}
+
+message ResponseOfferSnapshot {
+  Result result = 1;
+
+  enum Result {
+    UNKNOWN       = 0;  // Unknown result, abort all snapshot restoration
+    ACCEPT        = 1;  // Snapshot accepted, apply chunks
+    ABORT         = 2;  // Abort all snapshot restoration
+    REJECT        = 3;  // Reject this specific snapshot, try others
+    REJECT_FORMAT = 4;  // Reject all snapshots of this format, try others
+    REJECT_SENDER = 5;  // Reject all snapshots from the sender(s), try others
+  }
+}
+
+message ResponseLoadSnapshotChunk {
+  bytes chunk = 1;
+}
+
+message ResponseApplySnapshotChunk {
+  Result          result         = 1;
+  repeated uint32 refetch_chunks = 2;  // Chunks to refetch and reapply
+  repeated string reject_senders = 3;  // Chunk senders to reject and ban
+
+  enum Result {
+    UNKNOWN         = 0;  // Unknown result, abort all snapshot restoration
+    ACCEPT          = 1;  // Chunk successfully accepted
+    ABORT           = 2;  // Abort all snapshot restoration
+    RETRY           = 3;  // Retry chunk (combine with refetch and reject)
+    RETRY_SNAPSHOT  = 4;  // Retry snapshot (combine with refetch and reject)
+    REJECT_SNAPSHOT = 5;  // Reject this snapshot, try others
+  }
+}
+
 //----------------------------------------
 // Misc.
 
 // ConsensusParams contains all consensus-relevant parameters
 // that can be adjusted by the abci app
 message ConsensusParams {
-  BlockParams     block     = 1;
-  EvidenceParams  evidence  = 2;
-  ValidatorParams validator = 3;
+  BlockParams                      block     = 1;
+  tendermint.types.EvidenceParams  evidence  = 2;
+  tendermint.types.ValidatorParams validator = 3;
+  tendermint.types.VersionParams   version   = 4;
 }
 
 // BlockParams contains limits on the block size.
@@ -230,84 +296,53 @@ message BlockParams {
   int64 max_gas = 2;
 }
 
-message EvidenceParams {
-  // Note: must be greater than 0
-  int64                    max_age_num_blocks = 1;
-  google.protobuf.Duration max_age_duration   = 2
-      [(gogoproto.nullable) = false, (gogoproto.stdduration) = true];
-}
-
-// ValidatorParams contains limits on validators.
-message ValidatorParams {
-  repeated string pub_key_types = 1;
-}
-
 message LastCommitInfo {
   int32             round = 1;
   repeated VoteInfo votes = 2 [(gogoproto.nullable) = false];
 }
 
+// Event allows application developers to attach additional information to
+// ResponseBeginBlock, ResponseEndBlock, ResponseCheckTx and ResponseDeliverTx.
+// Later, transactions may be queried using these events.
 message Event {
-  string   type                               = 1;
-  repeated tendermint.libs.kv.Pair attributes = 2
-      [(gogoproto.nullable) = false, (gogoproto.jsontag) = "attributes,omitempty"];
+  string                  type       = 1;
+  repeated EventAttribute attributes = 2 [
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag)  = "attributes,omitempty"
+  ];
+}
+
+// EventAttribute is a single key-value pair, associated with an event.
+message EventAttribute {
+  bytes key   = 1;
+  bytes value = 2;
+  bool  index = 3;  // nondeterministic
+}
+
+// TxResult contains results of executing the transaction.
+//
+// One usage is indexing transaction results.
+message TxResult {
+  int64             height = 1;
+  uint32            index  = 2;
+  bytes             tx     = 3;
+  ResponseDeliverTx result = 4 [(gogoproto.nullable) = false];
 }
 
 //----------------------------------------
 // Blockchain Types
 
-message Header {
-  // basic block info
-  Version                   version  = 1 [(gogoproto.nullable) = false];
-  string                    chain_id = 2 [(gogoproto.customname) = "ChainID"];
-  int64                     height   = 3;
-  google.protobuf.Timestamp time     = 4 [(gogoproto.nullable) = false, (gogoproto.stdtime) = true];
-
-  // prev block info
-  BlockID last_block_id = 5 [(gogoproto.nullable) = false];
-
-  // hashes of block data
-  bytes last_commit_hash = 6;  // commit from validators from the last block
-  bytes data_hash        = 7;  // transactions
-
-  // hashes from the app output from the prev block
-  bytes validators_hash      = 8;   // validators for the current block
-  bytes next_validators_hash = 9;   // validators for the next block
-  bytes consensus_hash       = 10;  // consensus params for current block
-  bytes app_hash             = 11;  // state after txs from the previous block
-  bytes last_results_hash    = 12;  // root hash of all results from the txs from the previous block
-
-  // consensus info
-  bytes evidence_hash    = 13;  // evidence included in the block
-  bytes proposer_address = 14;  // original proposer of the block
-}
-
-message Version {
-  uint64 Block = 1;
-  uint64 App   = 2;
-}
-
-message BlockID {
-  bytes         hash         = 1;
-  PartSetHeader parts_header = 2 [(gogoproto.nullable) = false];
-}
-
-message PartSetHeader {
-  int32 total = 1;
-  bytes hash  = 2;
-}
-
 // Validator
 message Validator {
-  bytes address = 1;
+  bytes address = 1;  // The first 20 bytes of SHA256(public key)
   // PubKey pub_key = 2 [(gogoproto.nullable)=false];
-  int64 power = 3;
+  int64 power = 3;  // The voting power
 }
 
 // ValidatorUpdate
 message ValidatorUpdate {
-  PubKey pub_key = 1 [(gogoproto.nullable) = false];
-  int64  power   = 2;
+  tendermint.crypto.PublicKey pub_key = 1 [(gogoproto.nullable) = false];
+  int64                       power   = 2;
 }
 
 // VoteInfo
@@ -316,17 +351,38 @@ message VoteInfo {
   bool      signed_last_block = 2;
 }
 
-message PubKey {
-  string type = 1;
-  bytes  data = 2;
+enum EvidenceType {
+  UNKNOWN             = 0;
+  DUPLICATE_VOTE      = 1;
+  LIGHT_CLIENT_ATTACK = 2;
 }
 
 message Evidence {
-  string                    type      = 1;
-  Validator                 validator = 2 [(gogoproto.nullable) = false];
-  int64                     height    = 3;
-  google.protobuf.Timestamp time = 4 [(gogoproto.nullable) = false, (gogoproto.stdtime) = true];
-  int64                     total_voting_power = 5;
+  EvidenceType type = 1;
+  // The offending validator
+  Validator validator = 2 [(gogoproto.nullable) = false];
+  // The height when the offense occurred
+  int64 height = 3;
+  // The corresponding time where the offense occurred
+  google.protobuf.Timestamp time = 4 [
+    (gogoproto.nullable) = false,
+    (gogoproto.stdtime)  = true
+  ];
+  // Total voting power of the validator set in case the ABCI application does
+  // not store historical validators.
+  // https://github.com/tendermint/tendermint/issues/4581
+  int64 total_voting_power = 5;
+}
+
+//----------------------------------------
+// State Sync Types
+
+message Snapshot {
+  uint64 height   = 1;  // The height at which the snapshot was taken
+  uint32 format   = 2;  // The application-specific snapshot format
+  uint32 chunks   = 3;  // Number of chunks in the snapshot
+  bytes  hash     = 4;  // Arbitrary snapshot hash, equal only if identical
+  bytes  metadata = 5;  // Arbitrary application metadata
 }
 
 //----------------------------------------
@@ -344,4 +400,8 @@ service ABCIApplication {
   rpc InitChain(RequestInitChain) returns (ResponseInitChain);
   rpc BeginBlock(RequestBeginBlock) returns (ResponseBeginBlock);
   rpc EndBlock(RequestEndBlock) returns (ResponseEndBlock);
+  rpc ListSnapshots(RequestListSnapshots) returns (ResponseListSnapshots);
+  rpc OfferSnapshot(RequestOfferSnapshot) returns (ResponseOfferSnapshot);
+  rpc LoadSnapshotChunk(RequestLoadSnapshotChunk) returns (ResponseLoadSnapshotChunk);
+  rpc ApplySnapshotChunk(RequestApplySnapshotChunk) returns (ResponseApplySnapshotChunk);
 }
