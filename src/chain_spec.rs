@@ -3,7 +3,7 @@ use node_template_runtime::{
     Signature, SudoConfig, SystemConfig, WASM_BINARY,
 };
 use sc_service::ChainType;
-use sp_core::{ed25519, sr25519, Pair, Public};
+use sp_core::{sr25519, Pair, Public};
 use sp_keyring::{Ed25519Keyring, Sr25519Keyring};
 use sp_runtime::traits::{IdentifyAccount, Verify};
 
@@ -50,12 +50,12 @@ pub fn to_session_keys(
 fn initial_poa_keys() -> Vec<(AccountId, AccountId, SessionKeys)> {
     vec![
         (
-            get_account_id_from_seed::<ed25519::Public>("Alice"),
+            get_account_id_from_seed::<sr25519::Public>("Alice"),
             get_account_id_from_seed::<sr25519::Public>("Alice"),
             to_session_keys(&Ed25519Keyring::Alice, &Sr25519Keyring::Alice),
         ),
         (
-            get_account_id_from_seed::<ed25519::Public>("Bob"),
+            get_account_id_from_seed::<sr25519::Public>("Bob"),
             get_account_id_from_seed::<sr25519::Public>("Bob"),
             to_session_keys(&Ed25519Keyring::Bob, &Sr25519Keyring::Bob),
         ),

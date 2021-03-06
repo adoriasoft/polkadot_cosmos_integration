@@ -6,25 +6,23 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-use codec::Encode;
 use pallet_grandpa::{
     fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
 };
 #[cfg(feature = "babe")]
 use pallet_session::historical as pallet_session_historical;
+use pallet_transaction_payment::CurrencyAdapter;
 use sp_api::impl_runtime_apis;
 #[cfg(feature = "aura")]
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 #[allow(unused_imports)]
 use sp_runtime::traits::{
-    BlakeTwo256, Block as BlockT, IdentifyAccount, IdentityLookup, NumberFor, OpaqueKeys,
-    Saturating, Verify,
+    AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, IdentityLookup, NumberFor,
+    OpaqueKeys, Saturating, Verify,
 };
 use sp_runtime::{
-    create_runtime_str, generic,
-    generic::Era,
-    impl_opaque_keys,
+    create_runtime_str, generic, impl_opaque_keys,
     transaction_validity::{InvalidTransaction, TransactionSource, TransactionValidity},
     ApplyExtrinsicResult, MultiSignature, Perbill,
 };
@@ -37,8 +35,9 @@ use frame_system::offchain::SubmitTransaction;
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
     construct_runtime, debug,
-    dispatch::{CallableCallFor, IsSubType},
+    dispatch::CallableCallFor,
     parameter_types,
+    traits::IsSubType,
     traits::{Imbalance, KeyOwnerProofSystem, Randomness, ReservableCurrency},
     weights::{
         constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -131,28 +130,33 @@ pub fn native_version() -> NativeVersion {
     }
 }
 
+const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
+
 parameter_types! {
+    pub const Version: RuntimeVersion = VERSION;
     pub const BlockHashCount: BlockNumber = 2400;
     /// We allow for 2 seconds of compute with a 6 second average block time.
-    pub const MaximumBlockWeight: Weight = 2 * WEIGHT_PER_SECOND;
-    pub const AvailableBlockRatio: Perbill = Perbill::from_percent(75);
-    /// Assume 10% of weight for average on_initialize calls.
-    pub MaximumExtrinsicWeight: Weight = AvailableBlockRatio::get()
-        .saturating_sub(Perbill::from_percent(10)) * MaximumBlockWeight::get();
-    pub const MaximumBlockLength: u32 = 5 * 1024 * 1024;
-    pub const Version: RuntimeVersion = VERSION;
+    pub BlockWeights: frame_system::limits::BlockWeights = frame_system::limits::BlockWeights
+        ::with_sensible_defaults(2 * WEIGHT_PER_SECOND, NORMAL_DISPATCH_RATIO);
+    pub BlockLength: frame_system::limits::BlockLength = frame_system::limits::BlockLength
+        ::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
+    pub const SS58Prefix: u8 = 42;
 }
 
 // Configure FRAME pallets to include in runtime.
-impl frame_system::Trait for Runtime {
+impl frame_system::Config for Runtime {
     /// The basic call filter to use in dispatchable.
     type BaseCallFilter = ();
+    /// Block & extrinsics weights: base values and limits.
+    type BlockWeights = BlockWeights;
+    /// The maximum length of a block (in bytes).
+    type BlockLength = BlockLength;
     /// The identifier used to distinguish between accounts.
     type AccountId = AccountId;
     /// The aggregated dispatch type that is available for extrinsics.
     type Call = Call;
     /// The lookup mechanism to get account ID from whatever is passed in dispatchers.
-    type Lookup = IdentityLookup<AccountId>;
+    type Lookup = AccountIdLookup<AccountId, ()>;
     /// The index type for storing how many extrinsics an account has signed.
     type Index = Index;
     /// The index type for blocks.
@@ -169,24 +173,8 @@ impl frame_system::Trait for Runtime {
     type Origin = Origin;
     /// Maximum number of block number to block hash mappings to keep (oldest pruned first).
     type BlockHashCount = BlockHashCount;
-    /// Maximum weight of each block.
-    type MaximumBlockWeight = MaximumBlockWeight;
     /// The weight of database operations that the runtime can invoke.
     type DbWeight = RocksDbWeight;
-    /// The weight of the overhead invoked on the block import process, independent of the
-    /// extrinsics included in that block.
-    type BlockExecutionWeight = BlockExecutionWeight;
-    /// The base weight of any extrinsic processed by the runtime, independent of the
-    /// logic of that extrinsic. (Signature verification, nonce increment, fee, etc...)
-    type ExtrinsicBaseWeight = ExtrinsicBaseWeight;
-    /// The maximum weight that a single extrinsic of `Normal` dispatch class can have,
-    /// idependent of the logic of that extrinsics. (Roughly max block weight - average on
-    /// initialize cost).
-    type MaximumExtrinsicWeight = MaximumExtrinsicWeight;
-    /// Maximum size of all encoded transactions (in bytes) that are allowed in one block.
-    type MaximumBlockLength = MaximumBlockLength;
-    /// Portion of the block weight that is available to all normal transactions.
-    type AvailableBlockRatio = AvailableBlockRatio;
     /// Version of the runtime.
     type Version = Version;
     /// Converts a module to the index of the module in `construct_runtime!`.
@@ -201,6 +189,8 @@ impl frame_system::Trait for Runtime {
     type AccountData = pallet_balances::AccountData<Balance>;
     /// Weight information for the extrinsics of this pallet.
     type SystemWeightInfo = ();
+    /// This is used as an identifier of the chain. 42 is the generic substrate prefix.
+    type SS58Prefix = SS58Prefix;
 }
 
 /// Outer module that expose needed time constants.
@@ -247,7 +237,7 @@ parameter_types! {
 }
 
 #[cfg(feature = "babe")]
-impl pallet_babe::Trait for Runtime {
+impl pallet_babe::Config for Runtime {
     type EpochDuration = EpochDuration;
     type ExpectedBlockTime = ExpectedBlockTime;
     type EpochChangeTrigger = pallet_babe::ExternalTrigger;
@@ -265,11 +255,11 @@ impl pallet_babe::Trait for Runtime {
 }
 
 #[cfg(feature = "aura")]
-impl pallet_aura::Trait for Runtime {
+impl pallet_aura::Config for Runtime {
     type AuthorityId = AuraId;
 }
 
-impl pallet_grandpa::Trait for Runtime {
+impl pallet_grandpa::Config for Runtime {
     type Event = Event;
     type Call = Call;
     #[cfg(feature = "babe")]
@@ -290,7 +280,7 @@ parameter_types! {
     pub const MinimumPeriod: u64 = time::SLOT_DURATION / time::EPOCH_DURATION_IN_SLOTS;
 }
 
-impl pallet_timestamp::Trait for Runtime {
+impl pallet_timestamp::Config for Runtime {
     /// A timestamp: milliseconds since the unix epoch.
     type Moment = u64;
     #[cfg(feature = "aura")]
@@ -306,7 +296,7 @@ parameter_types! {
     pub const MaxLocks: u32 = 50;
 }
 
-impl pallet_balances::Trait for Runtime {
+impl pallet_balances::Config for Runtime {
     type MaxLocks = MaxLocks;
     /// The type for recording an account's balance.
     type Balance = Balance;
@@ -322,9 +312,8 @@ parameter_types! {
     pub const TransactionByteFee: Balance = 0;
 }
 
-impl pallet_transaction_payment::Trait for Runtime {
-    type Currency = Balances;
-    type OnTransactionPayment = ();
+impl pallet_transaction_payment::Config for Runtime {
+    type OnChargeTransaction = CurrencyAdapter<Balances, ()>;
     type TransactionByteFee = TransactionByteFee;
     type WeightToFee = IdentityFee<Balance>;
     type FeeMultiplierUpdate = ();
@@ -337,17 +326,17 @@ parameter_types! {
     pub const Offset: BlockNumber = 0;
 }
 
-impl pallet_session::historical::Trait for Runtime {
+impl pallet_session::historical::Config for Runtime {
     type FullIdentification = pallet_cosmos_abci::utils::Exposure<
-        <Self as frame_system::Trait>::AccountId,
+        <Self as frame_system::Config>::AccountId,
         pallet_cosmos_abci::Balance,
     >;
     type FullIdentificationOf = pallet_cosmos_abci::utils::ExposureOf<Self>;
 }
 
-impl pallet_session::Trait for Runtime {
+impl pallet_session::Config for Runtime {
     type Event = Event;
-    type ValidatorId = <Self as frame_system::Trait>::AccountId;
+    type ValidatorId = <Self as frame_system::Config>::AccountId;
     type ValidatorIdOf = pallet_cosmos_abci::utils::StashOf<Self>;
     #[cfg(feature = "aura")]
     type ShouldEndSession = pallet_session::PeriodicSessions<Period, Offset>;
@@ -367,12 +356,12 @@ impl pallet_session::Trait for Runtime {
     type WeightInfo = ();
 }
 
-impl pallet_sudo::Trait for Runtime {
+impl pallet_sudo::Config for Runtime {
     type Event = Event;
     type Call = Call;
 }
 
-impl pallet_cosmos_abci::Trait for Runtime {
+impl pallet_cosmos_abci::Config for Runtime {
     type AuthorityId = pallet_cosmos_abci::crypto::Public;
     type Call = Call;
     type Subscription = ();
@@ -380,49 +369,6 @@ impl pallet_cosmos_abci::Trait for Runtime {
 
 /// The payload being signed in transactions.
 pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
-
-impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for Runtime
-where
-    Call: From<LocalCall>,
-{
-    fn create_transaction<C: frame_system::offchain::AppCrypto<Self::Public, Self::Signature>>(
-        call: Call,
-        public: <Signature as sp_runtime::traits::Verify>::Signer,
-        account: AccountId,
-        nonce: Index,
-    ) -> Option<(
-        Call,
-        <UncheckedExtrinsic as sp_runtime::traits::Extrinsic>::SignaturePayload,
-    )> {
-        let tip = 0;
-        // take the biggest period possible.
-        let period = BlockHashCount::get()
-            .checked_next_power_of_two()
-            .map(|c| c / 2)
-            .unwrap_or(2) as u64;
-        // The `System::block_number` is initialized with `n+1`,
-        // so the actual block number is `n`.
-        let current_block = System::block_number() as u64 - 1;
-        let era = Era::mortal(period, current_block);
-        let extra = (
-            frame_system::CheckSpecVersion::<Runtime>::new(),
-            frame_system::CheckTxVersion::<Runtime>::new(),
-            frame_system::CheckGenesis::<Runtime>::new(),
-            frame_system::CheckEra::<Runtime>::from(era),
-            frame_system::CheckNonce::<Runtime>::from(nonce),
-            frame_system::CheckWeight::<Runtime>::new(),
-            pallet_transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
-        );
-        let raw_payload = SignedPayload::new(call, extra)
-            .map_err(|e| {
-                debug::warn!("Unable to create signed payload: {:?}", e);
-            })
-            .ok()?;
-        let signature = raw_payload.using_encoded(|payload| C::sign(payload, public))?;
-        let (call, extra, _) = raw_payload.deconstruct();
-        Some((call, (account, signature, extra)))
-    }
-}
 
 impl frame_system::offchain::SigningTypes for Runtime {
     type Public = <Signature as sp_runtime::traits::Verify>::Signer;
@@ -448,10 +394,10 @@ construct_runtime!(
         System: frame_system::{Module, Call, Config, Storage, Event<T>},
         RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Module, Call, Storage},
         Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent},
-        Aura: pallet_aura::{Module, Config<T>, Inherent},
-        Session: pallet_session::{Module, Call, Storage, Event, Config<T>},
-        Grandpa: pallet_grandpa::{Module, Call, Storage, Config, Event},
         Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
+        Session: pallet_session::{Module, Call, Storage, Event, Config<T>},
+        Aura: pallet_aura::{Module, Config<T>},
+        Grandpa: pallet_grandpa::{Module, Call, Storage, Config, Event},
         TransactionPayment: pallet_transaction_payment::{Module, Storage},
         Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
         CosmosAbci: pallet_cosmos_abci::{Module, Call, ValidateUnsigned},
@@ -467,19 +413,19 @@ construct_runtime!(
         System: frame_system::{Module, Call, Config, Storage, Event<T>},
         RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Module, Call, Storage},
         Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent},
-        Babe: pallet_babe::{Module, Call, Storage, Config, Inherent, ValidateUnsigned},
+        Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
         Session: pallet_session::{Module, Call, Storage, Event, Config<T>},
+        Babe: pallet_babe::{Module, Call, Storage, Config, Inherent, ValidateUnsigned},
         Historical: pallet_session_historical::{Module},
         Grandpa: pallet_grandpa::{Module, Call, Storage, Config, Event},
-        Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
         TransactionPayment: pallet_transaction_payment::{Module, Storage},
         Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
-        CosmosAbci: pallet_cosmos_abci::{Module, Call, ValidateUnsigned}
+        CosmosAbci: pallet_cosmos_abci::{Module, Call, ValidateUnsigned},
     }
 );
 
 /// The address format for describing accounts.
-pub type Address = AccountId;
+pub type Address = sp_runtime::MultiAddress<AccountId, ()>;
 /// Block header type as expected by this runtime.
 pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
 /// Block type as expected by this runtime.
@@ -611,12 +557,20 @@ impl_runtime_apis! {
             }
         }
 
-        fn current_epoch_start() -> sp_consensus_babe::SlotNumber {
+        fn current_epoch_start() -> sp_consensus_babe::Slot {
             Babe::current_epoch_start()
         }
 
+        fn current_epoch() -> sp_consensus_babe::Epoch {
+            Babe::current_epoch()
+        }
+
+        fn next_epoch() -> sp_consensus_babe::Epoch {
+            Babe::next_epoch()
+        }
+
         fn generate_key_ownership_proof(
-            _slot_number: sp_consensus_babe::SlotNumber,
+            _slot_number: sp_consensus_babe::Slot,
             authority_id: sp_consensus_babe::AuthorityId,
         ) -> Option<sp_consensus_babe::OpaqueKeyOwnershipProof> {
             use codec::Encode;
@@ -690,12 +644,19 @@ impl_runtime_apis! {
         ) -> pallet_transaction_payment_rpc_runtime_api::RuntimeDispatchInfo<Balance> {
             TransactionPayment::query_info(uxt, len)
         }
+
+        fn query_fee_details(
+            uxt: <Block as BlockT>::Extrinsic,
+            len: u32,
+        ) -> pallet_transaction_payment::FeeDetails<Balance> {
+            TransactionPayment::query_fee_details(uxt, len)
+        }
     }
 
     impl pallet_cosmos_abci::ExtrinsicConstructionApi<Block> for Runtime {
         fn broadcast_abci_tx(data: Vec<u8>) {
             let call = pallet_cosmos_abci::Call::abci_transaction(data);
-            let _ = SubmitTransaction::<Runtime, <Runtime as pallet_cosmos_abci::Trait>::Call>::submit_unsigned_transaction(call.into())
+            let _ = SubmitTransaction::<Runtime, <Runtime as pallet_cosmos_abci::Config>::Call>::submit_unsigned_transaction(call.into())
             .map_err(|e| {
                 debug::error!("Failed to broadcast deliver_tx transaction, error: {:?}", e);
                 "Failed to broadcast deliver_tx transaction"

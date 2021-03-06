@@ -76,13 +76,18 @@ impl PurgeChainWithStorageCmd {
                 yes: confirm_removal,
                 shared_params: sc_cli::SharedParams {
                     dev: shared_params.dev,
-                    chain: None,
-                    base_path: None,
+                    chain: shared_params.chain.clone(),
+                    base_path: shared_params.base_path.clone(),
                     log: shared_params.log.clone(),
+                    disable_log_color: shared_params.disable_log_color,
+                    disable_log_reloading: shared_params.disable_log_reloading,
+                    tracing_receiver: shared_params.tracing_receiver,
+                    tracing_targets: shared_params.tracing_targets.clone(),
                 },
                 database_params: sc_cli::DatabaseParams {
                     database: database_params.database,
                     database_cache_size: database_params.database_cache_size,
+                    storage_chain: database_params.storage_chain,
                 },
             };
 

@@ -144,9 +144,23 @@ pub fn run() -> sc_cli::Result<()> {
         }
         None => {
             let runner = cli.create_runner(&cli.run)?;
-            runner.run_node_until_exit(|config| match config.role {
-                Role::Light => service::new_light(config),
-                _ => service::new_full(config),
+
+            let abci_server_url = &pallet_abci::get_server_url();
+            // Init ABCI instance.
+            pallet_abci::set_abci_instance(Box::new(
+                pallet_abci::grpc::AbciinterfaceGrpc::connect(abci_server_url)
+                    .map_err(|_| "failed to connect")
+                    .unwrap(),
+            ))
+            .map_err(|_| "failed to set abci instance")
+            .unwrap();
+
+            runner.run_node_until_exit(|config| async move {
+                match config.role {
+                    Role::Light => service::new_light(config),
+                    _ => service::new_full(config),
+                }
+                .map_err(sc_cli::Error::Service)
             })
         }
     }
