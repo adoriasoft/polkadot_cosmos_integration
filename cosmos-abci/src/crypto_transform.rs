@@ -1,16 +1,17 @@
 use codec::{Decode, Encode};
 use sp_std::vec::Vec;
 
+/// The hashers module that export `ripemd160` and `sha256` hash algorithms.
 pub mod hashers;
 
-/// Curves for convert nodes pub keys.
+/// Pub key curve types.
 #[derive(Encode, Decode, Clone, Debug, PartialEq)]
 pub enum PubKeyTypes {
     Ed25519 = 0,
     Secp256k1 = 1,
 }
 
-/// Method for getting address from pub key.
+/// Method for getting authority address from authority pub key.
 pub fn get_address_from_pub_key(pub_key: &[u8], key_type: PubKeyTypes) -> Vec<u8> {
     match key_type {
         PubKeyTypes::Ed25519 => {
@@ -25,7 +26,7 @@ pub fn get_address_from_pub_key(pub_key: &[u8], key_type: PubKeyTypes) -> Vec<u8
     }
 }
 
-/// Method for encode value from base64 string to utf8 string.
+/// Method for encode value from `base64` string to `utf8` string.
 pub fn encode_value_from_base64(value: &[u8]) -> Vec<u8> {
     base64::decode(value).unwrap().to_vec()
 }

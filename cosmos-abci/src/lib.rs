@@ -37,9 +37,11 @@ type SessionIndex = u32;
 /// The optional ledger type.
 type OptionalLedger<AccountId> = Option<(AccountId, Balance)>;
 
+/// The default Cosmos node account curve transform type.
 pub const COSMOS_ACCOUNT_DEFAULT_PUB_KEY_TYPE: &str = "ed25519";
 /// Priority for unsigned transaction.
 pub const UNSIGNED_TXS_PRIORITY: u64 = 100;
+/// Session duration in blocks.
 pub const SESSION_BLOCKS_PERIOD: u32 = 5;
 #[allow(dead_code)]
 const LAST_COSMOS_VALIDATORS_KEY: &[u8; 22] = b"last_cosmos_validators";
@@ -56,13 +58,13 @@ pub mod crypto {
     app_crypto!(sr25519, KEY_TYPE);
 }
 
-/// The CosmosAbci trait.
+/// The CosmosAbci trait that define `check_tx`, `deliver_tx` methods.
 pub trait CosmosAbci {
     fn check_tx(data: Vec<u8>) -> Result<u64, DispatchError>;
     fn deliver_tx(data: Vec<u8>) -> DispatchResult;
 }
 
-/// The pallet configuration trait.
+/// The pallet configuration trait for aura consensus.
 #[cfg(feature = "aura")]
 pub trait Trait:
     CreateSignedTransaction<Call<Self>>
@@ -74,6 +76,7 @@ pub trait Trait:
     type Call: From<Call<Self>>;
     type Subscription: SubscriptionManager;
 }
+/// The pallet configuration trait for babe consensus.
 #[cfg(feature = "babe")]
 pub trait Trait:
     CreateSignedTransaction<Call<Self>>
@@ -87,7 +90,8 @@ pub trait Trait:
     type Subscription: SubscriptionManager;
 }
 
-/// The pallet Subscription manager trait.
+/// The pallet SubscriptionManager trait that define `on_check_tx` and `on_deliver_tx` methods
+/// and used by pallet subscribtion macro.
 pub trait SubscriptionManager {
     fn on_check_tx(data: Vec<u8>) -> DispatchResult;
     fn on_deliver_tx(data: Vec<u8>) -> DispatchResult;
@@ -159,14 +163,12 @@ decl_storage! {
 }
 
 decl_module! {
+    /// The pallet_cosmos_abci pallet that implements
+    /// bridging between Cosmos and Substrate nodes.
     pub struct Module<T: Trait> for enum Call where origin: T::Origin {
         // Block initialization.
         fn on_initialize(block_number: T::BlockNumber) -> Weight {
             0
-        }
-
-        // Block finalization.
-        fn on_finalize(block_number: T::BlockNumber) {
         }
 
         // Insert Cosmos node account.
@@ -313,6 +315,7 @@ impl<T: Trait> Module<T> {
         Ok(())
     }
 
+    /// Update Substrate weights for active authorities after receive it from Cosmos.
     pub fn assign_weights(changed: bool) {
         let mut authorities_with_updated_weight = Vec::new();
         let validators = <session::Module<T>>::validators();
@@ -409,7 +412,6 @@ impl<T: Trait> frame_support::unsigned::ValidateUnsigned for Module<T> {
     }
 }
 
-/// The implementation for CosmosAbci trait for pallet.
 impl<T: Trait> CosmosAbci for Module<T> {
     fn check_tx(data: Vec<u8>) -> Result<u64, DispatchError> {
         <T::Subscription as SubscriptionManager>::on_check_tx(data.clone())?;
@@ -629,12 +631,15 @@ pub trait AbciInterface {
 
 impl<T: Trait> sp_runtime::offchain::storage_lock::BlockNumberProvider for Module<T> {
     type BlockNumber = T::BlockNumber;
+
+    /// Return current block number.
     fn current_block_number() -> Self::BlockNumber {
         <frame_system::Module<T>>::block_number()
     }
 }
 
 impl<T: Trait> Convert<T::AccountId, Option<T::AccountId>> for utils::StashOf<T> {
+    /// Convert account id to the account stash.
     fn convert(controller: T::AccountId) -> Option<T::AccountId> {
         let account_ledger: OptionalLedger<T::AccountId> =
             <Module<T>>::account_ledgers(&controller);
@@ -648,6 +653,7 @@ impl<T: Trait> Convert<T::AccountId, Option<T::AccountId>> for utils::StashOf<T>
 impl<T: Trait> Convert<T::AccountId, Option<utils::Exposure<T::AccountId, Balance>>>
     for utils::ExposureOf<T>
 {
+    /// Convert account id to the account exposure.
     fn convert(_validator: T::AccountId) -> Option<utils::Exposure<T::AccountId, Balance>> {
         Some(utils::Exposure {
             total: 0,
@@ -658,16 +664,20 @@ impl<T: Trait> Convert<T::AccountId, Option<utils::Exposure<T::AccountId, Balanc
 }
 
 impl<T: Trait> pallet_session::SessionManager<T::ValidatorId> for Module<T> {
+    /// Return new list of validators after new session started.
     fn new_session(new_index: SessionIndex) -> Option<Vec<T::ValidatorId>> {
         Self::call_on_new_session(new_index)
     }
 
+    /// Required method implementation for due to the SessionManager trait rules.
     fn end_session(_end_index: SessionIndex) {}
 
+    /// Required method implementation for due to the SessionManager trait rules.
     fn start_session(_start_index: SessionIndex) {}
 }
 
 impl<T: Trait> pallet_session::ShouldEndSession<T::BlockNumber> for Module<T> {
+    /// The session should be ended anyway then using grandpa consensus.
     fn should_end_session(_: T::BlockNumber) -> bool {
         true
     }
@@ -677,13 +687,13 @@ impl<T: Trait> pallet_session::OneSessionHandler<T::AccountId> for Module<T>
 where
     <T as Trait>::AuthorityId: sp_runtime::RuntimeAppPublic,
 {
+    /// Implementation for the OneSessionHandler trait for the future purpose.
     type Key = T::AuthorityId;
 
     fn on_new_session<'a, I: 'a>(_changed: bool, _validators: I, _queued_validators: I)
     where
         I: Iterator<Item = (&'a T::AccountId, Self::Key)>,
     {
-        // Self::assign_weights(_changed);
     }
 
     fn on_genesis_session<'a, I: 'a>(_validators: I)
