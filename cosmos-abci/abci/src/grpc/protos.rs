@@ -1,26 +1,22 @@
-mod libs {
-    pub mod kv {
-        tonic::include_proto!("tendermint.libs.kv");
+pub mod tendermint {
+    pub mod crypto {
+        tonic::include_proto!("tendermint.crypto");
+    }
+
+    pub mod types {
+        tonic::include_proto!("tendermint.types");
+    }
+
+    pub mod version {
+        tonic::include_proto!("tendermint.version");
+    }
+
+    pub mod abci {
+        tonic::include_proto!("tendermint.abci");
     }
 }
 
-pub mod crypto {
-    pub mod merkle {
-        tonic::include_proto!("tendermint.crypto.merkle");
-    }
-}
-
-mod proto {
-    pub mod abci_proto {
-        tonic::include_proto!("tendermint.abci.types");
-    }
-}
-
-pub use crypto::merkle::*;
-pub use libs::kv::*;
-pub use proto::abci_proto::*;
-
-impl crate::ResponseSetOption for ResponseSetOption {
+impl crate::ResponseSetOption for tendermint::abci::ResponseSetOption {
     fn get_code(&self) -> u32 {
         self.code
     }
@@ -34,7 +30,7 @@ impl crate::ResponseSetOption for ResponseSetOption {
     }
 }
 
-impl crate::ResponseInfo for ResponseInfo {
+impl crate::ResponseInfo for tendermint::abci::ResponseInfo {
     fn get_version(&self) -> String {
         self.version.clone()
     }
@@ -56,9 +52,9 @@ impl crate::ResponseInfo for ResponseInfo {
     }
 }
 
-impl crate::ResponseFlush for ResponseFlush {}
+impl crate::ResponseFlush for tendermint::abci::ResponseFlush {}
 
-impl crate::ResponseEcho for ResponseEcho {
+impl crate::ResponseEcho for tendermint::abci::ResponseEcho {
     fn get_message(&self) -> String {
         self.message.clone()
     }
@@ -68,7 +64,7 @@ impl crate::ResponseEcho for ResponseEcho {
     }
 }
 
-impl crate::ResponseCheckTx for ResponseCheckTx {
+impl crate::ResponseCheckTx for tendermint::abci::ResponseCheckTx {
     fn get_code(&self) -> u32 {
         self.code
     }
@@ -114,7 +110,7 @@ impl crate::ResponseCheckTx for ResponseCheckTx {
     }
 }
 
-impl crate::ResponseDeliverTx for ResponseDeliverTx {
+impl crate::ResponseDeliverTx for tendermint::abci::ResponseDeliverTx {
     fn get_code(&self) -> u32 {
         self.code
     }
@@ -160,30 +156,30 @@ impl crate::ResponseDeliverTx for ResponseDeliverTx {
     }
 }
 
-impl crate::ResponseInitChain for ResponseInitChain {
-    fn get_validators(&self) -> Vec<ValidatorUpdate> {
+impl crate::ResponseInitChain for tendermint::abci::ResponseInitChain {
+    fn get_validators(&self) -> Vec<tendermint::abci::ValidatorUpdate> {
         self.validators.clone()
     }
 }
 
-impl crate::ResponseBeginBlock for ResponseBeginBlock {}
+impl crate::ResponseBeginBlock for tendermint::abci::ResponseBeginBlock {}
 
-impl crate::ResponseEndBlock for ResponseEndBlock {
-    fn get_validator_updates(&self) -> Vec<ValidatorUpdate> {
+impl crate::ResponseEndBlock for tendermint::abci::ResponseEndBlock {
+    fn get_validator_updates(&self) -> Vec<tendermint::abci::ValidatorUpdate> {
         self.validator_updates.clone()
     }
-    fn get_events(&self) -> Vec<Event> {
+    fn get_events(&self) -> Vec<tendermint::abci::Event> {
         self.events.clone()
     }
-    fn set_events(&mut self, events: Vec<Event>) {
+    fn set_events(&mut self, events: Vec<tendermint::abci::Event>) {
         self.events = events;
     }
-    fn set_validator_updates(&mut self, validator_updates: Vec<ValidatorUpdate>) {
+    fn set_validator_updates(&mut self, validator_updates: Vec<tendermint::abci::ValidatorUpdate>) {
         self.validator_updates = validator_updates;
     }
 }
 
-impl crate::ResponseCommit for ResponseCommit {
+impl crate::ResponseCommit for tendermint::abci::ResponseCommit {
     fn get_data(&self) -> Vec<u8> {
         self.data.clone()
     }
@@ -199,7 +195,7 @@ impl crate::ResponseCommit for ResponseCommit {
     }
 }
 
-impl crate::ResponseQuery for ResponseQuery {
+impl crate::ResponseQuery for tendermint::abci::ResponseQuery {
     fn get_code(&self) -> u32 {
         self.code
     }
@@ -224,8 +220,8 @@ impl crate::ResponseQuery for ResponseQuery {
     fn get_codespace(&self) -> String {
         self.codespace.clone()
     }
-    fn get_proof(&self) -> Option<crypto::merkle::Proof> {
-        self.proof.clone()
+    fn get_proof(&self) -> Option<tendermint::crypto::ProofOps> {
+        self.proof_ops.clone()
     }
 
     fn set_code(&mut self, v: u32) {
@@ -258,31 +254,33 @@ impl crate::ResponseQuery for ResponseQuery {
 mod tests {
     #[test]
     fn abci_pub_key_serde() {
-        let pub_key = crate::protos::PubKey {
+        let pub_key = crate::protos::tendermint::abci::PubKey {
             data: vec![10, 12, 15],
             r#type: "ed25519".to_string(),
         };
         let bytes_from_pub_key = bincode::serialize(&pub_key).unwrap();
         println!("{:?}", bytes_from_pub_key);
-        let pub_key_deserialized: Result<crate::protos::PubKey, Box<bincode::ErrorKind>> =
-            bincode::deserialize(&bytes_from_pub_key);
+        let pub_key_deserialized: Result<
+            crate::protos::tendermint::abci::PubKey,
+            Box<bincode::ErrorKind>,
+        > = bincode::deserialize(&bytes_from_pub_key);
         assert_eq!(pub_key, pub_key_deserialized.unwrap());
     }
 
     #[test]
     fn validation_update_serde() {
-        let pub_key = crate::protos::PubKey {
+        let pub_key = crate::protos::tendermint::abci::PubKey {
             data: vec![10, 12, 15],
             r#type: "ed25519".to_string(),
         };
-        let validator_update = crate::protos::ValidatorUpdate {
+        let validator_update = crate::protos::tendermint::abci::ValidatorUpdate {
             pub_key: Some(pub_key),
             power: 14515,
         };
         let bytes_from_pub_key = bincode::serialize(&validator_update).unwrap();
         println!("{:?}", bytes_from_pub_key);
         let validator_update_deserialized: Result<
-            crate::protos::ValidatorUpdate,
+            crate::protos::tendermint::abci::ValidatorUpdate,
             Box<bincode::ErrorKind>,
         > = bincode::deserialize(&bytes_from_pub_key);
         assert_eq!(validator_update, validator_update_deserialized.unwrap());

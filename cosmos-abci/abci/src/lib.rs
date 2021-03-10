@@ -73,7 +73,7 @@ pub trait ResponseDeliverTx {
 /// Trait that specify fields of ResponseInitChain.
 #[automock]
 pub trait ResponseInitChain {
-    fn get_validators(&self) -> Vec<protos::ValidatorUpdate>;
+    fn get_validators(&self) -> Vec<protos::tendermint::abci::ValidatorUpdate>;
 }
 
 /// Trait that specify fields for ResponseSetOption.
@@ -128,7 +128,7 @@ pub trait ResponseQuery {
     fn get_value(&self) -> Vec<u8>;
     fn get_height(&self) -> i64;
     fn get_codespace(&self) -> String;
-    fn get_proof(&self) -> Option<protos::crypto::merkle::Proof>;
+    fn get_proof(&self) -> Option<protos::tendermint::crypto::ProofOps>;
 
     fn set_code(&mut self, v: u32);
     fn set_log(&mut self, v: String);
