@@ -463,17 +463,29 @@ pub trait AbciInterface {
         {
             Some(bytes) => {
                 let validators = pallet_abci::utils::deserialize_vec::<
-                    pallet_abci::protos::ValidatorUpdate,
+                    pallet_abci::protos::tendermint::abci::ValidatorUpdate,
                 >(&bytes)
                 .map_err(|_| "cannot deserialize ValidatorUpdate vector")?;
 
                 let mut response = Vec::new();
                 for val in validators {
-                    if let Some(key) = val.pub_key {
-                        response.push(utils::CosmosAccount {
-                            pub_key: key.data,
-                            power: val.power,
-                        });
+                    if let Some(pub_key) = val.pub_key {
+                        if let Some(sum) = pub_key.sum {
+                            match sum {
+                                pallet_abci::protos::tendermint::crypto::public_key::Sum::Ed25519(
+                                    data,
+                                ) => response.push(utils::CosmosAccount {
+                                    pub_key: data,
+                                    power: val.power,
+                                }),
+                                pallet_abci::protos::tendermint::crypto::public_key::Sum::Secp256k1(
+                                    data,
+                                ) => response.push(utils::CosmosAccount {
+                                    pub_key: data,
+                                    power: val.power,
+                                }),
+                            };
+                        }
                     }
                 }
                 Ok(response)
@@ -491,17 +503,29 @@ pub trait AbciInterface {
         {
             Some(bytes) => {
                 let validators = pallet_abci::utils::deserialize_vec::<
-                    pallet_abci::protos::ValidatorUpdate,
+                    pallet_abci::protos::tendermint::abci::ValidatorUpdate,
                 >(&bytes)
                 .map_err(|_| "cannot deserialize ValidatorUpdate vector")?;
 
                 let mut response = Vec::new();
                 for val in validators {
-                    if let Some(key) = val.pub_key {
-                        response.push(utils::CosmosAccount {
-                            pub_key: key.data,
-                            power: val.power,
-                        });
+                    if let Some(pub_key) = val.pub_key {
+                        if let Some(sum) = pub_key.sum {
+                            match sum {
+                                pallet_abci::protos::tendermint::crypto::public_key::Sum::Ed25519(
+                                    data,
+                                ) => response.push(utils::CosmosAccount {
+                                    pub_key: data,
+                                    power: val.power,
+                                }),
+                                pallet_abci::protos::tendermint::crypto::public_key::Sum::Secp256k1(
+                                    data,
+                                ) => response.push(utils::CosmosAccount {
+                                    pub_key: data,
+                                    power: val.power,
+                                }),
+                            };
+                        }
                     }
                 }
                 Ok(response)
@@ -546,24 +570,25 @@ pub trait AbciInterface {
         proposer_address: Vec<u8>,
         current_cosmos_validators: Vec<utils::CosmosAccount>,
     ) -> DispatchResult {
-        let cosmos_validators: Vec<pallet_abci::protos::VoteInfo> = current_cosmos_validators
-            .iter()
-            .map(|validator| {
-                let address = crypto_transform::get_address_from_pub_key(
-                    &validator.pub_key,
-                    crypto_transform::PubKeyTypes::Ed25519,
-                );
+        let cosmos_validators: Vec<pallet_abci::protos::tendermint::abci::VoteInfo> =
+            current_cosmos_validators
+                .iter()
+                .map(|validator| {
+                    let address = crypto_transform::get_address_from_pub_key(
+                        &validator.pub_key,
+                        crypto_transform::PubKeyTypes::Ed25519,
+                    );
 
-                pallet_abci::protos::VoteInfo {
-                    validator: Some(pallet_abci::protos::Validator {
-                        address,
-                        power: validator.power,
-                    }),
-                    // TODO Check if validator is author of last block or does not.
-                    signed_last_block: true,
-                }
-            })
-            .collect();
+                    pallet_abci::protos::tendermint::abci::VoteInfo {
+                        validator: Some(pallet_abci::protos::tendermint::abci::Validator {
+                            address,
+                            power: validator.power,
+                        }),
+                        // TODO Check if validator is author of last block or does not.
+                        signed_last_block: true,
+                    }
+                })
+                .collect();
 
         let _result = pallet_abci::get_abci_instance()
             .map_err(|_| "failed to setup connection")?
@@ -604,7 +629,7 @@ pub trait AbciInterface {
             if validator_update.power == 0 {
                 // remove this validator for the current list
                 current_cosmos_validators.retain(
-                    |x: &pallet_abci::protos::ValidatorUpdate| -> bool {
+                    |x: &pallet_abci::protos::tendermint::abci::ValidatorUpdate| -> bool {
                         x.pub_key != validator_update.pub_key
                     },
                 );

@@ -74,29 +74,40 @@ impl crate::AbciInterface for AbciinterfaceGrpc {
         time_nanos: i32,
         chain_id: &str,
         pub_key_types: Vec<String>,
-        max_bytes: i64,
+        max_block_bytes: i64,
+        max_evidence_bytes: i64,
         max_gas: i64,
         max_age_num_blocks: i64,
         max_age_duration: u64,
         app_state_bytes: Vec<u8>,
         validators: Vec<protos::tendermint::abci::ValidatorUpdate>,
+        app_version: u64,
+        initial_height: i64,
     ) -> crate::AbciResult<dyn crate::ResponseInitChain> {
         let evidence = protos::tendermint::types::EvidenceParams {
             max_age_num_blocks,
             max_age_duration: Some(Duration::from_micros(max_age_duration).into()),
+            max_bytes: max_evidence_bytes,
         };
-        let block = protos::tendermint::abci::BlockParams { max_bytes, max_gas };
+        let block = protos::tendermint::abci::BlockParams {
+            max_bytes: max_block_bytes,
+            max_gas,
+        };
         let validator = protos::tendermint::types::ValidatorParams { pub_key_types };
+
+        let version = protos::tendermint::types::VersionParams { app_version };
 
         let consensus_params = protos::tendermint::abci::ConsensusParams {
             block: Some(block),
             evidence: Some(evidence),
             validator: Some(validator),
+            version: Some(version),
         };
 
         self.chain_id = chain_id.to_string();
 
         let request = tonic::Request::new(protos::tendermint::abci::RequestInitChain {
+            initial_height,
             time: Some(prost_types::Timestamp {
                 seconds: time_seconds,
                 nanos: time_nanos,
