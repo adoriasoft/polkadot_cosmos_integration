@@ -1,12 +1,12 @@
 # Substrate Node with Cosmos ABCI pallet
 
-A new FRAME-based Substrate node with Cosmos ABCI.
+A new FRAME-based Substrate node with Cosmos ABCI pallet.
 
 ## Documentation
 
 Documentation for this project is [here](https://github.com/adoriasoft/polkadot-cosmos-docs)
 
-## Build
+## Build in local environment
 
 Install Rust:
 
@@ -26,73 +26,33 @@ Build Wasm and native code:
 cargo build
 ```
 
-```
-For building node with selected consensus
-- cargo build -Z package-features --package pallet-cosmos-abci --features "std <consensus_pallet_name>" --no-default-features
-- cargo build -Z package-features --package runtime --features "std <consensus_pallet_name>" --no-default-features
-- cargo build --workspace --features "<consensus_pallet_name>" --no-default-features
-```
-
-## Run
-
 Before running substrate node, you should build and start cosmos node. Go to the our fork of the [cosmos-sdk](https://github.com/adoriasoft/cosmos-sdk/tree/master), switch to the branch [feature/add_nameservice](https://github.com/adoriasoft/cosmos-sdk/tree/feature/add_nameservice), then just follow [instractions](https://github.com/adoriasoft/cosmos-sdk/tree/feature/add_nameservice/simapp).
 
-To run node locally you will need to specify the environment variables for cosmos-abci pallet.
+#### Specify environment variables that using by node
 
 ```sh
+# Set ABCI backend url
 export ABCI_SERVER_URL=tcp://localhost:26658
+# Using path to Genesis file
 export ABCI_GENESIS_STATE_PATH=$HOME/.nsd/config/genesis.json
-# or
+# Using whole Genesis state from file
+export ABCI_GENESIS_STATE=$(cat $HOME/.nsd/config/genesis.json)
+# Re-export whole Genesis state from file
 export ABCI_GENESIS_STATE=$(cat $HOME/.nsd/config/genesis.json)
 ```
 
-After any updating of the genesis.json file should specify following encironment variable
+#### Build with selected consensus
+
+````
+Available consensus
+- `aura`
+- `babe`
 
 ```sh
-export ABCI_GENESIS_STATE=$(cat $HOME/.nsd/config/genesis.json)
-```
+- cargo build --no-default-features --features <consensus_name>
+````
 
-### Tests
-
-#### Pallets tests
-
-To run tests from local use commands:
-
-```sh
-# pallet-cosmos-abci
-cargo test --test cosmos_abci_unit_test
-# pallet-abci
-cargo test --test abci_integration_test
-cargo test --test abci_unit_test
-```
-
-#### sh integration tests
-
-Follow to the scripts/integration_tests directory
-
-### Single Node Development Chain
-
-Purge any existing developer chain state:
-
-```sh
-./target/release/node-template purge-chain --dev
-```
-
-Start a development chain with:
-
-```sh
-./target/release/node-template --abci_genesis_state_path $HOME/.nsd/config/genesis.json --abci_server_url tcp://localhost:26658 --abci_rpc_url 127.0.0.1:26657 --dev
-```
-
-To get detailed info about options that available for node:
-
-```sh
-./target/release/node-template --help
-```
-
-Detailed logs may be shown by running the node with the following environment variables set: `RUST_LOG=debug RUST_BACKTRACE=1 cargo run -- --dev`.
-
-### Run in Docker
+## Dockerize environment
 
 First, install [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/).
 
@@ -108,7 +68,52 @@ Or:
 docker-compose up -d
 ```
 
-### CosmosRPC REST calls
+## Testing
 
-- Request to CosmosRPC API:
+#### Unit and integration Testing with cargo
+
+```sh
+# Testing of all cargo packages
+cargo test --all
+# Testing of pallet-cosmos-abci package
+cargo test -p pallet-cosmos-abci --test cosmos_abci_unit_test
+cargo test -p pallet-cosmos-abci --test crypto_transform_unit_test
+# Testing of pallet-abci package
+cargo test -p pallet-abci --test abci_integration_test
+cargo test -p pallet-abci --test abci_unit_test
+```
+
+#### Integration Testing with bash
+
+Follow the docs from `https://github.com/adoriasoft/polkadot_cosmos_integration/tree/master/scripts/integration_tests` directory.
+
+### Node development chain
+
+Start a development chain with:
+
+```sh
+./target/release/node-template
+  --abci_genesis_state_path $HOME/.nsd/config/genesis.json
+  --abci_server_url tcp://localhost:26658
+  --abci_rpc_url 127.0.0.1:26657
+  --dev
+```
+
+Purge any existing developer chain state:
+
+```sh
+./target/release/node-template purge-chain --dev
+```
+
+To get detailed info about options that available for node:
+
+```sh
+./target/release/node-template --help
+```
+
+Detailed logs may be shown by running the node with the following environment variables set: `RUST_LOG=debug RUST_BACKTRACE=1 cargo run -- --dev`.
+
+### Perform calls to Cosmos RPC
+
+- Simple request to Cosmos RPC:
   `{ "jsonrpc": "2.0", "method": <method_name>, "id": 0, "params": <method_params> }`

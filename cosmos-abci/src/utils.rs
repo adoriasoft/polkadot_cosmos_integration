@@ -2,10 +2,10 @@ use codec::{Decode, Encode};
 use sp_runtime::RuntimeDebug;
 use sp_std::prelude::*;
 
-/// Exposure for account.
+/// Return Exposure for account.
 pub struct ExposureOf<T>(sp_std::marker::PhantomData<T>);
 
-/// Exposure.
+/// Exposure for account.
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Encode, Decode, Default, RuntimeDebug)]
 pub struct Exposure<AccountId, Balance> {
     pub total: Balance,
@@ -13,7 +13,7 @@ pub struct Exposure<AccountId, Balance> {
     pub others: Vec<(AccountId, Balance)>,
 }
 
-/// Stash for account.
+/// Return Stash for account.
 pub struct StashOf<T>(sp_std::marker::PhantomData<T>);
 
 /// Cosmos account Public key.
