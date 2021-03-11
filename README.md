@@ -111,7 +111,7 @@ To get detailed info about options that available for node, run:
 ./target/release/node-template --help
 ```
 
-To show detailed logs, run the the node with the following environment variables set: `RUST_LOG=debug RUST_BACKTRACE=1 cargo run --dev`.
+To show detailed logs, run the the node with the following environment variables set: `RUST_LOG=debug RUST_BACKTRACE=1 cargo run -- --dev`.
 
 ### Perform calls to Cosmos RPC
 
