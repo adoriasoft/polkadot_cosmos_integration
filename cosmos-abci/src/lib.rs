@@ -425,8 +425,8 @@ impl<T: Trait> CosmosAbci for Module<T> {
     }
 }
 
-/// Broadcast ABCI transaction 
 sp_api::decl_runtime_apis! {
+    /// Broadcast ABCI transaction
     pub trait ExtrinsicConstructionApi {
         fn broadcast_abci_tx(data: Vec<u8>);
     }
@@ -435,7 +435,6 @@ sp_api::decl_runtime_apis! {
 /// Runtime interfaces for interaction with other modules.
 #[runtime_interface]
 pub trait AbciInterface {
-
     /// Write data to the external DB
     fn storage_write(key: Vec<u8>, value: Vec<u8>) -> Result<(), DispatchError> {
         abci_storage::get_abci_storage_instance()
