@@ -1,4 +1,4 @@
-//! The pallet for interact with cosmos abci interface.
+//! The pallet for interaction with cosmos abci interface.
 
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(unused_assignments)]
@@ -32,14 +32,14 @@ pub mod utils;
 
 /// Balance type for pallet.
 pub type Balance = u64;
-/// Session index that define in pallet_session.
+/// Session index defined in pallet_session.
 type SessionIndex = u32;
 /// The optional ledger type.
 type OptionalLedger<AccountId> = Option<(AccountId, Balance)>;
 
-/// The default Cosmos node account curve transform type.
+/// The default Cosmos account curve type.
 pub const COSMOS_ACCOUNT_DEFAULT_PUB_KEY_TYPE: &str = "ed25519";
-/// Priority for unsigned transaction.
+/// Priority for unsigned transactions.
 pub const UNSIGNED_TXS_PRIORITY: u64 = 100;
 /// Session duration in blocks.
 pub const SESSION_BLOCKS_PERIOD: u32 = 5;
@@ -49,7 +49,7 @@ const LAST_COSMOS_VALIDATORS_KEY: &[u8; 22] = b"last_cosmos_validators";
 /// The KeyType ID.
 pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"abci");
 /// Based on the above `KeyTypeId` we need to generate a pallet-specific crypto type wrapper.
-/// We can utilize the supported crypto kinds (`sr25519`, `ed25519` and `ecdsa`) and augment
+/// We can utilize the supported crypto algorithms (`sr25519`, `ed25519` and `ecdsa`) and augment
 /// them with the pallet-specific identifier.
 pub mod crypto {
     use crate::KEY_TYPE;
@@ -58,7 +58,7 @@ pub mod crypto {
     app_crypto!(sr25519, KEY_TYPE);
 }
 
-/// The CosmosAbci trait that define `check_tx`, `deliver_tx` methods.
+/// The CosmosAbci trait that defines `check_tx`, `deliver_tx` methods.
 pub trait CosmosAbci {
     fn check_tx(data: Vec<u8>) -> Result<u64, DispatchError>;
     fn deliver_tx(data: Vec<u8>) -> DispatchResult;
@@ -90,8 +90,8 @@ pub trait Trait:
     type Subscription: SubscriptionManager;
 }
 
-/// The pallet SubscriptionManager trait that define `on_check_tx` and `on_deliver_tx` methods
-/// and used by pallet subscribtion macro.
+/// The pallet SubscriptionManager trait that defines `on_check_tx` and `on_deliver_tx` methods
+/// and is used by pallet subscribtion macro.
 pub trait SubscriptionManager {
     fn on_check_tx(data: Vec<u8>) -> DispatchResult;
     fn on_deliver_tx(data: Vec<u8>) -> DispatchResult;
@@ -147,7 +147,7 @@ where
     type Public = T::AuthorityId;
 }
 
-/// The ABCITxs struct that keept map of txs.
+/// The ABCITxs struct that keeps map of txs.
 #[derive(Encode, Decode, Clone, Default, RuntimeDebug)]
 pub struct ABCITxs {
     data_array: Vec<Vec<u8>>,
@@ -163,15 +163,14 @@ decl_storage! {
 }
 
 decl_module! {
-    /// The pallet_cosmos_abci pallet that implements
-    /// bridging between Cosmos and Substrate nodes.
+    /// The cosmos_abci pallet that connects Cosmos and Substrate nodes.
     pub struct Module<T: Trait> for enum Call where origin: T::Origin {
         // Block initialization.
         fn on_initialize(block_number: T::BlockNumber) -> Weight {
             0
         }
 
-        // Insert Cosmos node account.
+        // Map Cosmos account with the provided Substrate account.
         #[weight = 0]
         fn insert_cosmos_account(
             origin,
@@ -189,7 +188,7 @@ decl_module! {
             Ok(())
         }
 
-        // Remove Cosmos node account.
+        // Remove mapping between Cosmos and Substrate accounts.
         #[weight = 0]
         fn remove_cosmos_account(origin) -> DispatchResult {
             let convertable = <T as session::Trait>::ValidatorIdOf::convert(ensure_signed(origin)?)
@@ -201,7 +200,7 @@ decl_module! {
             Ok(())
         }
 
-        // Transaction dispatch.
+        // ABCI transaction dispatch (wrapper over Cosmos transaction).
         #[weight = 0]
         pub fn abci_transaction(origin, data: Vec<u8>) -> DispatchResult {
             let _ = ensure_none(origin)?;
@@ -210,7 +209,7 @@ decl_module! {
             Ok(())
         }
 
-        // Offchain worker logic.
+        // ABCI block processing in offchain worker.
         fn offchain_worker(block_number: T::BlockNumber) {
             if let Some(bytes) = abci_interface::storage_get(b"abci_current_height".to_vec()).unwrap() {
                 let mut height: u32 = u32::from_ne_bytes(bytes.as_slice().try_into().unwrap());
@@ -236,7 +235,7 @@ decl_module! {
 
 /// Implementation of additional methods for pallet configuration trait.
 impl<T: Trait> Module<T> {
-    // The abci transaction call.
+    // Save ABCI transaction into Substrate storage.
     pub fn call_abci_transaction(data: Vec<u8>) -> DispatchResult {
         let block_number = <system::Module<T>>::block_number();
         let mut abci_txs: ABCITxs = <ABCITxStorage<T>>::get(block_number);
@@ -245,7 +244,7 @@ impl<T: Trait> Module<T> {
         Ok(())
     }
 
-    // Called on offchain worker executive.
+    // Execute ABCI block with transactions (Called on offchain worker).
     pub fn call_offchain_worker(
         block_number: T::BlockNumber,
         block_hash: T::Hash,
@@ -263,7 +262,7 @@ impl<T: Trait> Module<T> {
         Self::call_on_finalize(block_number);
     }
 
-    // Called on block initialize.
+    // ABCI BeginBlock logic.
     pub fn call_on_initialize(
         block_number: T::BlockNumber,
         block_hash: T::Hash,
@@ -290,7 +289,7 @@ impl<T: Trait> Module<T> {
         true
     }
 
-    /// Called on block finalize.
+    /// ABCI EndBlock logic.
     pub fn call_on_finalize(block_number: T::BlockNumber) -> bool {
         match abci_interface::end_block(block_number.saturated_into() as i64) {
             Ok(_) => match abci_interface::commit() {
@@ -315,7 +314,8 @@ impl<T: Trait> Module<T> {
         Ok(())
     }
 
-    /// Update Substrate weights for active authorities after receive it from Cosmos.
+    /// Update Substrate weights for current grandpa authorities after receiving them from Cosmos.
+    /// It's not used.
     pub fn assign_weights(changed: bool) {
         let mut authorities_with_updated_weight = Vec::new();
         let validators = <session::Module<T>>::validators();
@@ -351,7 +351,7 @@ impl<T: Trait> Module<T> {
 
     pub fn call_on_new_session(_new_session_index: SessionIndex) -> Option<Vec<T::ValidatorId>> {
         // Sessions starts after end_block() with number 2.
-        // For some reason two first sessions is skipped.
+        // For some reason two first sessions are skipped.
 
         let current_substarte_validators = <session::Module<T>>::validators();
 
@@ -363,7 +363,7 @@ impl<T: Trait> Module<T> {
                 if let Some(substrate_account_id) =
                     <CosmosAccounts<T>>::get(&cosmos_validator.pub_key)
                 {
-                    // update cosmos validator in the substrate storage
+                    // update Cosmos validator in the Substrate storage
                     let convertable =
                         <T as pallet_session::Trait>::ValidatorIdOf::convert(substrate_account_id)
                             .unwrap();
@@ -391,7 +391,7 @@ impl<T: Trait> Module<T> {
     }
 }
 
-/// The implementation of ValidateUnsigned trait for module.
+/// Allow using unsigned transactions in abci pallet.
 impl<T: Trait> frame_support::unsigned::ValidateUnsigned for Module<T> {
     type Call = Call<T>;
 
@@ -412,6 +412,7 @@ impl<T: Trait> frame_support::unsigned::ValidateUnsigned for Module<T> {
     }
 }
 
+/// ABCO CheckTx and DeliverTx methods
 impl<T: Trait> CosmosAbci for Module<T> {
     fn check_tx(data: Vec<u8>) -> Result<u64, DispatchError> {
         <T::Subscription as SubscriptionManager>::on_check_tx(data.clone())?;
@@ -424,16 +425,18 @@ impl<T: Trait> CosmosAbci for Module<T> {
     }
 }
 
+/// Broadcast ABCI transaction 
 sp_api::decl_runtime_apis! {
-    /// ExtrinsicConstructionApi trait for define broadcast_abci_tx method.
     pub trait ExtrinsicConstructionApi {
         fn broadcast_abci_tx(data: Vec<u8>);
     }
 }
 
-/// AbciInterface trait with runtime_interface macro.
+/// Runtime interfaces for interaction with other modules.
 #[runtime_interface]
 pub trait AbciInterface {
+
+    /// Write data to the external DB
     fn storage_write(key: Vec<u8>, value: Vec<u8>) -> Result<(), DispatchError> {
         abci_storage::get_abci_storage_instance()
             .map_err(|_| "failed to get abci storage instance")?
@@ -442,6 +445,7 @@ pub trait AbciInterface {
         Ok(())
     }
 
+    /// Get data from the external DB
     fn storage_get(key: Vec<u8>) -> Result<Option<Vec<u8>>, DispatchError> {
         let value = abci_storage::get_abci_storage_instance()
             .map_err(|_| "failed to get abci storage instance")?
@@ -451,6 +455,7 @@ pub trait AbciInterface {
         Ok(value)
     }
 
+    /// Get Cosmos validators from the external DB
     fn get_cosmos_validators(height: i64) -> Result<Vec<utils::CosmosAccount>, DispatchError> {
         match abci_storage::get_abci_storage_instance()
             .map_err(|_| "failed to get abci storage instance")?
@@ -478,6 +483,7 @@ pub trait AbciInterface {
         }
     }
 
+    /// Get the latest Cosmos validators from the external DB
     fn get_last_cosmos_validators() -> Result<Vec<utils::CosmosAccount>, DispatchError> {
         match abci_storage::get_abci_storage_instance()
             .map_err(|_| "failed to get abci storage instance")?
@@ -505,6 +511,7 @@ pub trait AbciInterface {
         }
     }
 
+    /// Send ABCI CheckTx to Cosmos
     fn check_tx(data: Vec<u8>) -> Result<u64, DispatchError> {
         let result = pallet_abci::get_abci_instance()
             .map_err(|_| "failed to setup connection")?
@@ -523,6 +530,7 @@ pub trait AbciInterface {
         }
     }
 
+    /// Send ABCI DeliverTx to Cosmos
     fn deliver_tx(data: Vec<u8>) -> DispatchResult {
         let _result = pallet_abci::get_abci_instance()
             .map_err(|_| "failed to setup connection")?
@@ -531,6 +539,7 @@ pub trait AbciInterface {
         Ok(())
     }
 
+    /// Send ABCI BeginBlock to Cosmos
     fn begin_block(
         height: i64,
         hash: Vec<u8>,
@@ -571,6 +580,7 @@ pub trait AbciInterface {
         Ok(())
     }
 
+    /// Send ABCI EndBlock to Cosmos
     fn end_block(height: i64) -> DispatchResult {
         let result = pallet_abci::get_abci_instance()
             .map_err(|_| "failed to setup connection")?
@@ -606,7 +616,7 @@ pub trait AbciInterface {
         let bytes = pallet_abci::utils::serialize_vec(current_cosmos_validators)
             .map_err(|_| "cannot serialize cosmos validators")?;
 
-        // save it in the storage
+        // save validators into the external DB
         abci_storage::get_abci_storage_instance()
             .map_err(|_| "failed to get abci storage instance")?
             .write(height.to_ne_bytes().to_vec(), bytes.clone())
@@ -620,6 +630,7 @@ pub trait AbciInterface {
         Ok(())
     }
 
+    /// Send ABCI Commit to Cosmos
     fn commit() -> DispatchResult {
         let _result = pallet_abci::get_abci_instance()
             .map_err(|_| "failed to setup connection")?
@@ -669,20 +680,22 @@ impl<T: Trait> pallet_session::SessionManager<T::ValidatorId> for Module<T> {
         Self::call_on_new_session(new_index)
     }
 
-    /// Required method implementation for due to the SessionManager trait rules.
+    /// Required method implementation due to the SessionManager trait rules.
     fn end_session(_end_index: SessionIndex) {}
 
-    /// Required method implementation for due to the SessionManager trait rules.
+    /// Required method implementation due to the SessionManager trait rules.
     fn start_session(_start_index: SessionIndex) {}
 }
 
 impl<T: Trait> pallet_session::ShouldEndSession<T::BlockNumber> for Module<T> {
-    /// The session should be ended anyway then using grandpa consensus.
+    /// The session should end anyway.
     fn should_end_session(_: T::BlockNumber) -> bool {
         true
     }
 }
 
+/// It's not used
+/// We planned to use it for weights' update, but Substrate consensuses don't allow updates in such a way
 impl<T: Trait> pallet_session::OneSessionHandler<T::AccountId> for Module<T>
 where
     <T as Trait>::AuthorityId: sp_runtime::RuntimeAppPublic,
