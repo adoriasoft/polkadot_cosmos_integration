@@ -21,17 +21,18 @@ source ./testing_setup/test_utils.sh
 start_all
 sleep 20s
 
-nsd tx staking create-validator \
+simd tx staking create-validator \
  --amount=10000000stake \
  --pubkey=cosmosvalconspub1zcjduepq5n6c30jmmytupyeadls6cxxstvja6ke83ypj0ftmjymmnpnndu2s0793yf \
  --moniker="alex validator" \
- --chain-id=namechain \
+ --chain-id=test_chain \
  --from=jack \
  --commission-rate="0.10" \
  --commission-max-rate="0.20" \
  --commission-max-change-rate="0.01" \
  --min-self-delegation="1" \
- --gas-prices="0.025stake"
+ --gas-prices="0.025stake" \
+ -y
 
 cd ../../node_testing_ui
 
@@ -40,30 +41,30 @@ assert_eq "$validators_set" $expect_validators_set_1
 
 sleep 30s
 
-value=$(nscli q bank balances $(nscli keys show jack -a))
+value=$(simd q bank balances $(simd keys show jack -a))
 echo "$value"
-expected=$'- amount: \"1000\"\n  denom: nametoken\n- amount: \"89995000\"\n  denom: stake'
+expected=$'balances:\n- amount: \"89995000\"\n  denom: stake\npagination:\n  next_key: null\n  total: \"0\"'
 assert_eq "$value" "$expected"
 
 # withdraw rewards
-nscli tx distribution withdraw-all-rewards --chain-id=namechain --from=$(nscli keys show jack -a) -y
+simd tx distribution withdraw-all-rewards --chain-id=test_chain --from=$(simd keys show jack -a) -y
 sleep 5s
 
-value=$(nscli q bank balances $(nscli keys show jack -a))
+value=$(simd q bank balances $(simd keys show jack -a))
 echo "$value"
-expected=$'- amount: \"1000\"\n  denom: nametoken\n- amount: \"89995000\"\n  denom: stake'
+expected=$'balances:\n- amount: \"89995000\"\n  denom: stake\npagination:\n  next_key: null\n  total: \"0\"'
 assert_eq "$value" "$expected"
 
 node ./insert-cosmos-validator.app.js //Bob $cosmos_validator_pub_key
 sleep 30s
 
 # withdraw rewards
-nscli tx distribution withdraw-all-rewards --chain-id=namechain --from=$(nscli keys show jack -a) -y
+simd tx distribution withdraw-all-rewards --chain-id=test_chain --from=$(simd keys show jack -a) -y
 sleep 5s
 
-value=$(nscli q bank balances $(nscli keys show jack -a))
+value=$(simd q bank balances $(simd keys show jack -a))
 echo "$value"
-expected=$'- amount: \"1000\"\n  denom: nametoken\n- amount: \"89995000\"\n  denom: stake'
+expected=$'balances:\n- amount: \"89995000\"\n  denom: stake\npagination:\n  next_key: null\n  total: \"0\"'
 assert_ne "$value" "$expected"
 
 test_passed "cosmos_validator_rewards_test test passed"
