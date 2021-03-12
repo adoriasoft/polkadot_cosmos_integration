@@ -20,17 +20,18 @@ source ./testing_setup/test_utils.sh
 start_all
 sleep 20s
 
-nsd tx staking create-validator \
+simd tx staking create-validator \
  --amount=10000000stake \
  --pubkey=cosmosvalconspub1zcjduepq5n6c30jmmytupyeadls6cxxstvja6ke83ypj0ftmjymmnpnndu2s0793yf \
  --moniker="alex validator" \
- --chain-id=namechain \
+ --chain-id=test_chain \
  --from=alice \
  --commission-rate="0.10" \
  --commission-max-rate="0.20" \
  --commission-max-change-rate="0.01" \
  --min-self-delegation="1" \
- --gas-prices="0.025stake"
+ --gas-prices="0.025stake" \
+ -y
 
 cd ../../node_testing_ui
 
