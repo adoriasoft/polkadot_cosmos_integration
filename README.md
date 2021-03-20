@@ -12,6 +12,7 @@ Refer to the instructions at the
 [Substrate Developer Hub](https://substrate.dev/docs/en/knowledgebase/getting-started/#manual-installation).
 
 The application is known to compile with the following versions of Rust:
+
 nightly-2020-08-19 (defined in rust-toolchain)
 
 ## Build in local environment
