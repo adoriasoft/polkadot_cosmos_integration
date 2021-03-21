@@ -127,7 +127,7 @@ Follow the docs from the [directory](https://github.com/adoriasoft/polkadot_cosm
 
 ABCI pallet allows launching applications based on Cosmos SDK (or any other application that uses ABCI) on top of Substrate consensus and network layers. When both Cosmos and Substrate nodes are running, users can interact with them using [Polkadot GUI](https://polkadot.js.org/apps/) and [Cosmos CLI](https://docs.cosmos.network/v0.39/interfaces/cli.html). 
 
-In Polkadot GUI, users can send standard Substrate extrinsic including extrinsics to ABCI pallet to match Substrate and Cosmos accounts for validators elections and Cosmos transaction wrapped with Substrate extrinsics. In Cosmos CLI, users can make the majority of standards calls to Cosmos node (all available functions are described in the [full documentation](https://github.com/adoriasoft/polkadot-cosmos-docs). Some examples of commends for Nameservice app are described [here](https://github.com/adoriasoft/cosmos-sdk/blob/feature/add_nameservice/simapp/README.md).
+In Polkadot GUI, users can send standard Substrate extrinsic including extrinsics to ABCI pallet to match Substrate and Cosmos accounts for validators elections and Cosmos transaction wrapped with Substrate extrinsics. In Cosmos CLI, users can make the majority of standards calls to Cosmos node (all available functions are described in the [full documentation](https://github.com/adoriasoft/polkadot-cosmos-docs). Some examples of commands for Nameservice app are described [here](https://github.com/adoriasoft/cosmos-sdk/blob/feature/add_nameservice/simapp/README.md).
 
 ### Perform calls to Cosmos RPC
 
