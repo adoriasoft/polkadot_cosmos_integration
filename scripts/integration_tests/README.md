@@ -1,11 +1,11 @@
 ## Prapare local environment for running tests
 
 1. Make sure Go installed on your machine.
-   Prepare your Comsos environment as described in https://github.com/adoriasoft/cosmos-sdk/tree/feature/add_nameservice/simapp.
+   Prepare your Comsos environment as described in https://github.com/adoriasoft/cosmos-sdk/tree/feature/add_nameservice/simapp/README.md.
 
-2. Built Substrate node from the root.
+2. Built Substrate node from the root https://github.com/adoriasoft/polkadot_cosmos_integration/README.md.
 
-3. Make sure you have Node.js installed on your machine.
+3. Make sure you have Node.js installed on your machine and then run:
 
 ```sh
 cd ../../node_testing_ui
