@@ -1,7 +1,19 @@
-# Integration tests
+## Prapare local environment for running tests
 
-Before run this tests you should have been already built substrate node and cosmos node (nsd) and cosmos cli (nscli).
-For these just follow the instructions from the root directory of this project.\
+1. Make sure Go installed on your machine.
+   Prepare your Comsos environment as described in https://github.com/adoriasoft/cosmos-sdk/tree/feature/add_nameservice/simapp.
+
+2. Built Substrate node from the root.
+
+3. Make sure you have Node.js installed on your machine.
+
+```sh
+cd ../../node_testing_ui
+yarn install
+```
+
+## Run tests
+
 You can run each tests separetelly:
 
 ```sh
