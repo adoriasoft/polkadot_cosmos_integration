@@ -6,6 +6,15 @@ A new FRAME-based Substrate node with Cosmos ABCI pallet.
 
 Documentation for this project is [here](https://github.com/adoriasoft/polkadot-cosmos-docs).
 
+## Requirements
+
+Refer to the instructions at the
+[Substrate Developer Hub](https://substrate.dev/docs/en/knowledgebase/getting-started/#manual-installation).
+
+The application is known to compile with the following versions of Rust:
+
+nightly-2020-08-19 (defined in rust-toolchain)
+
 ## Build in local environment
 
 Install Rust:
@@ -23,10 +32,11 @@ Initialize your Wasm Build environment:
 Build Wasm and native code:
 
 ```sh
-cargo build
+cargo build --release
 ```
 
-Before running substrate node, you should build and start cosmos node. Go to the our fork of the [cosmos-sdk](https://github.com/adoriasoft/cosmos-sdk/tree/master), switch to the branch [feature/add_nameservice](https://github.com/adoriasoft/cosmos-sdk/tree/feature/add_nameservice), then just follow the [instructions](https://github.com/adoriasoft/cosmos-sdk/tree/feature/add_nameservice/simapp).
+Build and start Cosmos node:
+Go to the our fork of the [cosmos-sdk](https://github.com/adoriasoft/cosmos-sdk/tree/master), switch to the branch [feature/add_nameservice](https://github.com/adoriasoft/cosmos-sdk/tree/feature/add_nameservice), then follow the [instructions](https://github.com/adoriasoft/cosmos-sdk/tree/feature/add_nameservice/simapp).
 
 #### Specify environment variables used by node
 
@@ -49,7 +59,7 @@ Available consensuses
 - `babe`
 
 ```sh
-- cargo build --no-default-features --features <consensus_name>
+- cargo build --release --no-default-features --features <consensus_name>
 ````
 
 ## Build in dockerized environment
@@ -67,6 +77,31 @@ Or:
 ```sh
 docker-compose up -d
 ```
+
+## Run node in development mode
+
+Start a development chain with:
+
+```sh
+./target/release/node-template\
+ --abci_genesis_state_path $HOME/.nsd/config/genesis.json\
+ --abci_server_url tcp://localhost:26658\
+ --abci_rpc_url 127.0.0.1:26657 --dev
+```
+
+Purge any existing development chain state:
+
+```sh
+./target/release/node-template purge-chain --dev
+```
+
+To get detailed info about options that available for node, run:
+
+```sh
+./target/release/node-template --help
+```
+
+To show detailed logs, run the the node with the following environment variables set: `RUST_LOG=debug RUST_BACKTRACE=1 cargo run -- --dev`.
 
 ## Testing
 
@@ -87,31 +122,12 @@ cargo test -p pallet-abci --test abci_unit_test
 
 Follow the docs from the [directory](https://github.com/adoriasoft/polkadot_cosmos_integration/tree/master/scripts/integration_tests).
 
-### Node in development mode
 
-Start a development chain with:
+## How to use?
 
-```sh
-./target/release/node-template
-  --abci_genesis_state_path $HOME/.nsd/config/genesis.json
-  --abci_server_url tcp://localhost:26658
-  --abci_rpc_url 127.0.0.1:26657
-  --dev
-```
+ABCI pallet allows launching applications based on Cosmos SDK (or any other application that uses ABCI) on top of Substrate consensus and network layers. When both Cosmos and Substrate nodes are running, users can interact with them using [Polkadot GUI](https://polkadot.js.org/apps/) and [Cosmos CLI](https://docs.cosmos.network/v0.39/interfaces/cli.html). 
 
-Purge any existing development chain state:
-
-```sh
-./target/release/node-template purge-chain --dev
-```
-
-To get detailed info about options that available for node, run:
-
-```sh
-./target/release/node-template --help
-```
-
-To show detailed logs, run the the node with the following environment variables set: `RUST_LOG=debug RUST_BACKTRACE=1 cargo run -- --dev`.
+In Polkadot GUI, users can send standard Substrate extrinsic including extrinsics to ABCI pallet to match Substrate and Cosmos accounts for validators elections and Cosmos transaction wrapped with Substrate extrinsics. In Cosmos CLI, users can make the majority of standards calls to Cosmos node (all available functions are described in the [full documentation](https://github.com/adoriasoft/polkadot-cosmos-docs). Some examples of commends for Nameservice app are described [here](https://github.com/adoriasoft/cosmos-sdk/blob/feature/add_nameservice/simapp/README.md).
 
 ### Perform calls to Cosmos RPC
 
