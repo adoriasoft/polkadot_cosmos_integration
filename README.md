@@ -110,12 +110,6 @@ To show detailed logs, run the the node with the following environment variables
 ```sh
 # Test all cargo packages
 cargo test --all
-# Test pallet-cosmos-abci package
-cargo test -p pallet-cosmos-abci --test cosmos_abci_unit_test
-cargo test -p pallet-cosmos-abci --test crypto_transform_unit_test
-# Test pallet-abci package
-cargo test -p pallet-abci --test abci_integration_test
-cargo test -p pallet-abci --test abci_unit_test
 ```
 
 #### Integration testing with bash
