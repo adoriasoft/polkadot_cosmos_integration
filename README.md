@@ -38,18 +38,6 @@ cargo build --release
 Build and start Cosmos node:
 Go to the our fork of the [cosmos-sdk](https://github.com/adoriasoft/cosmos-sdk/tree/master), switch to the branch [feature/add_nameservice](https://github.com/adoriasoft/cosmos-sdk/tree/feature/add_nameservice), then follow the [instructions](https://github.com/adoriasoft/cosmos-sdk/tree/feature/add_nameservice/simapp).
 
-#### Specify environment variables used by node
-
-```sh
-# Set ABCI backend url
-export ABCI_SERVER_URL=tcp://localhost:26658
-# Set path to Genesis file
-export ABCI_GENESIS_STATE_PATH=$HOME/.nsd/config/genesis.json
-# Set whole Genesis state from file
-export ABCI_GENESIS_STATE=$(cat $HOME/.nsd/config/genesis.json)
-# Re-export whole Genesis state from file
-export ABCI_GENESIS_STATE=$(cat $HOME/.nsd/config/genesis.json)
-```
 
 #### Build with selected consensus
 
