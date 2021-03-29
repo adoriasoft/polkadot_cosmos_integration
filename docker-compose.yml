@@ -2,11 +2,7 @@ version: "3.2"
 services:
   dev_substrate:
     image: ghcr.io/adoriasoft/substrate-node:latest
-    command: --dev
-    environment:
-      ABCI_RPC_SERVER_URL: 0.0.0.0:26657
-      ABCI_SERVER_URL: tcp://dev_cosmos:26658
-      ABCI_GENESIS_STATE_PATH: /genesis.json
+    command: --dev --abci_genesis_state_path=/genesis.json --abci_server_url=tcp://dev_cosmos:26658 --abci_rpc_url=0.0.0.0:26657
     volumes:
       - ./.maintain/genesis.json:/genesis.json
     ports:
