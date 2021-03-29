@@ -1,8 +1,8 @@
 version: "3.2"
 services:
   dev_substrate:
-    image: ghcr.io/adoriasoft/substrate-node:latest
-    command: --dev --abci_genesis_state_path=/genesis.json --abci_server_url=tcp://dev_cosmos:26658 --abci_rpc_url=0.0.0.0:26657
+    image: ghcr.io/adoriasoft/substrate-node@sha256:5bc69aa9c28bc55ad01d30021428bb8e4554d637b2e3cfce55bbfd80a6afbf7a
+    command: --abci_genesis_state_path /genesis.json --abci_server_url tcp://dev_cosmos:26658 --abci_rpc_url 0.0.0.0:26657 --dev
     volumes:
       - ./.maintain/genesis.json:/genesis.json
     ports:
@@ -12,7 +12,7 @@ services:
       - dev_cosmos
 
   dev_cosmos:
-    image: ghcr.io/adoriasoft/cosmos-node:latest
+    image: ghcr.io/adoriasoft/cosmos-node@sha256:15a33055c829b4038c5b4edddf2369ea79ae3256e9e4a535a95f256f74956d59
     command: nsd start --with-tendermint=false --transport=grpc
     restart: on-failure
     ports:
