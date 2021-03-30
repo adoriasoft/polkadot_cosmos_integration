@@ -148,7 +148,7 @@ pub fn start_server(client: Arc<crate::service::FullClient>) {
                                 "code" : abci_query_res_ok.get_code().to_string(),
                                 "key" : Some(base64::encode(abci_query_res_ok.get_key())),
                                 "value" : Some(base64::encode(abci_query_res_ok.get_value())),
-                                "proof" : &proof,
+                                "proof_ops" : &proof,
                             }
                         }))
                     }

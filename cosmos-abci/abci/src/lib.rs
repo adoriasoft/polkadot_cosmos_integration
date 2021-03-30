@@ -73,7 +73,7 @@ pub trait ResponseDeliverTx {
 /// Trait that specify fields of ResponseInitChain.
 #[automock]
 pub trait ResponseInitChain {
-    fn get_validators(&self) -> Vec<protos::ValidatorUpdate>;
+    fn get_validators(&self) -> Vec<protos::tendermint::abci::ValidatorUpdate>;
 }
 
 /// Trait that specify fields for ResponseSetOption.
@@ -91,10 +91,13 @@ pub trait ResponseBeginBlock {}
 /// Trait that specify fields for ResponseEndBlock.
 #[automock]
 pub trait ResponseEndBlock {
-    fn get_validator_updates(&self) -> Vec<protos::ValidatorUpdate>;
-    fn get_events(&self) -> Vec<protos::Event>;
-    fn set_events(&mut self, events: Vec<protos::Event>);
-    fn set_validator_updates(&mut self, validator_updates: Vec<protos::ValidatorUpdate>);
+    fn get_validator_updates(&self) -> Vec<protos::tendermint::abci::ValidatorUpdate>;
+    fn get_events(&self) -> Vec<protos::tendermint::abci::Event>;
+    fn set_events(&mut self, events: Vec<protos::tendermint::abci::Event>);
+    fn set_validator_updates(
+        &mut self,
+        validator_updates: Vec<protos::tendermint::abci::ValidatorUpdate>,
+    );
 }
 
 /// Trait that specify fields for ResponseCommit.
@@ -128,7 +131,7 @@ pub trait ResponseQuery {
     fn get_value(&self) -> Vec<u8>;
     fn get_height(&self) -> i64;
     fn get_codespace(&self) -> String;
-    fn get_proof(&self) -> Option<protos::crypto::merkle::Proof>;
+    fn get_proof(&self) -> Option<protos::tendermint::crypto::ProofOps>;
 
     fn set_code(&mut self, v: u32);
     fn set_log(&mut self, v: String);
@@ -155,12 +158,15 @@ pub trait AbciInterface {
         time_nanos: i32,
         chain_id: &str,
         pub_key_types: Vec<String>,
-        max_bytes: i64,
+        max_block_bytes: i64,
+        max_evidence_bytes: i64,
         max_gas: i64,
         max_age_num_blocks: i64,
         max_age_duration: u64,
         app_state_bytes: Vec<u8>,
-        validators: Vec<protos::ValidatorUpdate>,
+        validators: Vec<protos::tendermint::abci::ValidatorUpdate>,
+        app_version: u64,
+        initial_height: i64,
     ) -> AbciResult<dyn ResponseInitChain>;
 
     fn set_option(&mut self, key: &str, value: &str) -> AbciResult<dyn ResponseSetOption>;
@@ -171,7 +177,7 @@ pub trait AbciInterface {
         hash: Vec<u8>,
         last_block_id: Vec<u8>,
         proposer_address: Vec<u8>,
-        active_validators: Vec<protos::VoteInfo>,
+        active_validators: Vec<protos::tendermint::abci::VoteInfo>,
     ) -> AbciResult<dyn ResponseBeginBlock>;
 
     fn end_block(&mut self, height: i64) -> AbciResult<dyn ResponseEndBlock>;

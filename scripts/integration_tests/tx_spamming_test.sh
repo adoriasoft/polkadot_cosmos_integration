@@ -13,36 +13,36 @@ sleep 20s
 ## sync bug test
 
 # Check the amounts
-value=$(nscli q bank balances $(nscli keys show jack -a))
+value=$(simd q bank balances $(simd keys show jack -a))
 echo "$value"
-expected=$'- amount: \"1000\"\n  denom: nametoken\n- amount: \"100000000\"\n  denom: stake'
+expected=$'balances:\n- amount: \"100000000\"\n  denom: stake\npagination:\n  next_key: null\n  total: \"0\"'
 assert_eq "$value" "$expected"
 
-value=$(nscli q bank balances $(nscli keys show alice -a))
+value=$(simd q bank balances $(simd keys show alice -a))
 echo "$value"
-expected=$'- amount: \"1000\"\n  denom: nametoken\n- amount: \"100000000\"\n  denom: stake'
+expected=$'balances:\n- amount: \"100000000\"\n  denom: stake\npagination:\n  next_key: null\n  total: \"0\"'
 assert_eq "$value" "$expected"
 
 for i in {1..200}
 do
-    nscli tx send  $(nscli keys show jack -a) $(nscli keys show alice -a) 50000000stake --chain-id=namechain --from jack -y
+    simd tx bank send  $(simd keys show jack -a) $(simd keys show alice -a) 50000000stake --chain-id=test_chain --from jack -y
 done
 
 for i in {1..200}
 do
-    nscli tx send  $(nscli keys show jack -a) $(nscli keys show alice -a) 50000000stake --chain-id=namechain --from jack -y
+    simd tx bank send  $(simd keys show jack -a) $(simd keys show alice -a) 50000000stake --chain-id=test_chain --from jack -y
 done
 sleep 20s
 
 # Check the amounts
-value=$(nscli q bank balances $(nscli keys show jack -a))
+value=$(simd q bank balances $(simd keys show jack -a))
 echo "$value"
-expected=$'- amount: \"1000\"\n  denom: nametoken\n- amount: \"0\"\n  denom: stake'
+expected=$'balances:\n- amount: \"0\"\n  denom: stake\npagination:\n  next_key: null\n  total: \"0\"'
 assert_eq "$value" "$expected"
 
-value=$(nscli q bank balances $(nscli keys show alice -a))
+value=$(simd q bank balances $(simd keys show alice -a))
 echo "$value"
-expected=$'- amount: \"1000\"\n  denom: nametoken\n- amount: \"200000000\"\n  denom: stake'
+expected=$'balances:\n- amount: \"200000000\"\n  denom: stake\npagination:\n  next_key: null\n  total: \"0\"'
 assert_eq "$value" "$expected"
 
 test_passed "tx spamming test"

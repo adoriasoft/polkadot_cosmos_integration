@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #! This test runs two nodes of the substarte and corresponding to it two nodes of the cosmos-sdk
-#! 1. Set up 2 cosmos validators using the `nsd tx staking create-validator` command.
+#! 1. Set up 2 cosmos validators using the `simd tx staking create-validator` command.
 #! 2. Match fist cosmos validator to the substarte validator Bob, so as a result we expect that susbrate will change the validator list to the one Bob
 #! 3. Match the same first cosmos validator to the another subsrate validator Alice, so as a result we expect that susbrate will change the validator list to the one Alice
 #! 4. Math the second cosmos validator to the last substrate validator Bob, so as a result we expect that susbrate will change the validator list to the Bob and Alice validators
@@ -43,31 +43,33 @@ cd ../../node_testing_ui
 sleep 20s
 
 #insert new validator into the cosmos
-nsd tx staking create-validator \
+simd tx staking create-validator \
  --amount=10000000stake \
  --pubkey=cosmosvalconspub1zcjduepq875syecv06rvxsnppratlqnde5p40raam8hu0pyru3f2yhr5uc3qpju33s \
  --moniker="alice validator" \
- --chain-id=namechain \
+ --chain-id=test_chain \
  --from=alice \
  --commission-rate="0.10" \
  --commission-max-rate="0.20" \
  --commission-max-change-rate="0.01" \
  --min-self-delegation="1" \
  --gas-prices="0.025stake" \
- --node tcp://localhost:26659
+ --node tcp://localhost:26659 \
+ -y
 
-nsd tx staking create-validator \
+simd tx staking create-validator \
  --amount=10000000stake \
  --pubkey=cosmosvalconspub1zcjduepq5n6c30jmmytupyeadls6cxxstvja6ke83ypj0ftmjymmnpnndu2s0793yf \
  --moniker="jack validator" \
- --chain-id=namechain \
+ --chain-id=test_chain \
  --from=jack \
  --commission-rate="0.10" \
  --commission-max-rate="0.20" \
  --commission-max-change-rate="0.01" \
  --min-self-delegation="1" \
  --gas-prices="0.025stake" \
- --node tcp://localhost:26659
+ --node tcp://localhost:26659 \
+ -y
 
 sleep 10s
 

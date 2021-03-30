@@ -25,54 +25,54 @@ sleep 5s
 sleep 20s
 
 # Check the amounts on the cosmos node 1
-value=$(nscli q bank balances $(nscli keys show jack -a) --node tcp://localhost:26659)
+value=$(simd q bank balances $(simd keys show jack -a) --node tcp://localhost:26659)
 echo "$value"
-expected=$'- amount: \"1000\"\n  denom: nametoken\n- amount: \"100000000\"\n  denom: stake'
+expected=$'balances:\n- amount: \"100000000\"\n  denom: stake\npagination:\n  next_key: null\n  total: \"0\"'
 assert_eq "$value" "$expected"
 
-value=$(nscli q bank balances $(nscli keys show alice -a) --node tcp://localhost:26659)
+value=$(simd q bank balances $(simd keys show alice -a) --node tcp://localhost:26659)
 echo "$value"
-expected=$'- amount: \"1000\"\n  denom: nametoken\n- amount: \"100000000\"\n  denom: stake'
+expected=$'balances:\n- amount: \"100000000\"\n  denom: stake\npagination:\n  next_key: null\n  total: \"0\"'
 assert_eq "$value" "$expected"
 
 # Check the amounts on the cosmos node 2
-value=$(nscli q bank balances $(nscli keys show jack -a) --node tcp://localhost:26661)
+value=$(simd q bank balances $(simd keys show jack -a) --node tcp://localhost:26661)
 echo "$value"
-expected=$'- amount: \"1000\"\n  denom: nametoken\n- amount: \"100000000\"\n  denom: stake'
+expected=$'balances:\n- amount: \"100000000\"\n  denom: stake\npagination:\n  next_key: null\n  total: \"0\"'
 assert_eq "$value" "$expected"
 
-value=$(nscli q bank balances $(nscli keys show alice -a) --node tcp://localhost:26661)
+value=$(simd q bank balances $(simd keys show alice -a) --node tcp://localhost:26661)
 echo "$value"
-expected=$'- amount: \"1000\"\n  denom: nametoken\n- amount: \"100000000\"\n  denom: stake'
+expected=$'balances:\n- amount: \"100000000\"\n  denom: stake\npagination:\n  next_key: null\n  total: \"0\"'
 assert_eq "$value" "$expected"
 
 # Send 25000000 stake tokens from Jack to Alice
-nscli tx send  $(nscli keys show jack -a) $(nscli keys show alice -a) 25000000stake --chain-id=namechain --from jack --node tcp://localhost:26659 -y
+simd tx bank send  $(simd keys show jack -a) $(simd keys show alice -a) 25000000stake --chain-id=test_chain --from jack --node tcp://localhost:26659 -y
 sleep 20s
 
-nscli tx send  $(nscli keys show jack -a) $(nscli keys show alice -a) 25000000stake --chain-id=namechain --from jack --node tcp://localhost:26661 -y
+simd tx bank send  $(simd keys show jack -a) $(simd keys show alice -a) 25000000stake --chain-id=test_chain --from jack --node tcp://localhost:26661 -y
 sleep 20s
 
 # Check the amounts on the cosmos node 1
-value=$(nscli q bank balances $(nscli keys show jack -a) --node tcp://localhost:26659)
+value=$(simd q bank balances $(simd keys show jack -a) --node tcp://localhost:26659)
 echo "$value"
-expected=$'- amount: \"1000\"\n  denom: nametoken\n- amount: \"50000000\"\n  denom: stake'
+expected=$'balances:\n- amount: \"50000000\"\n  denom: stake\npagination:\n  next_key: null\n  total: \"0\"'
 assert_eq "$value" "$expected"
 
-value=$(nscli q bank balances $(nscli keys show alice -a) --node tcp://localhost:26659)
+value=$(simd q bank balances $(simd keys show alice -a) --node tcp://localhost:26659)
 echo "$value"
-expected=$'- amount: \"1000\"\n  denom: nametoken\n- amount: \"150000000\"\n  denom: stake'
+expected=$'balances:\n- amount: \"150000000\"\n  denom: stake\npagination:\n  next_key: null\n  total: \"0\"'
 assert_eq "$value" "$expected"
 
 # Check the amounts on the cosmos node 2
-value=$(nscli q bank balances $(nscli keys show jack -a) --node tcp://localhost:26661)
+value=$(simd q bank balances $(simd keys show jack -a) --node tcp://localhost:26661)
 echo "$value"
-expected=$'- amount: \"1000\"\n  denom: nametoken\n- amount: \"50000000\"\n  denom: stake'
+expected=$'balances:\n- amount: \"50000000\"\n  denom: stake\npagination:\n  next_key: null\n  total: \"0\"'
 assert_eq "$value" "$expected"
 
-value=$(nscli q bank balances $(nscli keys show alice -a) --node tcp://localhost:26661)
+value=$(simd q bank balances $(simd keys show alice -a) --node tcp://localhost:26661)
 echo "$value"
-expected=$'- amount: \"1000\"\n  denom: nametoken\n- amount: \"150000000\"\n  denom: stake'
+expected=$'balances:\n- amount: \"150000000\"\n  denom: stake\npagination:\n  next_key: null\n  total: \"0\"'
 assert_eq "$value" "$expected"
 
 test_passed "basic test 2 nodes"

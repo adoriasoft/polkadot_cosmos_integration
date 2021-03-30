@@ -186,11 +186,14 @@ fn init_chain() -> Result<(), ServiceError> {
                     &genesis.chain_id,
                     genesis.pub_key_types,
                     genesis.max_bytes,
+                    genesis.max_bytes / 2,
                     genesis.max_gas,
                     genesis.max_age_num_blocks,
                     genesis.max_age_duration,
                     genesis.app_state_bytes,
                     vec![],
+                    1,
+                    0,
                 )
                 .map_err(|_| "init chain failed")?;
 
