@@ -32,6 +32,7 @@ simd tx staking create-validator \
  --commission-max-change-rate="0.01" \
  --min-self-delegation="1" \
  --gas-prices="0.025stake" \
+ --keyring-backend=test \
  -y
 
 cd ../../node_testing_ui
@@ -41,16 +42,16 @@ assert_eq "$validators_set" $expect_validators_set_1
 
 sleep 30s
 
-value=$(simd q bank balances $(simd keys show jack -a))
+value=$(simd q bank balances $(simd keys show jack -a --keyring-backend test))
 echo "$value"
 expected=$'balances:\n- amount: \"89995000\"\n  denom: stake\npagination:\n  next_key: null\n  total: \"0\"'
 assert_eq "$value" "$expected"
 
 # withdraw rewards
-simd tx distribution withdraw-all-rewards --chain-id=test_chain --from=$(simd keys show jack -a) -y
+simd tx distribution withdraw-all-rewards --chain-id=test_chain --from=$(simd keys show jack -a --keyring-backend test) --keyring-backend test -y
 sleep 5s
 
-value=$(simd q bank balances $(simd keys show jack -a))
+value=$(simd q bank balances $(simd keys show jack -a --keyring-backend test))
 echo "$value"
 expected=$'balances:\n- amount: \"89995000\"\n  denom: stake\npagination:\n  next_key: null\n  total: \"0\"'
 assert_eq "$value" "$expected"
@@ -59,10 +60,10 @@ node ./insert-cosmos-validator.app.js //Bob $cosmos_validator_pub_key
 sleep 30s
 
 # withdraw rewards
-simd tx distribution withdraw-all-rewards --chain-id=test_chain --from=$(simd keys show jack -a) -y
+simd tx distribution withdraw-all-rewards --chain-id=test_chain --from=$(simd keys show jack -a --keyring-backend test) --keyring-backend test -y
 sleep 5s
 
-value=$(simd q bank balances $(simd keys show jack -a))
+value=$(simd q bank balances $(simd keys show jack -a --keyring-backend test))
 echo "$value"
 expected=$'balances:\n- amount: \"89995000\"\n  denom: stake\npagination:\n  next_key: null\n  total: \"0\"'
 assert_ne "$value" "$expected"

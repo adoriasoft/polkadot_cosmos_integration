@@ -17,6 +17,37 @@ jobs:
       - name: test
         run: cargo test --all
 
+  integration_tests:
+    runs-on: ubuntu-18.04
+
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-go@v2
+        with:
+          go-version: '^1.15' # The Go version to download (if necessary) and use.
+      - name: rust-setup
+        run: |
+          rustup default nightly
+          rustup target add wasm32-unknown-unknown
+          rustup component add rustfmt
+          rustup update
+      - name: build-cosmos
+        run: |
+          git clone https://github.com/cosmos/cosmos-sdk.git
+          cd cosmos-sdk
+          git checkout v0.42.3
+          make build
+          cp build/simd ~/go/bin
+          cd ..
+          ./scripts/cosmos-init.sh
+      - name: build_substrate
+        run: cargo build
+      - name: run_tests
+        run: |
+          cd scripts/integration_tests
+          ./basic_test.sh
+
+
   clean:
     name: Check code format
     runs-on: ubuntu-latest
