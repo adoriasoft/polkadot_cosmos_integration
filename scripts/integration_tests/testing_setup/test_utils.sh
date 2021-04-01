@@ -28,4 +28,5 @@ function assert_ne() {
 
 function test_passed() {
     echo -e "\033[0;32m test:" $1 "has passed"
+    exit 0
 }
