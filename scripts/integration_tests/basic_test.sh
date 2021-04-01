@@ -37,4 +37,3 @@ expected=$'balances:\n- amount: \"150000000\"\n  denom: stake\npagination:\n  ne
 assert_eq "$value" "$expected"
 
 test_passed "basic test"
-exit 0

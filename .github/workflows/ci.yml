@@ -46,7 +46,10 @@ jobs:
         run: |
           cd scripts/integration_tests
           ./basic_test.sh
-          exit 0
+          ./basic_test_2_nodes.sh
+          ./broadcast_tx.sh
+          ./stoping_nodes_test.sh
+          ./tx_spamming_test.sh
 
 
   clean:
