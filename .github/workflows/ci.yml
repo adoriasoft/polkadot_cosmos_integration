@@ -46,6 +46,7 @@ jobs:
         run: |
           cd scripts/integration_tests
           ./basic_test.sh
+          exit 0
 
 
   clean:
